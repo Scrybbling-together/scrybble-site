@@ -12,7 +12,7 @@
         pkgs = nixpkgs.legacyPackages.${system};
 
         php = (import ./nix/php.nix { inherit pkgs; });
-        rmapi = (import ./nix/remarks.nix { inherit pkgs; });
+        rmapi = (import ./nix/rmapi.nix { inherit pkgs; });
 
         setup-script = pkgs.writeScriptBin "setup-scrybble" ''
                     #!${pkgs.bash}/bin/bash
@@ -72,7 +72,7 @@
           '';
         };
 
-        packages.rmapi = rmapi.rmapi;
+        packages.rmapi = rmapi;
         packages.php83-build-image = php.php-docker-image;
       });
 }
