@@ -8,8 +8,9 @@ let
     src = pkgs.fetchFromGitHub {
       owner = "ddvk";
       repo = "rmapi";
-      rev = "main";
+      rev = "5dbf1cc9720b7250083b41f87f713e3ab82065fe";
       sha256 = "sha256-pVmG9XD3AcHDRo1A25QSnPStKPsgku3lWhN47xdYrwE=";
+#      sha256 = "sha256-TD8edRMZEn05HHvSwwPpeA6AzXMNkNz6mrQl4zF8Kfk=";
     };
 
     vendorHash = "sha256-Qisfw+lCFZns13jRe9NskCaCKVj5bV1CV8WPpGBhKFc=";
