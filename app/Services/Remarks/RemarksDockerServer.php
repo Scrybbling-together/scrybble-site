@@ -23,7 +23,7 @@ class RemarksDockerServer implements Remarks\RemarksService
             "out_path" => "/efs/" . $sourceDirectory->relativeTo($efsRoot)->string()
         ]);
         if ($res->status() !== 200) {
-            throw new RuntimeException("Failed to convert notes and highlights.");
+            throw new RuntimeException("Failed to convert notes and highlights: " . $res->body());
         }
         return $res->body();
     }

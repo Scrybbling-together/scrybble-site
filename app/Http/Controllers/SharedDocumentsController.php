@@ -19,7 +19,7 @@ class SharedDocumentsController extends Controller
             "feedback",
             "developer_access_consent_granted",
             "open_access_consent_granted"
-        ])->get();
+        ])->with("user:id,email")->get();
 
         if ($user?->id !== 1) {
            $shared = $shared->filter(fn ($item) => $item["open_access_consent_granted"]);
@@ -45,6 +45,7 @@ class SharedDocumentsController extends Controller
 
                 return [
                     'id' => $public_sync_id,
+                    'user_email' => $shared->user->email,
                     'created_at' => $shared->sync->created_at->diffForHumans(),
                     'feedback' => $shared->feedback,
                     'output_href' => $output_href,

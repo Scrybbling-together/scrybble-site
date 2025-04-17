@@ -14,6 +14,9 @@
             <thead>
             <tr>
                 <th>Sync id</th>
+                @if (Auth::user()->id === 1)
+                <th>User</th>
+                @endif
                 <th>When</th>
                 <th>Feedback</th>
                 <th>Filename</th>
@@ -25,6 +28,11 @@
             @foreach ($shared as $shared_file)
                 <tr>
                     <td>{{$shared_file['id']}}</td>
+                    @if (Auth::user()->id === 1)
+                    <td>{{$shared_file['user_email']}}</td>
+                    @else
+                        <td>Must be logged in as an admin to view user e-mail</td>
+                    @endif
                     <td>{{$shared_file['created_at']}}</td>
                     <td>{{$shared_file['feedback']}}</td>
                     <td>{{$shared_file['filename']}}</td>

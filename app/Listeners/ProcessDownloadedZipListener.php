@@ -19,6 +19,7 @@ use Throwable;
 class ProcessDownloadedZipListener implements ShouldQueue
 {
 
+
     public function __construct(private PRMStorageInterface $PRMStorage)
     {
     }
@@ -59,11 +60,13 @@ class ProcessDownloadedZipListener implements ShouldQueue
             AbsolutePath::fromString($user_storage->path($jobdir->joinAtoms('extractedFiles')->string()));
         $absolute_outdir = AbsolutePath::fromString($user_storage->path($jobdir->joinAtoms('out')));
         try {
-            $sync_context->logStep("Processing ReMarkable file");
-            $remarks_service->extractNotesAndHighlights(
+            $sync_context->logStep("Processing reMarkable file");
+            $output = $remarks_service->extractNotesAndHighlights(
                 sourceDirectory: $absolute_job_dir,
                 targetDirectory: $absolute_outdir);
-            $sync_context->logStep("Processed ReMarkable file");
+            $sync_context->logStep("Processed reMarkable file", [
+                "remarks_output" => $output
+            ]);
         } catch (RuntimeException $exception) {
             $sync_context->logError("Extraction failed. Error", [
                 "error" => $exception->getMessage()
