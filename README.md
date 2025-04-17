@@ -33,7 +33,9 @@ with the ReMarkable API.
 You can build the binary with
 
 ```bash
-$ nix build .#rmapi
+$ nix build .#rmapi # this builds to ./result/bin/rmapi
+# install it to the application
+$ rm binaries/rmapi; mv ./result/bin/rmapi binaries/rmapi
 ```
 
 ## Remarks
@@ -44,7 +46,3 @@ into an annotated pdf, or a bunch of markdown.
 I host a dockerfile at hub.docker.com, tagged `laauurraaa/remarks-bin:latest`.
 
 `docker run -v "$PWD/YOUR FOLDER WITH REMARKABLE STUFF/":/store laauurraaa/remarks-bin:0.2.1 /store/in/YOUR_NOTEBOOK /store/out`
-
-This command runs remarks over a test file, if you have any.
-
-See the file `remarks.version` in the root directory for the most recent remarks version.

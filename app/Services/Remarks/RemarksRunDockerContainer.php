@@ -16,9 +16,9 @@ class RemarksRunDockerContainer implements RemarksService
     /**
      * @param AbsolutePathInterface $sourceDirectory
      * @param AbsolutePathInterface $targetDirectory
-     * @return void
+     * @return string
      */
-    public function extractNotesAndHighlights(AbsolutePathInterface $sourceDirectory, AbsolutePathInterface $targetDirectory): void
+    public function extractNotesAndHighlights(AbsolutePathInterface $sourceDirectory, AbsolutePathInterface $targetDirectory): string
     {
         // docker run -v "$PWD/files":/store laauurraaa/remarks-bin /store /store --targets md
         $source_dir = $sourceDirectory->string();
@@ -32,6 +32,8 @@ class RemarksRunDockerContainer implements RemarksService
             throw new RuntimeException("remarks-bin docker failed with error_code: `$result_code`: `" . implode
                 ("\n", $output) . '`');
         }
+
+        return implode("\n", $output);
     }
 
 }

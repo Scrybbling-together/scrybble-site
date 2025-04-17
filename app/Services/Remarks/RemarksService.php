@@ -13,7 +13,7 @@ interface RemarksService
     /**
      * @param AbsolutePathInterface $sourceDirectory
      * @param AbsolutePathInterface $targetDirectory
-     * @return void
+     * @return string
      */
-    public function extractNotesAndHighlights(AbsolutePathInterface $sourceDirectory, AbsolutePathInterface $targetDirectory): void;
+    public function extractNotesAndHighlights(AbsolutePathInterface $sourceDirectory, AbsolutePathInterface $targetDirectory): string;
 }
