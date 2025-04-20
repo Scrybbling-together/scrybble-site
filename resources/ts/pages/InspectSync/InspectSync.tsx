@@ -71,7 +71,7 @@ function ShareDialog({
       className="share-info-dialog"
       open={shareInfoDialogOpen !== false}
       close={() => setShareInfoDialogOpen(false)}
-      title={"Your ReMarkable document isn't syncing well. Need help?"}
+      title={"Your reMarkable document isn't syncing well. Need help?"}
       actions={
         <div className="d-flex gap-2">
           <button
@@ -90,11 +90,11 @@ function ShareDialog({
               }
               try {
                 await send(details).unwrap()
-                toast.success('Shared ReMarkable document.')
+                toast.success('Shared reMarkable document.')
                 setShareInfoDialogOpen(false)
               } catch (e) {
                 toast.error(
-                  'Was unable to share the ReMarkable document. Contact developer.'
+                  'Was unable to share the reMarkable document. Contact developer.'
                 )
               }
             }}
@@ -119,7 +119,7 @@ function ShareDialog({
           documents.
         </p>
         <p>
-          Would you like to give permission to share the ReMarkable documents
+          Would you like to give permission to share the reMarkable documents
           that Scrybble downloaded so that it can be investigated for{' '}
           {shareInfoDialogOpen['variant'] === 'success' ? 'problems' : 'errors'}
           ?
@@ -145,7 +145,7 @@ function ShareDialog({
               className="form-check-label"
               htmlFor="check-developer-access"
             >
-              Allow the developer to access this ReMarkable file
+              Allow the developer to access this reMarkable file
             </label>
           </div>
           <div className={`collapse${devAccess ? ' show' : ''} given-access`}>
@@ -160,7 +160,7 @@ function ShareDialog({
                 }}
               />
               <label className="form-check-label" htmlFor="check-open-access">
-                Share this document with the wider ReMarkable development
+                Share this document with the wider reMarkable development
                 community (This means anyone can access it)
               </label>
             </div>
@@ -178,7 +178,7 @@ function ShareDialog({
             <div className="collapse mx-4" id="more-info-collapse">
               <p>
                 Sharing your document with everyone may feel strange. Why would
-                you want that? It's because Scrybble and the ReMarkable
+                you want that? It's because Scrybble and the reMarkable
                 development community is built on{' '}
                 <a href="/open-core">open principles</a>.
               </p>
@@ -189,10 +189,10 @@ function ShareDialog({
                 Scrybble.
               </p>
               <label htmlFor="comment">
-                What's wrong with this ReMarkable document?
+                What's wrong with this reMarkable document?
               </label>
               <p className="text-success">
-                Want a thriving community of tools for the ReMarkable? You can
+                Want a thriving community of tools for the reMarkable? You can
                 contribute your documents to the community!
               </p>
             </div>
@@ -217,12 +217,12 @@ function ShareDialog({
               <ul>
                 {isError ? (
                   <li>
-                    The errors associated with this ReMarkable document, pdf or
+                    The errors associated with this reMarkable document, pdf or
                     quick sheets.
                   </li>
                 ) : null}
                 <li>
-                  Your ReMarkable document:{' '}
+                  Your reMarkable document:{' '}
                   <pre>{shareInfoDialogOpen['filename']}</pre>
                 </li>
               </ul>

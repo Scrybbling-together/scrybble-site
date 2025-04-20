@@ -22,7 +22,7 @@ export default function RMOneTimeCodeCard({
     <div className="card-dark">
       <div className="card-header">
         <span className="fs-4">
-          Connect with ReMarkable{' '}
+          Connect with reMarkable{' '}
           {firstTime ? (
             <span className="fs-5 text-muted">(step 2/2)</span>
           ) : null}
@@ -31,7 +31,7 @@ export default function RMOneTimeCodeCard({
       <div className="card-body">
         {!firstTime ? (
           <div className="alert alert-warning">
-            Your authentication token has expired, please log in with ReMarkable
+            Your authentication token has expired, please log in with reMarkable
             again
           </div>
         ) : null}

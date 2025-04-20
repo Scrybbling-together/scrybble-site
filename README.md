@@ -28,7 +28,7 @@ After running the last step, the site will be accessible on your [localhost](htt
 ## RMapi
 
 We use https://github.com/ddvk/rmapi as a direct dependency for this project. This is used to authenticate and sync
-with the ReMarkable API.
+with the reMarkable API.
 
 You can build the binary with
 

@@ -9,7 +9,7 @@ use JsonException;
 use Str;
 
 /**
- * Functionality directly related to the ReMarkable itself
+ * Functionality directly related to the reMarkable itself
  * Primarily deals with extracting information out of rm notebook metadata
  */
 class RemarkableService {
@@ -25,7 +25,7 @@ class RemarkableService {
     }
 
     /**
-     * The name of the Remarkable file
+     * The name of the reMarkable file
      * @param Filesystem $userStorage
      * @param RelativePathInterface $to
      * @return string

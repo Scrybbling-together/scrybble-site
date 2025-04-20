@@ -22,20 +22,20 @@ export function Roadmap() {
             <td>Yes</td>
             <td>Support PDFs</td>
             <td>
-              Allow synchronization of PDF files from ReMarkable to Obsidian
+              Allow synchronization of PDF files from reMarkable to Obsidian
             </td>
           </tr>
           <tr className="table-success">
             <td>Yes</td>
             <td>Support .epub format</td>
             <td>
-              Allow synchronization of .epub files from ReMarkable to Obsidian
+              Allow synchronization of .epub files from reMarkable to Obsidian
             </td>
           </tr>
           <tr className="table-success">
             <td>Yes</td>
             <td>Support notebooks</td>
-            <td>Allows synchronizing ReMarkable notebooks to Obsidian</td>
+            <td>Allows synchronizing reMarkable notebooks to Obsidian</td>
           </tr>
           <tr className="table-success">
             <td>Yes</td>
@@ -51,7 +51,7 @@ export function Roadmap() {
             <td>No</td>
             <td>Tags</td>
             <td>
-              ReMarkable recently released a tags feature, it would be great if
+              reMarkable recently released a tags feature, it would be great if
               the synchronized pages contain these references.
             </td>
           </tr>

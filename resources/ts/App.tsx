@@ -105,7 +105,7 @@ function ObsidianPost() {
 function DashboardError() {
   const error = useRouteError()
   console.log(`HIIII there was an error: ${error}`)
-  return 'There was an error loading your ReMarkable files.'
+  return 'There was an error loading your reMarkable files.'
 }
 
 const routes = (

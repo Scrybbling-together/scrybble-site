@@ -10,7 +10,7 @@ export function LandingPage() {
                 <div className="text-center hero">
                     <h1>Scrybble</h1>
                     <p className="lead">
-                        <i>Your</i> ReMarkable notes in <i>your</i> Obsidian vault
+                        <i>Your</i> reMarkable notes in <i>your</i> Obsidian vault
                     </p>
                     <a
                         href="https://streamsoft.gumroad.com/l/remarkable-to-obsidian"
@@ -44,10 +44,10 @@ export function LandingPage() {
                         </h2>
                     </div>
                     <div className="copy">
-                        <h2>Your ReMarkable notes in your Obsidian vault</h2>
+                        <h2>Your reMarkable notes in your Obsidian vault</h2>
                         <p>
                             Wouldn't it be nice if you had access to everything on your
-                            ReMarkable tablet in your Obsidian vault?
+                            reMarkable tablet in your Obsidian vault?
                         </p>
                         <ul>
                             <li>The highlights in your textbooks and documents</li>
@@ -62,7 +62,7 @@ export function LandingPage() {
                                 href="https://streamsoft.gumroad.com/l/remarkable-to-obsidian"
                                 className="btn btn-lg btn-secondary fw-bold border-white bg-white mr-4"
                             >
-                                I want my ReMarkable notes in Obsidian!
+                                I want my reMarkable notes in Obsidian!
                             </a>
                         </p>
                     </div>
@@ -72,18 +72,18 @@ export function LandingPage() {
                     <div className="copy">
                         <h2>FAQ</h2>
                         <ul>
-                            <li>Does this work with ReMarkable version 3.0?</li>
+                            <li>Does this work with reMarkable version 3.0?</li>
                             <ul>
-                                <li>Yes! Scrybble works with ReMarkable version 3.0.</li>
+                                <li>Yes! Scrybble works with reMarkable version 3.0.</li>
                             </ul>
-                            <li>Does Scrybble support the ReMarkable Paper Pro?</li>
+                            <li>Does Scrybble support the reMarkable Paper Pro?</li>
                             <ul>
                                 <li>Partially, but we're still working on full support</li>
                             </ul>
                             <li>How does this work?</li>
                             <ul>
                                 <li>
-                                    You'll have to connect your ReMarkable account to Scrybble,
+                                    You'll have to connect your reMarkable account to Scrybble,
                                     and install the Obsidian "Scrybble" plugin which will download
                                     the files you selected for synchronisation.
                                 </li>
@@ -121,7 +121,7 @@ export function LandingPage() {
 
                             <div className="ms-2">
                                 <h3 className="fw-normal mb-4 lh-sm">
-                                    "Review: ReMarkable Paper Pro is a perfect device, without the perfect flow"
+                                    "Review: reMarkable Paper Pro is a perfect device, without the perfect flow"
                                 </h3>
 
                                 <p>

@@ -1,7 +1,7 @@
 <div {{ $attributes }}>
     <div class="card-dark">
         <div class="card-header">
-            <span class="fs-4">Connect with ReMarkable <span class="fs-5 text-muted">(step 2/2)</span></span>
+            <span class="fs-4">Connect with reMarkable <span class="fs-5 text-muted">(step 2/2)</span></span>
         </div>
         <div class="card-body">
             <p><a target="_blank" href="https://my.remarkable.com/device/desktop/connect">Retrieve your one-time-code</a> and fill it in below</p>
