@@ -24,6 +24,58 @@
     }
   }
 
+    // Dialog header styling
+    .share-info-dialog h5,
+    .share-info-dialog .dialog-title {
+        color: var(--scrybble-flame);
+        font-size: 1.5rem;
+        font-weight: 600;
+        margin-bottom: 1.5rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 2px solid var(--scrybble-kobold-pink);
+    }
+
+    // Section spacing
+    .share-info-dialog p {
+        margin-bottom: 1.25rem;
+        line-height: 1.6;
+    }
+
+    // Form elements
+    .share-info-dialog .form-group {
+        margin: 2rem 0;
+    }
+
+    .share-info-dialog .form-check {
+        margin-bottom: 1rem;
+        padding-left: 2rem; // More space for checkbox
+    }
+
+    .share-info-dialog .form-check-input {
+        margin-top: 0.3rem; // Better vertical alignment
+        margin-left: -2rem;
+    }
+
+    // Textarea and inputs
+    .share-info-dialog textarea.form-control {
+        padding: 1rem;
+        min-height: 100px;
+        border-color: var(--scrybble-envisage);
+        border-radius: 8px;
+        margin-top: 0.5rem;
+    }
+
+    .share-info-dialog textarea.form-control:focus {
+        box-shadow: 0 0 0 0.25rem rgba(149, 189, 181, 0.25);
+    }
+
+    // Section headings
+    .share-info-dialog h5 {
+        margin-top: 2rem;
+        font-size: 1.2rem;
+        color: var(--scrybble-envisage);
+    }
+
   .share-info-dialog {
     .form-group > * {
       margin: 4px 0;

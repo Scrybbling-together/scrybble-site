@@ -10,7 +10,7 @@
 @section('content')
     <div class="m-4">
         <h1>Shared documents</h1>
-        <table class="table table-dark table-bordered table-striped">
+        <table class="table table-bordered table-striped">
             <thead>
             <tr>
                 <th>Sync id</th>
@@ -45,7 +45,7 @@
                     </td>
                     <td>
                         @if($shared_file['input_href'])
-                            <a href="{{$shared_file['input_href']}}">Download</a>
+                            <a href="{{ $shared_file['input_href'] }}">Download</a>
                         @else
                             Gone
                         @endif

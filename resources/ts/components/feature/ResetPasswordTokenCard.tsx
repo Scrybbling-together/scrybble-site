@@ -38,7 +38,7 @@ export function ResetPasswordTokenCard() {
 
   return (
     <div className="page-centering-container">
-      <div className="card-dark col-md-6">
+      <div className="card col-md-6">
         <div className="card-header">Choose a new password</div>
         <form
           className="card-body"

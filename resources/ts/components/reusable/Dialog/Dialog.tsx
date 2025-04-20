@@ -42,12 +42,12 @@ export function Dialog({
     <dialog
       ref={ref}
       onCancel={close}
-      className={`bg-dark text-light${extendedClassNames}`}
+      className={extendedClassNames}
       {...props}
     >
       <div className="modal-content">
-        <div className="modal-header">
-          <h5 className="modal-title">{title}</h5>
+        <div className="modal-header border-bottom-0">
+          <h2 className="modal-title">{title}</h2>
         </div>
         <div className="modal-body">{children}</div>
         <div className="modal-footer">{actions}</div>

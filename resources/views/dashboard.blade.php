@@ -21,7 +21,7 @@
                     <x-one-time-code/>
                 @endif
             @else
-                <div class="card-dark" style="width: 32rem">
+                <div class="card" style="width: 32rem">
                     <div class="card-header">
                         <span class="fs-4">Connect your gumroad license <span class="fs-5 text-muted">(step 1/2)</span></span>
                     </div>

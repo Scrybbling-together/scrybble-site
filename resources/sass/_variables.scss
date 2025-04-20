@@ -1,7 +1,214 @@
-// Body
-$body-bg: #f8fafc;
 
 // Typography
 $font-family-sans-serif: 'Nunito', sans-serif;
 $font-size-base: 0.9rem;
 $line-height-base: 1.6;
+
+// _variables.scss or custom.scss
+// Place this file in your Laravel project's resources/scss directory
+
+// Define Scrybble Brand Colors
+$scrybble-citron:      #BEC36B;  // Secondary color
+$scrybble-kobold-pink: #EFD3CF;  // Secondary color
+$scrybble-flame:       #E86837;  // Accent for buttons
+$scrybble-envisage:    #95BDB5;  // Primary brand color
+$scrybble-acorn-squash:#F0A740;  // Accent color
+$scrybble-baby-powder: #F6F5F0;  // Primary background color
+
+// Override Bootstrap's color system
+$primary:       $scrybble-envisage;
+$secondary:     $scrybble-citron;
+$success:       adjust-color($scrybble-citron, $lightness: -10%); // Darker citron for success
+$info:          $scrybble-kobold-pink;
+$warning:       $scrybble-acorn-squash;
+$danger:        $scrybble-flame;
+$light:         $scrybble-baby-powder;
+$dark:          #343a40; // Keep Bootstrap's dark or customize
+
+// Create custom color class for the flame color if needed as a utility
+$custom-colors: (
+    "flame": $scrybble-flame
+);
+
+// Body
+$body-bg:                   $scrybble-baby-powder;
+$body-color:                #303030; // Dark gray for text
+
+// Links
+$link-color:                $scrybble-envisage;
+$link-hover-color:          $scrybble-acorn-squash;
+
+// Components
+$border-radius:             .25rem;
+$border-radius-lg:          .5rem;
+$border-radius-sm:          .2rem;
+
+// Buttons + Forms
+$input-btn-padding-y:       .5rem;
+$input-btn-padding-x:       1rem;
+$input-focus-border-color:  $scrybble-envisage;
+$input-focus-box-shadow:    0 0 0 0.25rem rgba($scrybble-envisage, 0.25);
+
+// Cards
+$card-border-color:         rgba($scrybble-envisage, 0.125);
+$card-cap-bg:               rgba($scrybble-envisage, 0.03);
+
+// Navs
+$nav-link-color:            $scrybble-envisage;
+$nav-link-hover-color:      $scrybble-acorn-squash;
+$nav-tabs-link-active-color: $scrybble-flame;
+
+$table-color: $body-color; // Keep default text color
+$table-bg: $scrybble-baby-powder; // Use baby powder as base background
+
+// Striped table colors
+$table-striped-color: $body-color; // Keep default text color for striped rows
+$table-striped-bg-factor: 0.14; // Adjust for subtlety
+$table-striped-bg: rgba($scrybble-kobold-pink, $table-striped-bg-factor); // Very light Kobold Pink
+
+// Hover effect
+$table-hover-color: $body-color; // Keep default text color for hover
+$table-hover-bg-factor: 0.08; // Slightly stronger than stripes
+$table-hover-bg: rgba($scrybble-envisage, $table-hover-bg-factor); // Light Envisage on hover
+
+// Active state
+$table-active-color: $body-color;
+$table-active-bg-factor: 0.12;
+$table-active-bg: rgba($scrybble-envisage, $table-active-bg-factor);
+
+// Border colors
+$table-border-factor: 0.1;
+$table-border-color: rgba($scrybble-envisage, $table-border-factor);
+
+// Import Bootstrap
+@import "bootstrap/scss/bootstrap";
+
+
+.bg-envisage {
+    background-color: $scrybble-envisage !important;
+}
+
+.bg-kobold-pink {
+    background-color: $scrybble-kobold-pink !important;
+}
+
+// For proper hover effects on links following design guide
+a {
+    color: $scrybble-envisage;
+    transition: color 0.2s ease-in-out;
+    &:hover {
+        color: darken($scrybble-envisage, 25%);
+    }
+}
+
+.form-check-input {
+    &:checked {
+        background-color: $scrybble-envisage;
+        border-color: $scrybble-envisage;
+    }
+
+    &:focus {
+        border-color: $scrybble-envisage;
+        box-shadow: 0 0 0 0.25rem rgba(149, 189, 181, 0.25); // Envisage with opacity
+    }
+
+    &:not(:disabled):not(:checked):hover {
+        border-color: shade-color($scrybble-envisage, 10%);
+    }
+}
+
+h1 {
+    color: $scrybble-envisage;
+    border-bottom: 3px solid $scrybble-envisage;
+    padding-bottom: 10px;
+}
+
+h2 {
+    margin-top: 30px;
+    color: $scrybble-flame !important;
+    border-bottom: 2px solid $scrybble-citron;
+    padding-bottom: 5px;
+}
+
+dialog {
+    border-radius: 8px; // Slightly increased for a softer feel
+    border-color: $scrybble-envisage; // Your primary brand color
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    padding: 1.5rem;
+
+    // Optional: Add a subtle header styling if your dialogs have headers
+    .modal-header, .dialog-header {
+        border-bottom: 1px solid rgba(149, 189, 181, 0.3); // Envisage with opacity
+        margin-bottom: 1rem;
+        padding-bottom: 0.75rem;
+    }
+}
+dialog::backdrop {
+    backdrop-filter: blur(8px);
+    background-color: rgba($scrybble-envisage, 0.5); // Envisage with opacity for a subtle tint
+}
+
+.btn:disabled {
+    background-color: $scrybble-baby-powder !important;
+}
+
+b {
+    color: $scrybble-envisage;
+}
+
+nav {
+    background-color: $scrybble-envisage !important;
+    padding: 15px;
+    border-radius: 5px;
+    margin-bottom: 30px;
+
+    & .nav-link {
+        color: darken($scrybble-envisage, 20%);
+        font-weight: bold;
+        margin-right: 15px;
+        text-decoration: none;
+        padding: 5px 10px;
+        border-radius: 3px;
+        background-color: rgba(255, 255, 255, 0.6);
+
+        &:hover {
+            background-color: rgba(255, 255, 255, 0.5);
+        }
+        & .active {
+            color: white;
+            background-color: $scrybble-flame;
+        }
+    }
+}
+
+body::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: url('/img/paper.png');
+    background-repeat: repeat;
+    opacity: 0.3;
+    z-index: -1;
+    /* Ensures you can click through it */
+    pointer-events: none;
+}
+
+footer {
+    background-color: lighten($scrybble-envisage, 0.35);
+    border-top: 3px solid $scrybble-envisage;
+    padding: 1.5rem 0;
+    margin-top: 3rem;
+    color: #555;
+
+    a {
+        color: $scrybble-flame;
+
+        &:hover {
+            color: darken($scrybble-flame, 10%);
+            text-decoration: none;
+        }
+    }
+}

@@ -25,7 +25,7 @@ export default function () {
   }, [isSuccess])
 
   return (
-    <div className="card-dark">
+    <div className="card">
       <div className="card-header">Login</div>
       <form
         className="card-body"

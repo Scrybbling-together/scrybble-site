@@ -19,7 +19,7 @@ export default function RMOneTimeCodeCard({
   }
 
   return (
-    <div className="card-dark">
+    <div className="card">
       <div className="card-header">
         <span className="fs-4">
           Connect with reMarkable{' '}

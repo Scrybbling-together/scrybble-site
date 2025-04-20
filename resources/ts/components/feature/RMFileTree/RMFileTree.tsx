@@ -107,7 +107,7 @@ export default function RMFileTree() {
         'loading'
       ) : (
         <div id="filetree">
-          <table className="table table-dark table-sm table-hover table-striped align-middle caption-top">
+          <table className="table table-sm table-hover table-striped align-middle caption-top">
             <caption>{filetree.cwd}</caption>
             <colgroup>
               <col width="0*" />

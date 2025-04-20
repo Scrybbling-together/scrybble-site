@@ -15,7 +15,7 @@ export default function GumroadLicenseCard() {
   }
 
   return (
-    <div id="login-card" className="card-dark">
+    <div id="login-card" className="card">
       <div className="card-header">
         <h1 className="fs-4">
           Connect your gumroad license

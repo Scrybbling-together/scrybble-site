@@ -47,7 +47,7 @@ export function RegisterCard() {
   return (
     <div className="page-centering-container">
       <div className="col-md-8">
-        <div className="card-dark">
+        <div className="card">
           <div className="card-header">Register</div>
 
           <div className="card-body">

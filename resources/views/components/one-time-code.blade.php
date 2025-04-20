@@ -1,5 +1,5 @@
 <div {{ $attributes }}>
-    <div class="card-dark">
+    <div class="card">
         <div class="card-header">
             <span class="fs-4">Connect with reMarkable <span class="fs-5 text-muted">(step 2/2)</span></span>
         </div>

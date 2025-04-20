@@ -32,7 +32,7 @@ function SyncItem({
       className={`list-group-item gap-2 ${error ? 'list-group-item-danger' : ''} ${completed ? 'list-group-item-success' : 'list-group-item-warning'}`}
     >
       <span className="filename">{filename}</span>
-      <span className="badge bg-info rounded-pill">{created_at}</span>
+      <span className="badge bg-success rounded-pill">{created_at}</span>
       {completed || error ? (
         <a
           onClick={() => {
@@ -42,9 +42,9 @@ function SyncItem({
               variant: completed ? 'success' : 'error',
             })
           }}
-          className="share-error"
+          className="share-error text-dark"
         >
-          Share info with developer
+            Share info with developer
         </a>
       ) : null}
     </li>
@@ -75,7 +75,7 @@ function ShareDialog({
       actions={
         <div className="d-flex gap-2">
           <button
-            className="btn btn-warning"
+            className="btn btn-success"
             disabled={!devAccess && !openAccess}
             onClick={async () => {
               if (shareInfoDialogOpen === false) return
@@ -115,7 +115,7 @@ function ShareDialog({
     >
       <>
         <p>
-          Your privacy matters. The Scrybble developers cannot just access your
+          <b>Your privacy matters</b>. The Scrybble developers cannot just access your
           documents.
         </p>
         <p>
@@ -210,7 +210,7 @@ function ShareDialog({
 
         <hr />
 
-        <div className="mt-2">
+        <div className="mt-4">
           <h5>What will be shared?</h5>
           <div>
             {devAccess ? (
@@ -285,7 +285,7 @@ export default function InspectSync() {
         <p>Your most recent syncs are displayed below. </p>
         {isSuccess ? (
           <>
-            <ul className="list-group bg-dark syncs">
+            <ul className="list-group bg syncs">
               {syncStatus.map((item) => (
                 <SyncItem
                   key={item.id}

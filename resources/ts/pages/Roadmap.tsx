@@ -4,7 +4,7 @@ export function Roadmap() {
   return (
     <div className="container">
       <h1>Scrybble roadmap</h1>
-      <table className="table table-dark">
+      <table className="table">
         <thead>
           <tr>
             <th>Supported</th>
@@ -14,7 +14,7 @@ export function Roadmap() {
         </thead>
         <tbody>
           <tr className="table-group-divider">
-            <td colSpan={3} className="table-dark text-center">
+            <td colSpan={3} className="table text-center">
               <h4 style={{ marginBottom: 0 }}>Filetype support</h4>
             </td>
           </tr>
@@ -43,7 +43,7 @@ export function Roadmap() {
             <td>Allow ssynchronizing quick sheets to Obsidian</td>
           </tr>
           <tr className="table-group-divider">
-            <td colSpan={3} className="table-dark text-center">
+            <td colSpan={3} className="table text-center">
               <h4 style={{ marginBottom: 0 }}>Features</h4>
             </td>
           </tr>
@@ -56,7 +56,7 @@ export function Roadmap() {
             </td>
           </tr>
           <tr className="table-group-divider">
-            <td colSpan={3} className="table-dark text-center">
+            <td colSpan={3} className="table text-center">
               <h4 style={{ marginBottom: 0 }}>Website user interface</h4>
             </td>
           </tr>
@@ -70,7 +70,7 @@ export function Roadmap() {
             </td>
           </tr>
           <tr className="table-group-divider">
-            <td colSpan={3} className="table-dark text-center">
+            <td colSpan={3} className="table text-center">
               <h4 style={{ marginBottom: 0 }}>Stability</h4>
             </td>
           </tr>
@@ -83,7 +83,7 @@ export function Roadmap() {
             </td>
           </tr>
           <tr className="table-group-divider">
-            <td colSpan={3} className="table-dark text-center">
+            <td colSpan={3} className="table text-center">
               <h4 style={{ marginBottom: 0 }}>Synchronization</h4>
             </td>
           </tr>

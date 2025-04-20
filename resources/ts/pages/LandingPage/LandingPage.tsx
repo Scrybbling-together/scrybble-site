@@ -8,13 +8,13 @@ export function LandingPage() {
         <div id="landing-page">
             <main>
                 <div className="text-center hero">
-                    <h1>Scrybble</h1>
+                    <h1 className="logo">Scrybble</h1>
                     <p className="lead">
                         <i>Your</i> reMarkable notes in <i>your</i> Obsidian vault
                     </p>
                     <a
                         href="https://streamsoft.gumroad.com/l/remarkable-to-obsidian"
-                        className="btn btn-lg btn-secondary fw-bold border-white bg-white"
+                        className="btn btn-lg btn-secondary fw-bold"
                     >
                         Learn more
                     </a>
@@ -60,14 +60,13 @@ export function LandingPage() {
                         <p className="lead">
                             <a
                                 href="https://streamsoft.gumroad.com/l/remarkable-to-obsidian"
-                                className="btn btn-lg btn-secondary fw-bold border-white bg-white mr-4"
+                                className="btn btn-lg btn-secondary fw-bold mr-4"
                             >
                                 I want my reMarkable notes in Obsidian!
                             </a>
                         </p>
                     </div>
                 </div>
-                <hr />
                 <div className="block faq">
                     <div className="copy">
                         <h2>FAQ</h2>
@@ -78,7 +77,7 @@ export function LandingPage() {
                             </ul>
                             <li>Does Scrybble support the reMarkable Paper Pro?</li>
                             <ul>
-                                <li>Partially, but we're still working on full support</li>
+                                <li>Yes! <a href="https://streamsoft.gumroad.com/p/to-scrybble-moving-out-of-beta">View a recent newsletter</a> to look at what synced notes look like</li>
                             </ul>
                             <li>How does this work?</li>
                             <ul>
@@ -102,16 +101,15 @@ export function LandingPage() {
                     </div>
                     <div className="images"></div>
                 </div>
-                <hr />
                 <div className="block news">
                     <div className="copy">
                         <h2>In the news!</h2>
 
                         <div className="p-4 border-start border-4">
                             <div className="d-flex align-items-center gap-2 mb-4">
-                                <span className="badge bg-secondary bg-opacity-25">Featured in</span>
+                                <span className="badge bg-envisage">Featured in</span>
                                 <a href="https://www.bright.nl/nieuws/1231170/review-remarkable-paper-pro-is-een-perfect-apparaat-zonder-de-perfecte-flow.html"
-                                   className="fw-semibold text-decoration-none"
+                                   className="fw-semibold text-decoration-none text-dark"
                                    target="_blank"
                                    rel="noopener noreferrer">
                                     Bright.nl

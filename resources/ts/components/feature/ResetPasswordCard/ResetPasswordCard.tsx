@@ -19,7 +19,7 @@ export default function ResetPasswordCard() {
 
   return (
     <>
-      <div className="card-dark col-md-6">
+      <div className="card col-md-6">
         <div className="card-header">Reset password</div>
         <form
           className="card-body"

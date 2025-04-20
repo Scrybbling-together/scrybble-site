@@ -1,146 +1,151 @@
+@import "./../../../../resources/sass/variables";
+
 #landing-page {
-  .hero {
-    padding: 6em 0;
-    background-color: lighten(#212529, 5%);
-    margin-bottom: 48px;
+    .hero {
+        padding: 6em 0;
+        margin-bottom: 48px;
 
-    box-shadow: 0 0 0 100vmax lighten(#212529, 5%);
-    clip-path: inset(0 -100vmax);
+        .logo {
+            border-bottom: none;
+        }
 
-    h1 {
-      font-size: 4em;
+        background-color: darken($light, 5%);
+        box-shadow: 0 0 0 100vmax darken($light, 5%);
+        clip-path: inset(0 -100vmax);
+
+        h1 {
+            font-size: 4em;
+        }
+
+        a {
+            margin-right: 16px;
+        }
     }
 
-    a {
-      margin-right: 16px;
-    }
-  }
-
-  hr {
-    margin-top: 32px;
-    margin-bottom: 32px;
-  }
-
-  @media only screen and (min-width: 320px) {
-    .block {
-      grid-template-columns: 1fr;
-    }
-
-    .remarkable-to-obsidian {
-      .images h2 {
-        font-size: 2em;
-      }
-
-      img {
-        height: 2em;
-      }
-    }
-
-    .faq {
-      .images {
-        display: none;
-      }
-    }
-  }
-
-  @media only screen and (min-width: 960px) {
-    .block {
-      grid-template-columns: 1fr 1fr;
-    }
-
-    .remarkable-to-obsidian {
-      .images h2 {
-        font-size: 4em;
-      }
-
-      img {
-        height: 2em;
-      }
-    }
-
-    .faq {
-      .images {
-        display: initial;
-      }
-    }
-  }
-
-  .block {
-    display: grid;
-
-    > div {
-      padding: 16px 16px 16px 16px;
-    }
-
-    li,
-    p {
-      color: darken(white, 25%);
-    }
-
-    > .copy {
-      p,
-      li {
-        font-size: 1.2em;
-      }
-
-      > h2 {
+    hr {
+        margin-top: 32px;
         margin-bottom: 32px;
-      }
-
-      > ul {
-        margin-bottom: 24px;
-      }
     }
-  }
 
-  .remarkable-to-obsidian {
-    & .images {
-      text-align: center;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
+    @media only screen and (min-width: 320px) {
+        .block {
+            grid-template-columns: 1fr;
+        }
 
-      & .imgContainer {
-        width: 100%;
+        .remarkable-to-obsidian {
+            .images h2 {
+                border-bottom: none;
+                color: $scrybble-envisage !important;
+                font-size: 2em;
+            }
+
+            img {
+                height: 2em;
+            }
+        }
+
+        .faq {
+            .images {
+                display: none;
+            }
+        }
+    }
+
+    @media only screen and (min-width: 960px) {
+        .block {
+            grid-template-columns: 1fr 1fr;
+        }
+
+        .remarkable-to-obsidian {
+            .images h2 {
+                font-size: 4em;
+            }
+
+            img {
+                height: 2em;
+            }
+        }
+
+        .faq {
+            .images {
+                display: initial;
+            }
+        }
+    }
+
+    .block {
         display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 32px;
-        margin-bottom: 16px;
-      }
 
-      img {
-        border-radius: 50%;
-        border: 5px solid;
-        margin: 0 16px;
-      }
+        > div {
+            padding: 16px 16px 16px 16px;
+        }
 
-      img.remarkable {
-        border-color: #333;
-      }
+        li,
 
-      img.obsidian {
-        border-color: #7b68d0;
-      }
-    }
-  }
+        > .copy {
+            p,
+            li {
+                font-size: 1.2em;
+            }
 
-  .faq {
-    .copy {
-      padding-bottom: 12em;
+            > h2 {
+                margin-bottom: 32px;
+            }
+
+            > ul {
+                margin-bottom: 24px;
+            }
+        }
     }
 
-    .images {
-      background: url('/img/question-mark-sketch.jpg') no-repeat 50%;
-      background-size: contain;
-      filter: opacity(0.05) blur(2px);
+    .remarkable-to-obsidian {
+        & .images {
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+
+            & .imgContainer {
+                width: 100%;
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 32px;
+                margin-bottom: 16px;
+            }
+
+            img {
+                border-radius: 50%;
+                border: 5px solid;
+                margin: 0 16px;
+            }
+
+            img.remarkable {
+                border-color: #333;
+            }
+
+            img.obsidian {
+                border-color: #7b68d0;
+            }
+        }
     }
 
-    ul > ul {
-      margin-bottom: 16px;
-    }
+    .faq {
+        .copy {
+            padding-bottom: 12em;
+        }
 
-    ul {
-      list-style: none;
+        .images {
+            background: url('/img/question-mark-sketch.jpg') no-repeat 50%;
+            background-size: contain;
+            filter: opacity(0.05) blur(2px);
+        }
+
+        ul > ul {
+            margin-bottom: 16px;
+        }
+
+        ul {
+            list-style: none;
+        }
     }
-  }
 }

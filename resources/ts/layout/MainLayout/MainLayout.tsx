@@ -39,7 +39,7 @@ export function MainLayout() {
         <>
             <Auth />
             <div id="mainLayout">
-                <nav className="navbar navbar-expand-md navbar-dark shadow-sm mb-4">
+                <nav className="navbar navbar-expand-md shadow-sm mb-4">
                     <div className="container">
                         <Link className="navbar-brand" to="/">
                             Scrybble
@@ -91,7 +91,7 @@ export function MainLayout() {
                                         </Link>
                                     </li>
                                 ) : null}
-                                <li className="nav-item border-right border-dark border"></li>
+                                <li className="mx-4"></li>
                                 {user ? (
                                     <>
                                         <li className="nav-item">
@@ -172,7 +172,7 @@ export function MainLayout() {
                 >
                     <Outlet />
                 </main>
-                <footer className="border-top border-2 border-dark">
+                <footer className="border-top border-2">
                     <div className="row mb-4">
                         <div className="col">
                             <span>

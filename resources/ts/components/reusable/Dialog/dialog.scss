@@ -1,8 +1,0 @@
-dialog::backdrop {
-  backdrop-filter: blur(8px);
-}
-
-dialog {
-  border-color: color-mix(in lab, var(--bs-border-color), var(--bs-dark) 80%);
-  border-radius: 4px;
-}
