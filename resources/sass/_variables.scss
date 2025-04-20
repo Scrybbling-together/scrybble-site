@@ -4,26 +4,23 @@ $font-family-sans-serif: 'Nunito', sans-serif;
 $font-size-base: 0.9rem;
 $line-height-base: 1.6;
 
-// _variables.scss or custom.scss
-// Place this file in your Laravel project's resources/scss directory
-
 // Define Scrybble Brand Colors
-$scrybble-citron:      #BEC36B;  // Secondary color
-$scrybble-kobold-pink: #EFD3CF;  // Secondary color
-$scrybble-flame:       #E86837;  // Accent for buttons
-$scrybble-envisage:    #95BDB5;  // Primary brand color
-$scrybble-acorn-squash:#F0A740;  // Accent color
-$scrybble-baby-powder: #F6F5F0;  // Primary background color
+$scrybble-citron:       #BEC36B;  // Secondary color
+$scrybble-kobold-pink:  #EFD3CF;  // Secondary color
+$scrybble-flame:        #E86837;  // Accent for buttons
+$scrybble-envisage:     #95BDB5;  // Primary brand color
+$scrybble-acorn-squash: #F0A740;  // Accent color
+$scrybble-baby-powder:  #F6F5F0;  // Primary background color
 
 // Override Bootstrap's color system
-$primary:       $scrybble-envisage;
-$secondary:     $scrybble-citron;
-$success:       adjust-color($scrybble-citron, $lightness: -10%); // Darker citron for success
-$info:          $scrybble-kobold-pink;
-$warning:       $scrybble-acorn-squash;
-$danger:        $scrybble-flame;
-$light:         $scrybble-baby-powder;
-$dark:          #343a40; // Keep Bootstrap's dark or customize
+$primary:   $scrybble-envisage;
+$secondary: $scrybble-citron;
+$success:   adjust-color($scrybble-citron, $lightness: -10%); // Darker citron for success
+$info:      $scrybble-kobold-pink;
+$warning:   $scrybble-acorn-squash;
+$danger:    $scrybble-flame;
+$light:     $scrybble-baby-powder;
+$dark:      #343a40; // Keep Bootstrap's dark or customize
 
 // Create custom color class for the flame color if needed as a utility
 $custom-colors: (
