@@ -177,7 +177,7 @@ export function MainLayout() {
                         <div className="col">
                             <span>
                                 <FontAwesomeIcon icon={faEnvelope} />&nbsp;
-                                smg@smgmusicdisplay.com
+                                mail@scrybble.ink
                             </span>
                         </div>
                     </div>

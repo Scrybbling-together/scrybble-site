@@ -121,7 +121,7 @@ export function Roadmap() {
       </table>
       <h2>Contact us</h2>
       <p>Got feedback? Something missing?</p>
-      <span>smg@smgmusicdisplay.com</span>
+      <span>mail@scrybble.ink</span>
     </div>
   )
 }
