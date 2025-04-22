@@ -90,7 +90,7 @@ class ProcessDownloadedZipListener implements ShouldQueue
             ]);
             throw $e;
         }
-        $sync_context->logStep("Zipped results");
+        $sync_context->logStep("Zipped results" . $to1);
 
         // 6. Upload zip to S3
         $sync_context->logStep("Uploading zip to storage");

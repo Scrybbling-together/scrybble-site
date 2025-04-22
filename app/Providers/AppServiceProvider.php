@@ -2,15 +2,13 @@
 
 namespace App\Providers;
 
-use App\Models\User;
 use App\Services\PRMStorage\DiskPRMStorage;
 use App\Services\PRMStorage\PRMStorageInterface;
 use App\Services\PRMStorage\S3PRMStorage;
-use App\Services\Remarks\RemarksDockerServer;
+use App\Services\Remarks\RemarksHTTPServer;
 use App\Services\Remarks\RemarksRunDockerContainer;
 use App\Services\Remarks\RemarksService;
 use App\Services\RMapi;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\ServiceProvider;
 use URL;
@@ -29,7 +27,7 @@ class AppServiceProvider extends ServiceProvider
         });
 
         $this->app->bind(RemarksService::class, fn() => match (config('scrybble.host_runner')) {
-            'docker' => new RemarksDockerServer(),
+            'docker' => new RemarksHTTPServer(),
             'bare-metal' => new RemarksRunDockerContainer()
         });
 
