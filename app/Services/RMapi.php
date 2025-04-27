@@ -206,15 +206,15 @@ class RMapi
      */
     public function get(string $filePath): array
     {
-        $rmapi_download_path = Str::replace('"', '\"', $filePath);
-        [$output, $exit_code] = $this->executeRMApiCommand("get \"$rmapi_download_path\"");
+        $rmapi_download_path = escapeshellarg($filePath);
+        [$output, $exit_code] = $this->executeRMApiCommand("get $rmapi_download_path");
         if ($exit_code !== 0) {
             if ($output && Str::contains($output->implode(""), "file doesn't exist")) {
                 throw new FileNotFoundException("Failed downloading file, it doesn't seem to exist (have you deleted the file? Otherwise try resyncing the file on your device)");
             }
             throw new RuntimeException('RMapi `get` command failed for an unknown reason');
         }
-        $location = $this->getDownloadedZipLocation($rmapi_download_path)->toRelative();
+        $location = $this->getDownloadedZipLocation($filePath)->toRelative();
 
         $folders = AbsolutePath::fromString($filePath);
 
