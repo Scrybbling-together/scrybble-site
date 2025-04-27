@@ -1,6 +1,6 @@
 services:
   app:
-    image: "laauurraaa/scrybble-app:latest"
+    image: "laauurraaa/scrybble-server:latest"
     restart: always
     ports:
       # comment this out if you want to use letsencrypt.
@@ -49,7 +49,7 @@ services:
     networks:
       - scrybble-network
   on_startup:
-    image: "laauurraaa/scrybble-app:latest"
+    image: "laauurraaa/scrybble-server:latest"
     networks:
       - scrybble-network
     depends_on:
@@ -65,7 +65,7 @@ services:
         php /var/www/html/artisan optimize:clear
         php /var/www/html/artisan optimize
   horizon:
-    image: "laauurraaa/scrybble-app:latest"
+    image: "laauurraaa/scrybble-server:latest"
     depends_on:
       - redis
     user: www-data

@@ -142,8 +142,7 @@ They are used to connect the Obsidian plugin with your server.
 
 Make sure to pick a good username and password!
 
-1. Run `docker compose exec app php artisan migrate`
-2. Run `docker compose exec app php artisan app:setup-admin-account`
+Run `docker compose exec app php artisan app:setup-admin-account`
 
 You're done! You can now visit http://localhost to see your Scrybble set-up, and you can log in to your admin account.
 

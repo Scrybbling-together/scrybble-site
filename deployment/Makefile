@@ -9,6 +9,6 @@ build-app:
 	docker build -t ${container} --build-arg RELEASE_HASH=${commit} -f App.Dockerfile ..
 
 upload-app:
-	docker push ${container}
 	docker tag ${container} ${container_name}:latest
+	docker push ${container}
 	docker push ${container_name}:latest
