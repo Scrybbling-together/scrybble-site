@@ -1,0 +1,148 @@
+services:
+  app:
+    image: "laauurraaa/scrybble-app:latest"
+    restart: always
+    ports:
+      # comment this out if you want to use letsencrypt.
+      - "80:80"
+    networks:
+      - scrybble-network
+    depends_on:
+      - redis
+      - remarks
+      # Uncomment if you want to use letsencrypt
+      # - nginx-proxy
+    expose:
+      - "80"
+    volumes:
+      - app-cache:/var/www/html/storage/framework
+      - app-bootstrap-cache:/var/www/html/bootstrap/cache
+      - ./efs/:/var/www/html/storage/efs/
+      - ./.env:/var/www/html/.env
+    environment:
+      DB_CONNECTION: '${DB_CONNECTION}'
+      DB_DATABASE: '${DB_DATABASE}'
+      DB_HOST: '${DB_HOST}'
+      DB_PASSWORD: '${DB_PASSWORD}'
+      DB_PORT: '${DB_PORT}'
+      DB_USERNAME: '${DB_USERNAME}'
+      VIRTUAL_HOST: '${APP_URL}'
+      VIRTUAL_PORT: '80'
+      # Uncomment if you want to use letsencrypt
+      # LETSENCRYPT_HOST: '${APP_URL}'
+  db:
+    image: mysql:9.1
+    restart: always
+    # uncomment to open up your database to external connections
+    # ports:
+    # - "3306:3306"
+    expose:
+      - 3306
+    environment:
+      MYSQL_ROOT_PASSWORD: '${DB_PASSWORD}'
+      MYSQL_ROOT_HOST: "%"
+      MYSQL_DATABASE: "${DB_DATABASE}"
+      MYSQL_USER: "${DB_USERNAME}"
+      MYSQL_PASSWORD: "${DB_PASSWORD}"
+    volumes:
+      - ./database/:/var/lib/mysql
+    networks:
+      - scrybble-network
+  on_startup:
+    image: "laauurraaa/scrybble-app:latest"
+    networks:
+      - scrybble-network
+    depends_on:
+      - redis
+    volumes:
+      - app-cache:/var/www/html/storage/framework
+      - app-bootstrap-cache:/var/www/html/bootstrap/cache
+      - ./.env:/var/www/html/.env
+    command:
+      - /bin/bash
+      - -c
+      - |
+        php /var/www/html/artisan optimize:clear
+        php /var/www/html/artisan optimize
+  horizon:
+    image: "laauurraaa/scrybble-app:latest"
+    depends_on:
+      - redis
+    user: www-data
+    restart:
+      always
+    networks:
+      - scrybble-network
+    command: ["php", "/var/www/html/artisan", "horizon"]
+    volumes:
+      - app-cache:/var/www/html/storage/framework
+      - app-bootstrap-cache:/var/www/html/bootstrap/cache
+      - ./efs/:/var/www/html/storage/efs/
+      - ./.env:/var/www/html/.env
+    environment:
+      PHP_FPM_POOL_NAME: "scrybble_horizon"
+  # Uncomment if you want to use letsencrypt
+#  nginx-proxy:
+#    restart: always
+#    image: nginxproxy/nginx-proxy
+#    container_name: nginx-proxy
+#    ports:
+#      - "80:80"
+#      - "443:443"
+#    volumes:
+#      - conf:/etc/nginx/conf.d
+#      - vhost:/etc/nginx/vhost.d
+#      - html:/usr/share/nginx/html
+#      - certs:/etc/nginx/certs:ro
+#      - /var/run/docker.sock:/tmp/docker.sock:ro
+#    networks:
+#      - scrybble-network
+#  acme-companion:
+#    restart: always
+#    image: nginxproxy/acme-companion
+#    container_name: nginx-proxy-acme
+#    environment:
+#      - DEFAULT_EMAIL=mail@scrybble.ink
+#      - NGINX_PROXY_CONTAINER=nginx-proxy
+#    volumes:
+#      - certs:/etc/nginx/certs:rw
+#      - acme:/etc/acme.sh
+#      - conf:/etc/nginx/conf.d
+#      - vhost:/etc/nginx/vhost.d
+#      - html:/usr/share/nginx/html
+#      - /var/run/docker.sock:/var/run/docker.sock:ro
+#    networks:
+#      - scrybble-network
+  redis:
+    restart: always
+    image: 'redis:alpine'
+    volumes:
+      - 'app-redis:/data'
+    networks:
+      - scrybble-network
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      retries: 3
+      timeout: 5s
+  remarks:
+    restart: always
+    image: "laauurraaa/remarks-server:latest"
+    networks:
+      - scrybble-network
+    volumes:
+      - /efs:/efs
+networks:
+  scrybble-network:
+    driver: bridge
+volumes:
+  app-redis:
+    driver: local
+  app-cache:
+    driver: local
+  app-bootstrap-cache:
+    driver: local
+  conf:
+  vhost:
+  html:
+  certs:
+  acme:

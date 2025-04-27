@@ -7,7 +7,6 @@ use App\Http\Middleware\EncryptCookies;
 use App\Http\Middleware\isAdminMiddleware;
 use App\Http\Middleware\PreventRequestsDuringMaintenance;
 use App\Http\Middleware\RedirectIfAuthenticated;
-use App\Http\Middleware\SelfHostedMiddleware;
 use App\Http\Middleware\TrimStrings;
 use App\Http\Middleware\TrustProxies;
 use App\Http\Middleware\VerifyCsrfToken;
@@ -46,7 +45,6 @@ class Kernel extends HttpKernel
         ValidatePostSize::class,
         TrimStrings::class,
         ConvertEmptyStringsToNull::class,
-        SelfHostedMiddleware::class
     ];
 
     /**
@@ -84,7 +82,6 @@ class Kernel extends HttpKernel
         'auth.session' => AuthenticateSession::class,
         'auth.is-admin' => isAdminMiddleware::class,
         'cache.headers' => SetCacheHeaders::class,
-        'deployment.self-hosted' => selfHostedMiddleware::class,
         'can' => Authorize::class,
         'guest' => RedirectIfAuthenticated::class,
         'password.confirm' => RequirePassword::class,
