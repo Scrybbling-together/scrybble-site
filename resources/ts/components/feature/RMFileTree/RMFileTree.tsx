@@ -100,7 +100,7 @@ export default function RMFileTree() {
         }
       >
         <p>
-          To get started, install the <b>scrybble</b> plugin in Obsidian.
+          To get started, install the <a href="https://publish.obsidian.md/hub/02+-+Community+Expansions/02.05+All+Community+Expansions/Plugins/scrybble.ink">Scrybble sync</a> plugin in Obsidian.
         </p>
       </Dialog>
       {isLoading ? (

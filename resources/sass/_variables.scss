@@ -209,3 +209,9 @@ footer {
         }
     }
 }
+
+.card {
+    & .card-header {
+        background-color: $scrybble-citron;
+    }
+}
