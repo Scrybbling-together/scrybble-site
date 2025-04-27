@@ -1,5 +1,6 @@
 commit := `git rev-parse master`
-container := laauurraaa/scrybble-server:${commit}
+container_name := laauurraaa/scrybble-server
+container := ${container_name}:${commit}
 
 release: build-app upload-app
 	echo "Releasing ${container}"
@@ -9,3 +10,5 @@ build-app:
 
 upload-app:
 	docker push ${container}
+	docker tag ${container} ${container_name}:latest
+	docker push ${container_name}:latest
