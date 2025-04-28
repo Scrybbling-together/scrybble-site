@@ -20,9 +20,6 @@ RUN rm -rf node_modules
 
 FROM laauurraaa/smg-app-base-image:1.1 AS production
 
-ENV APP_ENV=production
-ENV APP_DEBUG=false
-
 COPY --chown=www-data:www-data --from=build-js /app/ /var/www/html/
 RUN rm -rf /var/www/html/public/hot
 
