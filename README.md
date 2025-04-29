@@ -137,7 +137,7 @@ We're almost done configuring the server!
 
 The last thing you need to do is run the set-up on the server itself.
 
-There are three simple steps. You need to generate the encryption key used by Laravel, set-up an admin account, and lastly set-up the authentication server.
+There are three simple steps. You need to generate the encryption key used by Laravel, set-up an admin account, and lastly set up the OAuth authentication server.
 
 If this sounds like magic to you, don't worry, just follow the steps carefully and you'll be fine :)
 
@@ -159,11 +159,11 @@ If you mess up in the set-up stage, you can start over from fresh by running
 
 `docker compose exec app php artisan migrate:fresh`. This fully resets the database.
 
-Note, this command deletes _everything_ in the database on the server. You will lose sync history and you'll have to start over with this "set-up" section.
+Note, this command deletes _everything_ in the database on the server. You will lose sync history, and you'll have to start over with this "set-up" section.
 
 You're done! You can now visit http://localhost (or your domain!) to see your Scrybble set-up, and you can log in to your admin account.
 
-### Configuring your Obsidian plugin
+#### Configuring your Obsidian plugin
 
 In Obsidian, go to the plugin settings and enable the "Self hosted" toggle.
 
@@ -174,3 +174,23 @@ If you are using a different port that port 80, you can configure that in the sa
 For the client secret, you need to visit "http://{YOUR DOMAIN}/client-secret".
 
 That's it! You should be able to use your own self-hosted Scrybble now :)
+
+### Where are my files stored?
+
+The documents you sync are stored in a folder named "efs", which can be found in the same directory as your docker-compose file.
+It is automatically generated when you set up the server.
+
+In this folder structure, a directory will be created for each user that syncs a document.
+
+The folder structure is shown below.
+
+```
+- efs
+  - user-{USER_ID}
+    - jobs/: Sync history. Can be cleaned up at any time. Contains useful debugging information if something goes wrong however!
+    - processed/: This is where succesful syncs end up. You can clean this folder up if you want to save on storage.
+    - rmapi/
+      - tree.cache: A cache file for rmapi. It gets generated when you load the dashboad, and is refreshed if it is older than 15 minutes. You can safely delete this file at any time, but the dashboard will load somewhat more slowly.
+    - input_documents: Sync history. Can be cleaned up at any time. Contains useful debugging information if something goes wrong however!
+    - .rmapi-auth: Authentication data for your reMarkable. This is essentially your key to access your reMarkable data, make sure to keep this safe and never ever publish it somewhere.
+```
