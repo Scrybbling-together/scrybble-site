@@ -146,12 +146,14 @@ They are used to connect the Obsidian plugin with your server.
 
 Make sure to pick a good username and password!
 
-1. Run `docker compose exec app php artisan key:generate`
+Quick tip: If you get tired of typing "docker compose -f docker-compose.selfhosted.yml ..." all the time, you can create an [alias](https://www.geeksforgeeks.org/alias-command-in-linux-with-examples/)!
+
+1. Run `docker compose -f docker-compose.selfhosted.yml exec app php artisan key:generate`
    - This generates an encryption key unique to your set-up. This key is saved in the .env file under `APP_KEY`.
-2. Run `docker compose exec app php artisan app:setup-admin-account`
+2. Run `docker compose -f docker-compose.selfhosted.yml exec app php artisan app:setup-admin-account`
     - Make sure to pick a good username and password, it's used to connect the Obsidian Scrybble plugin with your server.
     - Additionally, this account is what you use to log in to your Scrybble dashboard on the website.
-3. Run `docker compose exec app php artisan passport:client --password`
+3. Run `docker compose -f docker-compose.selfhosted.yml exec app php artisan passport:client --password`
    - You will be prompted about a name. Type `obsidian-client`. It has to be exactly that, otherwise authentication will not work.
    - When asked about the user model, pick `user` and not `backpack`.
 
