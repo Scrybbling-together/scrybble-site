@@ -137,14 +137,31 @@ We're almost done configuring the server!
 
 The last thing you need to do is run the set-up on the server itself.
 
+There are three simple steps. You need to generate the encryption key used by Laravel, set-up an admin account, and lastly set-up the authentication server.
+
+If this sounds like magic to you, don't worry, just follow the steps carefully and you'll be fine :)
+
 When you create the admin account, the username and password matter.
 They are used to connect the Obsidian plugin with your server.
 
 Make sure to pick a good username and password!
 
-Run `docker compose exec app php artisan app:setup-admin-account`
+1. Run `docker compose exec app php artisan key:generate`
+   - This generates an encryption key unique to your set-up. This key is saved in the .env file under `APP_KEY`.
+2. Run `docker compose exec app php artisan app:setup-admin-account`
+    - Make sure to pick a good username and password, it's used to connect the Obsidian Scrybble plugin with your server.
+    - Additionally, this account is what you use to log in to your Scrybble dashboard on the website.
+3. Run `docker compose exec app php artisan passport:client --password`
+   - You will be prompted about a name. Type `obsidian-client`. It has to be exactly that, otherwise authentication will not work.
+   - When asked about the user model, pick `user` and not `backpack`.
 
-You're done! You can now visit http://localhost to see your Scrybble set-up, and you can log in to your admin account.
+If you mess up in the set-up stage, you can start over from fresh by running
+
+`docker compose exec app php artisan migrate:fresh`. This fully resets the database.
+
+Note, this command deletes _everything_ in the database on the server. You will lose sync history and you'll have to start over with this "set-up" section.
+
+You're done! You can now visit http://localhost (or your domain!) to see your Scrybble set-up, and you can log in to your admin account.
 
 ### Configuring your Obsidian plugin
 
