@@ -154,14 +154,11 @@ class RMapi
             }
             return $joinedLines;
         }, collect())->sort()->map(function ($line) use ($path) {
-            // a $line can look like
-            // [f] diary
-            // [d] 2025
-            // There is a rare edge-case where the filename is empty. Apparently this is possible in reMarkable.
-            // [f]
-            preg_match('/\[([df])]\s(.+)/', $line, $matches);
-            $type = $matches[1];
-            $filepath = $matches[2] ?? "";
+            // a $line typically looks like
+            // "[f] diary" (Note, that is a \t character, not a space!)
+            // "[d]	2025"
+            preg_match('/\[([df])]\s*(.*)/', $line, $matches);
+            [, $type, $filepath] = $matches;
             return ['type' => $type, 'name' => $filepath, 'path' => $type === 'd' ? "$path$filepath/" : "$path$filepath"];
         })->values();
     }
