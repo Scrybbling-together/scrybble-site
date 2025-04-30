@@ -153,9 +153,15 @@ class RMapi
                 $joinedLines[count($joinedLines) - 1] .= $line;
             }
             return $joinedLines;
-        }, collect())->sort()->map(function ($name) use ($path) {
-            preg_match('/\[([df])]\s(.+)/', $name, $matches);
-            [, $type, $filepath] = $matches;
+        }, collect())->sort()->map(function ($line) use ($path) {
+            // a $line can look like
+            // [f] diary
+            // [d] 2025
+            // There is a rare edge-case where the filename is empty. Apparently this is possible in reMarkable.
+            // [f]
+            preg_match('/\[([df])]\s(.+)/', $line, $matches);
+            $type = $matches[1];
+            $filepath = $matches[2] ?? "";
             return ['type' => $type, 'name' => $filepath, 'path' => $type === 'd' ? "$path$filepath/" : "$path$filepath"];
         })->values();
     }
