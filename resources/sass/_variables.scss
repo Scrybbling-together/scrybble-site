@@ -56,16 +56,16 @@ $nav-link-hover-color:      $scrybble-acorn-squash;
 $nav-tabs-link-active-color: $scrybble-flame;
 
 $table-color: $body-color; // Keep default text color
-$table-bg: $scrybble-baby-powder; // Use baby powder as base background
+$table-bg: rgba($scrybble-envisage, 0.05); // Use baby powder as base background
 
 // Striped table colors
 $table-striped-color: $body-color; // Keep default text color for striped rows
 $table-striped-bg-factor: 0.14; // Adjust for subtlety
-$table-striped-bg: rgba($scrybble-kobold-pink, $table-striped-bg-factor); // Very light Kobold Pink
+$table-striped-bg: rgba($scrybble-envisage, $table-striped-bg-factor); // Very light Kobold Pink
 
 // Hover effect
 $table-hover-color: $body-color; // Keep default text color for hover
-$table-hover-bg-factor: 0.08; // Slightly stronger than stripes
+$table-hover-bg-factor: 0.88; // Slightly stronger than stripes
 $table-hover-bg: rgba($scrybble-envisage, $table-hover-bg-factor); // Light Envisage on hover
 
 // Active state
@@ -89,12 +89,11 @@ $table-border-color: rgba($scrybble-envisage, $table-border-factor);
     background-color: $scrybble-kobold-pink !important;
 }
 
-// For proper hover effects on links following design guide
 a {
-    color: $scrybble-envisage;
+    color: darken($scrybble-envisage, 35%);
     transition: color 0.2s ease-in-out;
     &:hover {
-        color: darken($scrybble-envisage, 25%);
+        color: darken($scrybble-envisage, 45%);
     }
 }
 
@@ -150,7 +149,7 @@ dialog::backdrop {
 }
 
 b {
-    color: $scrybble-envisage;
+    color: darken($scrybble-envisage, 25%);
 }
 
 nav {
@@ -215,3 +214,7 @@ footer {
         background-color: $scrybble-citron;
     }
 }
+
+//table a {
+//    color: mix($scrybble-envisage, black, 35%);
+//}
