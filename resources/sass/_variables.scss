@@ -10,7 +10,7 @@ $scrybble-kobold-pink:  #EFD3CF;  // Secondary color
 $scrybble-flame:        #E86837;  // Accent for buttons
 $scrybble-envisage:     #95BDB5;  // Primary brand color
 $scrybble-acorn-squash: #F0A740;  // Accent color
-$scrybble-baby-powder:  #F6F5F0;  // Primary background color
+$scrybble-baby-powder:  mix(#F6F5F0, $scrybble-envisage, 85%);  // Primary background color
 
 // Override Bootstrap's color system
 $primary:   $scrybble-envisage;
