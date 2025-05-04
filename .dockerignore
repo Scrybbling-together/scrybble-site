@@ -1,0 +1,4 @@
+storage/logs/laravel.log
+./result
+bootstrap/cache/*
+storage/efs/*
