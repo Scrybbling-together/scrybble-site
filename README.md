@@ -148,14 +148,12 @@ Make sure to pick a good username and password!
 
 Quick tip: If you get tired of typing "docker compose -f docker-compose.selfhosted.yml ..." all the time, you can create an [alias](https://www.geeksforgeeks.org/alias-command-in-linux-with-examples/)!
 
-1. Run `docker compose -f docker-compose.selfhosted.yml exec app php artisan key:generate`
+1. Run `docker compose -f docker-compose.selfhosted.yml exec --user www-data app php artisan key:generate`
    - This generates an encryption key unique to your set-up. This key is saved in the .env file under `APP_KEY`.
-2. Run `docker compose -f docker-compose.selfhosted.yml exec app php artisan app:setup-admin-account`
+2. Run `docker compose -f docker-compose.selfhosted.yml exec --user www-data app php artisan app:setup-admin-account`
     - Make sure to pick a good username and password, it's used to connect the Obsidian Scrybble plugin with your server.
     - Additionally, this account is what you use to log in to your Scrybble dashboard on the website.
-3. Run `docker compose -f docker-compose.selfhosted.yml exec app php artisan passport:client --password`
-   - You will be prompted about a name. Type `obsidian-client`. It has to be exactly that, otherwise authentication will not work.
-   - When asked about the user model, pick `user` and not `backpack`.
+3. Run `docker compose -f docker-compose.selfhosted.yml exec --user www-data app php artisan passport:install`
 
 If you mess up in the set-up stage, you can start over from fresh by running
 
@@ -196,3 +194,7 @@ The folder structure is shown below.
     - input_documents: Sync history. Can be cleaned up at any time. Contains useful debugging information if something goes wrong however!
     - .rmapi-auth: Authentication data for your reMarkable. This is essentially your key to access your reMarkable data, make sure to keep this safe and never ever publish it somewhere.
 ```
+
+### Where can I view errors?
+
+Visit `http://{YOUR DOMAIN}/log-viewer`
