@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use Filament\Models\Contracts\FilamentUser;
+use Filament\Panel;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -14,7 +16,7 @@ use Laravel\Passport\HasApiTokens;
 /**
  * @mixin IdeHelperUser
  */
-class User extends Authenticatable
+class User extends Authenticatable implements FilamentUser
 {
     use HasApiTokens;
     use HasFactory;
@@ -53,5 +55,10 @@ class User extends Authenticatable
     public function gumroadLicense(): HasOne
     {
         return $this->hasOne(GumroadLicense::class);
+    }
+
+    public function canAccessPanel(Panel $panel): bool
+    {
+        return $this->id === 1;
     }
 }
