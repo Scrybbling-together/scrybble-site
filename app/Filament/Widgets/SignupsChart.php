@@ -15,7 +15,6 @@ class SignupsChart extends ChartWidget
     protected function getData(): array
     {
         $data = Trend::model(User::class)->between(start: User::query()->first()->created_at, end: now())->perMonth()->count("created_at");
-//        dd($data->map(fn (TrendValue $value) => ["x" => $value->date, "y" => $value->aggregate])->toArray());
         return [
             "datasets" => [
                 [
