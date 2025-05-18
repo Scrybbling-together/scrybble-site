@@ -10,7 +10,7 @@ use UnexpectedValueException;
 
 class DownloadService
 {
-    public function prepareRMNZipUrl(int $user_id, string $sync_id)
+    public function prepareRMNZipUrl(int $user_id, string $sync_id): string
     {
         $storage = Storage::disk('efs');
 
