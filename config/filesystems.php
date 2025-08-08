@@ -41,6 +41,11 @@ return [
             'root' => storage_path('efs'),
             'throw' => false
         ],
+        'storage-decrypted' => [
+            'driver' => 'local',
+            'root' => storage_path('storage-decrypted'),
+            'throw' => false
+        ],
 
         'public' => [
             'driver' => 'local',

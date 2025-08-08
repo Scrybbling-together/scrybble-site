@@ -6,6 +6,7 @@ use App\Services\Remarks;
 use Eloquent\Pathogen\AbsolutePath;
 use Eloquent\Pathogen\AbsolutePathInterface;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use RuntimeException;
 
@@ -17,7 +18,7 @@ class RemarksHTTPServer implements Remarks\RemarksService
      */
     public function extractNotesAndHighlights(AbsolutePathInterface $sourceDirectory, AbsolutePathInterface $targetDirectory): string
     {
-        $efsRoot = AbsolutePath::fromString(Storage::disk('efs')->path("."));
+        $efsRoot = AbsolutePath::fromString(Storage::disk('storage-decrypted')->path("."));
         $res = Http::timeout(5 * 60)->post("remarks:5000/process", [
             "in_path" => "/efs/" . $sourceDirectory->relativeTo($efsRoot)->string(),
             "out_path" => "/efs/" . $sourceDirectory->relativeTo($efsRoot)->string()

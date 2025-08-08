@@ -13,6 +13,6 @@ class DownloadController extends Controller
 
     public function download(string $path)
     {
-        return Storage::disk('efs')->download($path);
+        return Storage::disk('storage-decrypted')->download($path);
     }
 }

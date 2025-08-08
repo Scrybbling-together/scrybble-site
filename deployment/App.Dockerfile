@@ -25,7 +25,7 @@ RUN rm -rf node_modules
 FROM php:8.3.21-apache-bookworm AS production
 
 RUN apt-get update
-RUN apt-get -yqq install libbz2-dev libzip-dev libicu-dev
+RUN apt-get -yqq install libbz2-dev libzip-dev libicu-dev gocryptfs fuse
 
 RUN docker-php-ext-configure opcache --enable-opcache && \
     docker-php-ext-install  \

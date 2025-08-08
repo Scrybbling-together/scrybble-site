@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Exceptions\CryptFSException;
 use App\Helpers\FileManipulations;
 use Eloquent\Pathogen\RelativePath;
 use Illuminate\Support\Facades\Storage;
@@ -31,10 +32,11 @@ class DownloadService
      * @param int $user_id
      * @param string $sync_id
      * @return string
+     * @throws CryptFSException
      */
     public function prepareProcessedRemarksZipUrl(int $user_id, string $sync_id): string
     {
-        $storage = Storage::disk('efs');
+        $storage = Storage::disk('storage-decrypted');
 
         $path = "user-{$user_id}/processed/{$sync_id}.zip";
         if ($storage->exists($path)) {

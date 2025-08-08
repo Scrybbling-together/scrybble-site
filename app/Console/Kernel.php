@@ -12,8 +12,9 @@ class Kernel extends ConsoleKernel {
      * @param Schedule $schedule
      * @return void
      */
-    protected function schedule(Schedule $schedule) {
-        // $schedule->command('inspire')->hourly();
+    protected function schedule(Schedule $schedule): void
+    {
+        $schedule->command('cryptfs:cleanup')->everyFiveMinutes();
         $schedule->command('horizon:snapshot')->everyFiveMinutes();
         $schedule->command('app:clean-old-syncs --force')
             ->daily()

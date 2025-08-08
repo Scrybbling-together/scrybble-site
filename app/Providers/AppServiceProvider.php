@@ -30,7 +30,9 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->singleton(RMapi::class, function () {
-            return new RMapi();
+            if (request()->hasHeader('X-Encryption-Key')) {
+                return new RMapi();
+            }
         });
 
         $this->app->bind(RemarksService::class, fn() => match (config('scrybble.host_runner')) {
@@ -77,8 +79,8 @@ class AppServiceProvider extends ServiceProvider
         }
 
         if (config('scrybble.storage_platform') === "disk") {
-            Storage::disk('efs')->buildTemporaryUrlsUsing(fn($path, $expiration, $options) => URL::temporarySignedRoute("prmdownload", $expiration, array_merge($options, ['path' => $path]))
-            );
+            Storage::disk('efs')->buildTemporaryUrlsUsing(fn($path, $expiration, $options) => URL::temporarySignedRoute("prmdownload", $expiration, array_merge($options, ['path' => $path])));
+            Storage::disk('storage-decrypted')->buildTemporaryUrlsUsing(fn($path, $expiration, $options) => URL::temporarySignedRoute("rmdoc-download", $expiration, array_merge($options, ['path' => $path])));
         }
     }
 }

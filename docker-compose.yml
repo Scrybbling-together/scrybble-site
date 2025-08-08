@@ -2,11 +2,10 @@
 services:
     laravel.test:
         build:
-            context: ./vendor/laravel/sail/runtimes/8.3
-            dockerfile: Dockerfile
+            context: development
+            dockerfile: dev.Dockerfile
             args:
                 WWWGROUP: '${WWWGROUP}'
-        image: sail-8.3/app
         extra_hosts:
             - 'host.docker.internal:host-gateway'
         ports:
@@ -17,8 +16,14 @@ services:
             LARAVEL_SAIL: 1
             XDEBUG_MODE: '${SAIL_XDEBUG_MODE:-off}'
             XDEBUG_CONFIG: '${SAIL_XDEBUG_CONFIG:-client_host=host.docker.internal}'
+        cap_add:
+            - SYS_ADMIN
+        devices:
+            - /dev/fuse
         volumes:
             - '.:/var/www/html'
+            - './storage/storage-encrypted:/var/www/html/storage/storage-encrypted'
+            - './storage/storage-decrypted:/var/www/html/storage/storage-decrypted:shared'
         networks:
             - sail
         depends_on:
@@ -38,7 +43,7 @@ services:
             MYSQL_ALLOW_EMPTY_PASSWORD: 'yes'
         volumes:
             - 'sail-mariadb:/var/lib/mysql'
-            - './vendor/laravel/sail/database/mysql/create-testing-database.sh:/docker-entrypoint-initdb.d/10-create-testing-database.sh'
+            - './docker/mysql/create-testing-database.sh:/docker-entrypoint-initdb.d/10-create-testing-database.sh'
         networks:
             - sail
         healthcheck:
@@ -59,8 +64,10 @@ services:
             retries: 3
             timeout: 5s
     remarks:
+        devices:
+            - /dev/fuse
         volumes:
-            - ./storage/efs:/efs
+            - './storage/storage-decrypted:/efs/:shared'
         image: "laauurraaa/remarks-server:wmwfyiqalxli8g83kml2r60hi75bqqcd"
         networks:
             - sail

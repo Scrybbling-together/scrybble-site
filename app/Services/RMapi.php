@@ -219,9 +219,12 @@ class RMapi
     {
         $rmapi_download_path = escapeshellarg($filePath);
         [$output, $exit_code] = $this->executeRMApiCommand("get $rmapi_download_path");
+        $joined_output = $output->implode("");
         if ($exit_code !== 0) {
-            if ($output && Str::contains($output->implode(""), "file doesn't exist")) {
+            if (Str::contains($joined_output, "file doesn't exist")) {
                 throw new FileNotFoundException("Failed downloading file, it doesn't seem to exist (have you deleted the file? Otherwise try resyncing the file on your device)");
+            } else if (Str::contains($joined_output, "missing token")) {
+                throw new RuntimeException("RMapi cannot run because the .rmapi-auth file is missing");
             }
             throw new RuntimeException('RMapi `get` command failed for an unknown reason');
         }

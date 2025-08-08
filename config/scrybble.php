@@ -56,5 +56,22 @@ return [
         */
         'site_key' => env("CLOUDFLARE_SITE_KEY"),
         'secret_key' => env("CLOUDFLARE_TURNSTILE_SECRET_KEY")
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Encryption Configuration
+    |--------------------------------------------------------------------------
+    |
+    | Configuration for the bring-your-own-encryption feature using gocryptfs
+    |
+    */
+    'require_encryption' => env('SCRYBBLE_REQUIRE_ENCRYPTION', false),
+
+    'cryptfs' => [
+        'session_ttl' => env('CRYPTFS_SESSION_TTL', 600), // 10 minutes
+        'mount_timeout' => env('CRYPTFS_MOUNT_TIMEOUT', 30), // seconds
+        'encrypted_path' => storage_path('storage-encrypted'),
+        'decrypted_path' => storage_path('storage-decrypted'),
     ]
 ];

@@ -9,6 +9,7 @@ use App\Http\Controllers\OnetimecodeController;
 use App\Http\Controllers\ReMarkableDocumentFeedbackController;
 use App\Http\Controllers\RMFiletreeController;
 use App\Http\Controllers\SyncController;
+use App\Http\Middleware\HandleCryptFS;
 use App\Models\Sync;
 use App\Services\GumroadService;
 use App\Services\OnboardingStateService;
@@ -30,16 +31,18 @@ Route::middleware('auth:api')->get('/user', function (Request $request) {
     return $request->user();
 });
 
-Route::group(['middleware' => ["auth:api", "throttle:180,1"]], routes: static function () {
-    Route::post('sync/file', [FileController::class, 'show']);
-    Route::post('sync/status', [SyncController::class, 'show']);
+Route::group(['middleware' => ["auth:api", HandleCryptFS::class, "throttle:180,1"]], routes: static function () {
+    Route::group(['middleware' => HandleCryptFS::class], static function () {
+        Route::post('sync/file', [FileController::class, 'show']);
+        Route::post('sync/status', [SyncController::class, 'show']);
 
-    Route::post('sync/remarkable-document-share', [ReMarkableDocumentFeedbackController::class, 'store']);
+        Route::post('sync/remarkable-document-share', [ReMarkableDocumentFeedbackController::class, 'store']);
 
-    Route::get('sync/delta', [SyncController::class, 'index']);
-    Route::get('sync/onboardingState', OnboardingStateController::class);
-    Route::post('sync/RMFileTree', [RMFiletreeController::class, 'index']);
-    Route::get('sync/inspect-sync', [InspectSyncController::class, 'index']);
+        Route::get('sync/delta', [SyncController::class, 'index']);
+        Route::get('sync/onboardingState', OnboardingStateController::class);
+        Route::post('sync/RMFileTree', [RMFiletreeController::class, 'index']);
+        Route::get('sync/inspect-sync', [InspectSyncController::class, 'index']);
+    });
 
     Route::post('sync/gumroadLicense', [ConnectedGumroadLicenseController::class, "store"]);
     Route::post('sync/onetimecode', [OnetimecodeController::class, 'create']);
