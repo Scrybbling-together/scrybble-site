@@ -38,7 +38,7 @@ RUN docker-php-ext-configure opcache --enable-opcache && \
     exif \
     && \
     pecl install redis && \
-    docker-php-ext-enable redis exif
+    docker-php-ext-enable redis exif sodium
 
 COPY --chown=www-data:www-data --from=build-js /app/ /var/www/html/
 RUN rm -rf /var/www/html/public/hot
