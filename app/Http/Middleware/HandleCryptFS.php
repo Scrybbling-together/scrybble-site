@@ -8,6 +8,7 @@ use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use SodiumException;
 use Symfony\Component\HttpFoundation\Response;
 
 class HandleCryptFS
@@ -48,24 +49,22 @@ class HandleCryptFS
 
                 // Mount the user folder
                 $this->cryptFSService->mountUserFolder($user, $decodedKey);
-                
+
                 // Clear the key from memory
                 sodium_memzero($decodedKey);
-                
+
                 return $next($request);
             } catch (CryptFSException $e) {
                 Log::warning("Failed to mount folder for user {$user->id}: " . $e->getMessage());
                 return response()->json([
                     'error' => 'Failed to decrypt user folder. Please check your encryption key.'
                 ], 403);
+            } catch (SodiumException $e) {
+                Log::warning("Sodium failed to memzero." . $e->getMessage());
+                return response()->json([
+                    'error' => 'Could not clear encryption key from memory. Server is misconfigured or something is deeply wrong. Check ext-sodium and Laravel log'
+                ], 500);
             }
-        }
-
-        // Check if encryption is required
-        if (config('scrybble.require_encryption', false)) {
-            return response()->json([
-                'error' => 'Encryption key required. Please provide X-Encryption-Key header.'
-            ], 401);
         }
 
         // Allow request to proceed without encryption (legacy mode)

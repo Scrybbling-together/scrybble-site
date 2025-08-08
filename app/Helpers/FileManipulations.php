@@ -102,4 +102,56 @@ class FileManipulations {
         }
     }
 
+    public static function moveFilesRecursively(Filesystem $sourceStorage, string $sourceDir, Filesystem $destStorage, string $destDir): void {
+        if (!$destStorage->exists($destDir)) {
+            throw new RuntimeException("Destination directory '{$destDir}' does not exist");
+        }
+
+        $files = $sourceStorage->allFiles($sourceDir);
+
+        foreach ($files as $file) {
+            $relativePath = substr($file, strlen($sourceDir) + 1);
+            $destPath = $destDir . '/' . $relativePath;
+
+            $destStorage->put($destPath, $sourceStorage->get($file));
+        }
+    }
+
+    public static function verifyFilesMatch(Filesystem $sourceStorage, string $sourceDir, Filesystem $destStorage, string $destDir): bool {
+        $sourceFiles = $sourceStorage->allFiles($sourceDir);
+        $destFiles = $destStorage->allFiles($destDir);
+
+        if (count($sourceFiles) !== count($destFiles)) {
+            return false;
+        }
+
+        foreach ($sourceFiles as $sourceFile) {
+            $relativePath = substr($sourceFile, strlen($sourceDir) + 1);
+            $destPath = $destDir . '/' . $relativePath;
+
+            if (!$destStorage->exists($destPath)) {
+                return false;
+            }
+
+            if ($sourceStorage->size($sourceFile) !== $destStorage->size($destPath)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    public static function removeDirectory(string $dir): void {
+        if (!is_dir($dir)) {
+            return;
+        }
+        
+        $files = array_diff(scandir($dir), ['.', '..']);
+        foreach ($files as $file) {
+            $path = $dir . '/' . $file;
+            is_dir($path) ? self::removeDirectory($path) : unlink($path);
+        }
+        rmdir($dir);
+    }
+
 }

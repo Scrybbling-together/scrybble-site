@@ -66,8 +66,6 @@ return [
     | Configuration for the bring-your-own-encryption feature using gocryptfs
     |
     */
-    'require_encryption' => env('SCRYBBLE_REQUIRE_ENCRYPTION', false),
-
     'cryptfs' => [
         'session_ttl' => env('CRYPTFS_SESSION_TTL', 600), // 10 minutes
         'mount_timeout' => env('CRYPTFS_MOUNT_TIMEOUT', 30), // seconds

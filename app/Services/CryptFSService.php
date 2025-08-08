@@ -4,15 +4,21 @@ namespace App\Services;
 
 use App\Models\User;
 use App\Exceptions\CryptFSException;
+use App\Helpers\FileManipulations;
+use App\Helpers\UserStorage;
 use Illuminate\Support\Facades\Process;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 
 class CryptFSService
 {
     private const int MOUNT_TIMEOUT = 30; // seconds (fallback)
     private const int SESSION_TTL = 600; // 10 minutes (fallback)
 
+    /**
+     * @throws CryptFSException
+     */
     public function mountUserFolder(User $user, string $key): bool
     {
         $userId = $user->id;
@@ -42,6 +48,9 @@ class CryptFSService
         if ($result->successful()) {
             $this->createSession($user);
             Log::info("Successfully mounted encrypted folder for user {$userId}");
+
+            $this->migrateLegacyStorage($user);
+
             return true;
         }
 
@@ -76,15 +85,7 @@ class CryptFSService
     public function isUserFolderMounted(User $user): bool
     {
         $decryptedPath = config('scrybble.cryptfs.decrypted_path') . "/user-{$user->id}";
-
-        // Check if mount point exists and is actually mounted
-        if (!is_dir($decryptedPath)) {
-            return false;
-        }
-
-        // Check if it's a FUSE mount
-        $result = Process::run(['mountpoint', '-q', $decryptedPath]);
-        return $result->successful();
+        return is_dir($decryptedPath);
     }
 
     public function updateSession(User $user): void
@@ -156,5 +157,42 @@ class CryptFSService
         }
 
         Log::info("Initialized new encrypted folder at {$encryptedPath}");
+    }
+
+    private function migrateLegacyStorage(User $user): bool
+    {
+        $userId = $user->id;
+        $efs = Storage::disk('efs');
+        $legacyUserDir = "user-{$userId}";
+
+        if (!$efs->exists($legacyUserDir)) {
+            return true;
+        }
+
+        // Check if encrypted folder is actually mounted before attempting migration
+        if (!$this->isUserFolderMounted($user)) {
+            Log::info("Skipping migration for user {$userId} - encrypted folder not mounted");
+            return false;
+        }
+
+        Log::info("Starting migration of legacy storage for user {$userId}");
+
+        try {
+            $decryptedStorage = UserStorage::get($user);
+
+            FileManipulations::moveFilesRecursively($efs, $legacyUserDir, $decryptedStorage, '');
+
+            if (FileManipulations::verifyFilesMatch($efs, $legacyUserDir, $decryptedStorage, '')) {
+                $efs->deleteDirectory($legacyUserDir);
+                Log::info("Successfully migrated and cleaned up legacy storage for user {$userId}");
+                return true;
+            } else {
+                Log::error("Migration verification failed for user {$userId}");
+                return false;
+            }
+        } catch (\Exception $e) {
+            Log::error("Migration failed for user {$userId}: " . $e->getMessage());
+        }
+        return false;
     }
 }

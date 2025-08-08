@@ -32,13 +32,6 @@ class UserStorage {
             ]);
         }
 
-        // Check if encryption is required
-        if (config('scrybble.require_encryption', false)) {
-            throw new CryptFSException(
-                "Cannot access user storage: folder not mounted. Please provide encryption key."
-            );
-        }
-
         // Legacy fallback for backwards compatibility during migration
         return self::fallbackLegacyStorage($user);
     }

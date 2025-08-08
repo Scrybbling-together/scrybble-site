@@ -19,7 +19,6 @@ use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 use Stephenjude\FilamentBlog\BlogPlugin;
-use TomatoPHP\FilamentMediaManager\FilamentMediaManagerPlugin;
 
 class AdminPanelProvider extends PanelProvider
 {
@@ -31,7 +30,6 @@ class AdminPanelProvider extends PanelProvider
             ->path('admin')
             ->plugin(BlogPlugin::make())
             ->plugin(FilamentLogViewerPlugin::make())
-            ->plugin(FilamentMediaManagerPlugin::make())
             ->login()
             ->colors([
                 'primary' => Color::Amber,
