@@ -46,6 +46,7 @@ RUN rm -rf /var/www/html/public/hot
 COPY ./deployment/php/conf.d/opcache.ini /usr/local/etc/php/conf.d/opcache.ini
 COPY deployment/php/conf.d/php-overrides.ini /usr/local/etc/php/conf.d/php-overrides.ini
 COPY ./deployment/000-default.conf /etc/apache2/sites-available/000-default.conf
+COPY ./fuse.conf /etc/fuse.conf
 RUN mv "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini"
 COPY ../.env.azure-prod /var/www/html/.env
 
