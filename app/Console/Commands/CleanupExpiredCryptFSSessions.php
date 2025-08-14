@@ -5,8 +5,10 @@ namespace App\Console\Commands;
 use App\Models\User;
 use App\modules\CryptFS\Services\CryptFSMountingService;
 use App\modules\CryptFS\Services\CryptFSSessionService;
+use Exception;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Process;
 use Illuminate\Support\Facades\Redis;
 
 class CleanupExpiredCryptFSSessions extends Command
@@ -26,10 +28,7 @@ class CleanupExpiredCryptFSSessions extends Command
     {
         $this->info('Starting CryptFS cleanup...');
 
-        // Step 1: Clean up expired sessions from Redis
         $expiredFromRedis = $this->cleanupExpiredSessions();
-
-        // Step 2: Find and clean up orphaned mount points
         $orphanedMounts = $this->cleanupOrphanedMounts();
 
         $total = $expiredFromRedis + $orphanedMounts;
@@ -64,10 +63,8 @@ class CleanupExpiredCryptFSSessions extends Command
         $orphaned = 0;
 
         foreach ($mountedUserIds as $userId) {
-            // Check if there's a valid session in Redis for this mounted folder
             $user = User::find($userId);
             if (!$user || !$this->sessionService->hasActiveSession($user)) {
-                // Orphaned mount - no session in Redis
                 $this->warn("Found orphaned mount for user {$userId} (no Redis session)");
                 Log::warning("CryptFS cleanup: Orphaned mount found for user {$userId} - likely due to Redis restart");
 
@@ -97,7 +94,7 @@ class CleanupExpiredCryptFSSessions extends Command
                 $this->error("Failed to unmount folder for user {$userId} ({$reason})");
                 return false;
             }
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $this->error("Error unmounting user {$userId} ({$reason}): " . $e->getMessage());
             Log::error("CryptFS cleanup error for user {$userId}: " . $e->getMessage());
             return false;
@@ -108,11 +105,11 @@ class CleanupExpiredCryptFSSessions extends Command
     {
         $decryptedPath = config('scrybble.cryptfs.decrypted_path') . "/user-{$userId}";
 
-        if (!$this->isFolderMounted($decryptedPath)) {
-            return true; // Already unmounted
+        if (!$this->mountingService->isUserFolderMounted($userId)) {
+            return true;
         }
 
-        $result = \Illuminate\Support\Facades\Process::timeout(10)->run([
+        $result = Process::timeout(10)->run([
             'fusermount', '-u', $decryptedPath
         ]);
 

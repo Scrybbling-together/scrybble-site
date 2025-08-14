@@ -5,7 +5,6 @@ namespace App\modules\CryptFS\Services;
 use App\Models\CryptFSTable;
 use App\Models\User;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Log;
 use Random\RandomException;
 use SodiumException;
 
@@ -21,16 +20,16 @@ class CryptFSKeyService
     public function deriveKey(User $user, string $password): string
     {
         $cryptFS = $this->ensureCryptFSRecord($user);
-        
+
         $derivedKey = hash_pbkdf2(
-            'sha512', 
-            $password, 
-            $cryptFS->encryption_key_salt, 
+            'sha512',
+            $password,
+            $cryptFS->encryption_key_salt,
             self::KEY_DERIVATION_ITERATIONS
         );
 
         $this->storePendingKey($user, $derivedKey);
-        
+
         return $derivedKey;
     }
 
@@ -41,23 +40,23 @@ class CryptFSKeyService
 
     public function getPendingKey(User $user): ?string
     {
-        return Cache::get("cryptfs:pending_derived_key:{$user->id}");
+        return Cache::get("cryptfs:pending_derived_key:$user->id");
     }
 
     public function storePendingKey(User $user, string $key): void
     {
-        Cache::put("cryptfs:pending_derived_key:{$user->id}", $key, self::PENDING_KEY_TTL);
+        Cache::put("cryptfs:pending_derived_key:$user->id", $key, self::PENDING_KEY_TTL);
     }
 
     public function clearPendingKey(User $user): void
     {
-        Cache::forget("cryptfs:pending_derived_key:{$user->id}");
+        Cache::forget("cryptfs:pending_derived_key:$user->id");
     }
 
     public function needsKeyDerivation(User $user): bool
     {
         $cryptFS = $user->cryptFS;
-        
+
         if (!$cryptFS) {
             return true;
         }

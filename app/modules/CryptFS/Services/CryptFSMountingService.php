@@ -6,6 +6,7 @@ use App\Exceptions\CryptFSException;
 use App\Helpers\FileManipulations;
 use App\Helpers\UserStorage;
 use App\Models\User;
+use Exception;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Process;
 use Illuminate\Support\Facades\Storage;
@@ -25,7 +26,7 @@ class CryptFSMountingService
         $encryptedPath = $this->getEncryptedPath($userId);
         $decryptedPath = $this->getDecryptedPath($userId);
 
-        if ($this->isUserFolderMounted($user)) {
+        if ($this->isUserFolderMounted($user->id)) {
             return true;
         }
 
@@ -41,12 +42,12 @@ class CryptFSMountingService
         ]);
 
         if ($result->successful()) {
-            Log::info("Successfully mounted encrypted folder for user {$userId}");
+            Log::info("Successfully mounted encrypted folder for user $userId");
             $this->migrateLegacyStorage($user);
             return true;
         }
 
-        Log::error("Failed to mount folder for user {$userId}: " . $result->errorOutput());
+        Log::error("Failed to mount folder for user $userId: " . $result->errorOutput());
         throw new CryptFSException("Failed to mount encrypted folder: " . $result->errorOutput());
     }
 
@@ -55,7 +56,7 @@ class CryptFSMountingService
         $userId = $user->id;
         $decryptedPath = $this->getDecryptedPath($userId);
 
-        if (!$this->isUserFolderMounted($user)) {
+        if (!$this->isUserFolderMounted($userId)) {
             return true;
         }
 
@@ -64,24 +65,24 @@ class CryptFSMountingService
         ]);
 
         if ($result->successful()) {
-            Log::info("Successfully unmounted folder for user {$userId}");
+            Log::info("Successfully unmounted folder for user $userId");
             return true;
         }
 
-        Log::error("Failed to unmount folder for user {$userId}: " . $result->errorOutput());
+        Log::error("Failed to unmount folder for user $userId: " . $result->errorOutput());
         return false;
     }
 
-    public function isUserFolderMounted(User $user): bool
+    public function isUserFolderMounted(int $user_id): bool
     {
-        $decryptedPath = $this->getDecryptedPath($user->id);
-        
+        $decryptedPath = $this->getDecryptedPath($user_id);
+
         // In testing environment, we can't actually mount gocryptfs
         // so we just check if the directory exists
         if (app()->environment('testing')) {
             return is_dir($decryptedPath);
         }
-        
+
         return is_dir($decryptedPath) && $this->isMountPoint($decryptedPath);
     }
 
@@ -94,7 +95,7 @@ class CryptFSMountingService
 
         $mountedFolders = [];
         $folders = glob($decryptedBasePath . '/user-*', GLOB_ONLYDIR);
-        
+
         foreach ($folders as $folder) {
             if ($this->isMountPoint($folder)) {
                 preg_match('/user-(\d+)$/', $folder, $matches);
@@ -109,12 +110,12 @@ class CryptFSMountingService
 
     private function getEncryptedPath(int $userId): string
     {
-        return config('scrybble.cryptfs.encrypted_path') . "/user-{$userId}";
+        return config('scrybble.cryptfs.encrypted_path') . "/user-$userId";
     }
 
     private function getDecryptedPath(int $userId): string
     {
-        return config('scrybble.cryptfs.decrypted_path') . "/user-{$userId}";
+        return config('scrybble.cryptfs.decrypted_path') . "/user-$userId";
     }
 
     private function ensureDirectoriesExist(string $encryptedPath, string $decryptedPath): void
@@ -145,7 +146,7 @@ class CryptFSMountingService
             throw new CryptFSException("Failed to initialize encrypted folder: " . $result->errorOutput());
         }
 
-        Log::info("Initialized new encrypted folder at {$encryptedPath}");
+        Log::info("Initialized new encrypted folder at $encryptedPath");
     }
 
     private function isMountPoint(string $path): bool
@@ -154,22 +155,22 @@ class CryptFSMountingService
         return $result->successful();
     }
 
-    private function migrateLegacyStorage(User $user): bool
+    private function migrateLegacyStorage(User $user): void
     {
         $userId = $user->id;
         $efs = Storage::disk('efs');
-        $legacyUserDir = "user-{$userId}";
+        $legacyUserDir = "user-$userId";
 
         if (!$efs->exists($legacyUserDir)) {
-            return true;
+            return;
         }
 
-        if (!$this->isUserFolderMounted($user)) {
-            Log::info("Skipping migration for user {$userId} - encrypted folder not mounted");
-            return false;
+        if (!$this->isUserFolderMounted($user->id)) {
+            Log::info("Skipping migration for user $userId - encrypted folder not mounted");
+            return;
         }
 
-        Log::info("Starting migration of legacy storage for user {$userId}");
+        Log::info("Starting migration of legacy storage for user $userId");
 
         try {
             $decryptedStorage = UserStorage::get($user);
@@ -178,16 +179,14 @@ class CryptFSMountingService
 
             if (FileManipulations::verifyFilesMatch($efs, $legacyUserDir, $decryptedStorage, '')) {
                 $efs->deleteDirectory($legacyUserDir);
-                Log::info("Successfully migrated and cleaned up legacy storage for user {$userId}");
-                return true;
+                Log::info("Successfully migrated and cleaned up legacy storage for user $userId");
             } else {
-                Log::error("Migration verification failed for user {$userId}");
-                return false;
+                Log::error("Migration verification failed for user $userId");
             }
-        } catch (\Exception $e) {
-            Log::error("Migration failed for user {$userId}: " . $e->getMessage());
+            return;
+        } catch (Exception $e) {
+            Log::error("Migration failed for user $userId: " . $e->getMessage());
         }
-        
-        return false;
+
     }
 }

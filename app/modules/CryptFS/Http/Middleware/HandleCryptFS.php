@@ -33,7 +33,7 @@ class HandleCryptFS
         $encryptionKey = $request->header('X-Encryption-Key');
 
         // If no encryption key provided but folder is already mounted, just update session
-        if (!$encryptionKey && $this->mountingService->isUserFolderMounted($user)) {
+        if (!$encryptionKey && $this->mountingService->isUserFolderMounted($user->id)) {
             $this->sessionService->updateSession($user);
             return $next($request);
         }
@@ -49,7 +49,7 @@ class HandleCryptFS
                 }
 
                 $this->sessionService->withMountingLock($user, function () use ($user, $decodedKey) {
-                    if (!$this->mountingService->isUserFolderMounted($user)) {
+                    if (!$this->mountingService->isUserFolderMounted($user->id)) {
                         $this->mountingService->mountUserFolder($user, $decodedKey);
                     }
                     $this->sessionService->updateSession($user);
@@ -59,17 +59,17 @@ class HandleCryptFS
 
                 return $next($request);
             } catch (CryptFSException $e) {
-                Log::warning("Failed to mount folder for user {$user->id}: " . $e->getMessage());
+                Log::warning("CryptFS: Failed to mount folder for user $user->id: " . $e->getMessage());
                 return response()->json([
                     'error' => 'Failed to decrypt user folder. Please check your encryption key.'
                 ], 403);
             } catch (SodiumException $e) {
-                Log::warning("Sodium failed to memzero." . $e->getMessage());
+                Log::warning("CryptFS: Sodium failed to memzero." . $e->getMessage());
                 return response()->json([
                     'error' => 'Could not clear encryption key from memory. Server is misconfigured or something is deeply wrong. Check ext-sodium and Laravel log'
                 ], 500);
             } catch (RuntimeException $e) {
-                Log::warning("Failed to acquire lock for user {$user->id}: " . $e->getMessage());
+                Log::warning("CryptFS: Failed to acquire lock for user $user->id: " . $e->getMessage());
                 return response()->json([
                     'error' => 'System busy, please try again'
                 ], 503);

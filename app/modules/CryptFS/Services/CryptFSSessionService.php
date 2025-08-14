@@ -4,6 +4,7 @@ namespace App\modules\CryptFS\Services;
 
 use App\Models\User;
 use Illuminate\Support\Facades\Redis;
+use RuntimeException;
 
 class CryptFSSessionService
 {
@@ -62,7 +63,7 @@ class CryptFSSessionService
     {
         $key = self::LOCK_PREFIX . $user->id;
         $lockTtl = config('scrybble.cryptfs.lock_ttl', self::LOCK_TTL);
-        
+
         return Redis::set($key, '1', 'EX', $lockTtl, 'NX') === 'OK';
     }
 
@@ -76,7 +77,7 @@ class CryptFSSessionService
     {
         $key = self::KEY_DERIVATION_LOCK_PREFIX . $user->id;
         $lockTtl = config('scrybble.cryptfs.lock_ttl', self::LOCK_TTL);
-        
+
         return Redis::set($key, '1', 'EX', $lockTtl, 'NX') === 'OK';
     }
 
@@ -90,7 +91,7 @@ class CryptFSSessionService
     {
         $key = self::KEY_CONFIRMATION_LOCK_PREFIX . $user->id;
         $lockTtl = config('scrybble.cryptfs.lock_ttl', self::LOCK_TTL);
-        
+
         return Redis::set($key, '1', 'EX', $lockTtl, 'NX') === 'OK';
     }
 
@@ -103,7 +104,7 @@ class CryptFSSessionService
     public function withMountingLock(User $user, callable $callback)
     {
         if (!$this->acquireMountingLock($user)) {
-            throw new \RuntimeException("Could not acquire mounting lock for user {$user->id}");
+            throw new RuntimeException("Could not acquire mounting lock for user $user->id");
         }
 
         try {
@@ -116,7 +117,7 @@ class CryptFSSessionService
     public function withKeyDerivationLock(User $user, callable $callback)
     {
         if (!$this->acquireKeyDerivationLock($user)) {
-            throw new \RuntimeException("Could not acquire key derivation lock for user {$user->id}");
+            throw new RuntimeException("Could not acquire key derivation lock for user $user->id");
         }
 
         try {
@@ -129,7 +130,7 @@ class CryptFSSessionService
     public function withKeyConfirmationLock(User $user, callable $callback)
     {
         if (!$this->acquireKeyConfirmationLock($user)) {
-            throw new \RuntimeException("Could not acquire key confirmation lock for user {$user->id}");
+            throw new RuntimeException("Could not acquire key confirmation lock for user $user->id");
         }
 
         try {

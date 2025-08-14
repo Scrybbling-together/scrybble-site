@@ -22,7 +22,7 @@ class UserStorage {
     public static function get(User $user): Filesystem {
         $cryptFs = app(CryptFSMountingService::class);
 
-        if ($cryptFs->isUserFolderMounted($user)) {
+        if ($cryptFs->isUserFolderMounted($user->id)) {
             // User folder is mounted - use decrypted mount point
             $decryptedPath = config('scrybble.cryptfs.decrypted_path') . "/user-{$user->id}";
             return Storage::build([
