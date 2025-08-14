@@ -12,7 +12,7 @@ return new class extends Migration {
             $table->id();
 
             $table->foreignIdFor(User::class);
-            $table->string("encryption_key_salt", 256)->comment("The salt used to derive the encryption key for CryptFS.");
+            $table->string("encryption_key_salt", 256)->comment("The salt used to derive the encryption key for CryptFS.")->nullable();
             $table->boolean("key_needs_derivation")->comment("A flag specifying whether during next login, the key needs to be derived and stored in the database.");
 
             $table->timestamps();

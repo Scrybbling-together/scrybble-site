@@ -12,7 +12,7 @@ class CryptFSKeyService
 {
     private const int KEY_DERIVATION_ITERATIONS = 600000;
     private const int SALT_BYTES = 64;
-    private const int PENDING_KEY_TTL = 600; // 10 minutes
+    private const int PENDING_KEY_TTL = 60 * 10;
 
     /**
      * @throws RandomException
@@ -31,11 +31,6 @@ class CryptFSKeyService
         $this->storePendingKey($user, $derivedKey);
 
         return $derivedKey;
-    }
-
-    public function validateAndDecodeKey(string $encodedKey): string|false
-    {
-        return base64_decode($encodedKey, true);
     }
 
     public function getPendingKey(User $user): ?string

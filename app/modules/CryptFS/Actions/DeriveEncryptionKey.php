@@ -27,6 +27,7 @@ class DeriveEncryptionKey
             return;
         }
 
+
         $request = request();
         $password = $request->only('password')[0] ?? $request->input('password');
 

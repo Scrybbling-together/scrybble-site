@@ -14,6 +14,13 @@ class CryptFSTable extends Model
         'key_needs_derivation'
     ];
 
+    protected function casts(): array
+    {
+        return [
+            'key_needs_derivation' => 'boolean'
+        ];
+    }
+
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);

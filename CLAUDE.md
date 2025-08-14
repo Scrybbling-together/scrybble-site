@@ -24,7 +24,11 @@ We use Bootstrap v5.3 for styling, and have a custom colorscheme, the details of
 </project_structure>
 </project_context>
 
+
 <coding_instructions>
+<development_tools>
+- You can run PHPUnit tests using `docker compose exec laravel.test ...`
+</development_tools>
 <purpose>
 These rules ensure maintainability, safety, and developer velocity.
 **MUST** rules are enforced; **SHOULD** rules are strongly recommended. **SHOULD-NOT** rules strongly recommend _against_ certain behavior.

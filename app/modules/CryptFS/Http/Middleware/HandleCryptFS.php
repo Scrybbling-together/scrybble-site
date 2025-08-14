@@ -3,6 +3,7 @@
 namespace App\modules\CryptFS\Http\Middleware;
 
 use App\Exceptions\CryptFSException;
+use App\Models\CryptFSTable;
 use App\modules\CryptFS\Services\CryptFSKeyService;
 use App\modules\CryptFS\Services\CryptFSMountingService;
 use App\modules\CryptFS\Services\CryptFSSessionService;
@@ -30,9 +31,15 @@ class HandleCryptFS
         }
 
         $user = Auth::user();
+
+        if ($user && !$user->cryptFS) {
+            $user->cryptFS()->create([
+                'key_needs_derivation' => true
+            ]);
+        }
+
         $encryptionKey = $request->header('X-Encryption-Key');
 
-        // If no encryption key provided but folder is already mounted, just update session
         if (!$encryptionKey && $this->mountingService->isUserFolderMounted($user->id)) {
             $this->sessionService->updateSession($user);
             return $next($request);
@@ -41,21 +48,12 @@ class HandleCryptFS
         // If encryption key provided, attempt to mount
         if ($encryptionKey) {
             try {
-                $decodedKey = $this->keyService->validateAndDecodeKey($encryptionKey);
-                if ($decodedKey === false) {
-                    return response()->json([
-                        'error' => 'Invalid encryption key format'
-                    ], 400);
-                }
-
-                $this->sessionService->withMountingLock($user, function () use ($user, $decodedKey) {
-                    if (!$this->mountingService->isUserFolderMounted($user->id)) {
-                        $this->mountingService->mountUserFolder($user, $decodedKey);
-                    }
+                $this->sessionService->withMountingLock($user, function () use ($user, $encryptionKey) {
+                    $this->mountingService->mountUserFolder($user, $encryptionKey);
                     $this->sessionService->updateSession($user);
                 });
 
-                $this->keyService->securelyZeroKey($decodedKey);
+                $this->keyService->securelyZeroKey($encryptionKey);
 
                 return $next($request);
             } catch (CryptFSException $e) {
@@ -76,17 +74,6 @@ class HandleCryptFS
             }
         }
 
-        $response = $next($request);
-
-        if (Str::endsWith($request->route(), "/oauth/token")) {
-            $derived_key = $this->keyService->getPendingKey($user);
-            if ($derived_key) {
-                $response->headers->set('X-Encryption-Key', $derived_key);
-            } else {
-                Log::warning("Cryptfs: No derived key available for user {$user->id} when requesting /oauth/token");
-            }
-        }
-
-        return $response;
+        return $next($request);
     }
 }

@@ -3,6 +3,7 @@
 namespace App\modules\CryptFS\Services;
 
 use App\Models\User;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Redis;
 use RuntimeException;
 
@@ -59,84 +60,18 @@ class CryptFSSessionService
         return $expiredSessions;
     }
 
-    public function acquireMountingLock(User $user): bool
-    {
-        $key = self::LOCK_PREFIX . $user->id;
-        $lockTtl = config('scrybble.cryptfs.lock_ttl', self::LOCK_TTL);
-
-        return Redis::set($key, '1', 'EX', $lockTtl, 'NX') === 'OK';
-    }
-
-    public function releaseMountingLock(User $user): void
-    {
-        $key = self::LOCK_PREFIX . $user->id;
-        Redis::del($key);
-    }
-
-    public function acquireKeyDerivationLock(User $user): bool
-    {
-        $key = self::KEY_DERIVATION_LOCK_PREFIX . $user->id;
-        $lockTtl = config('scrybble.cryptfs.lock_ttl', self::LOCK_TTL);
-
-        return Redis::set($key, '1', 'EX', $lockTtl, 'NX') === 'OK';
-    }
-
-    public function releaseKeyDerivationLock(User $user): void
-    {
-        $key = self::KEY_DERIVATION_LOCK_PREFIX . $user->id;
-        Redis::del($key);
-    }
-
-    public function acquireKeyConfirmationLock(User $user): bool
-    {
-        $key = self::KEY_CONFIRMATION_LOCK_PREFIX . $user->id;
-        $lockTtl = config('scrybble.cryptfs.lock_ttl', self::LOCK_TTL);
-
-        return Redis::set($key, '1', 'EX', $lockTtl, 'NX') === 'OK';
-    }
-
-    public function releaseKeyConfirmationLock(User $user): void
-    {
-        $key = self::KEY_CONFIRMATION_LOCK_PREFIX . $user->id;
-        Redis::del($key);
-    }
-
     public function withMountingLock(User $user, callable $callback)
     {
-        if (!$this->acquireMountingLock($user)) {
-            throw new RuntimeException("Could not acquire mounting lock for user $user->id");
-        }
-
-        try {
-            return $callback();
-        } finally {
-            $this->releaseMountingLock($user);
-        }
+        return Cache::Lock(self::LOCK_PREFIX . $user->id, 10)->block(10, $callback);
     }
 
     public function withKeyDerivationLock(User $user, callable $callback)
     {
-        if (!$this->acquireKeyDerivationLock($user)) {
-            throw new RuntimeException("Could not acquire key derivation lock for user $user->id");
-        }
-
-        try {
-            return $callback();
-        } finally {
-            $this->releaseKeyDerivationLock($user);
-        }
+        return Cache::Lock(self::KEY_DERIVATION_LOCK_PREFIX . $user->id, 10)->block(10, $callback);
     }
 
     public function withKeyConfirmationLock(User $user, callable $callback)
     {
-        if (!$this->acquireKeyConfirmationLock($user)) {
-            throw new RuntimeException("Could not acquire key confirmation lock for user $user->id");
-        }
-
-        try {
-            return $callback();
-        } finally {
-            $this->releaseKeyConfirmationLock($user);
-        }
+        return Cache::Lock(self::KEY_CONFIRMATION_LOCK_PREFIX . $user->id, 10)->block(10, $callback);
     }
 }

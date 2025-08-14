@@ -35,6 +35,14 @@ class RouteServiceProvider extends ServiceProvider
 
             Route::middleware('web')
                 ->group(base_path('routes/web.php'));
+
+            Route::group([
+                'as' => 'passport.',
+                'prefix' => config('passport.path', 'oauth'),
+                'namespace' => 'Laravel\Passport\Http\Controllers',
+            ], function (): void {
+                $this->loadRoutesFrom(base_path('routes/passportRoutes.php'));
+            });
         });
     }
 

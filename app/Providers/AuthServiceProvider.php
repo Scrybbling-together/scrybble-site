@@ -26,6 +26,7 @@ class AuthServiceProvider extends ServiceProvider
     {
         $this->registerPolicies();
 
+        Passport::ignoreRoutes();
         Passport::enablePasswordGrant();
         Passport::loadKeysFrom(Storage::drive('efs')->path(''));
     }

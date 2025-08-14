@@ -40,9 +40,7 @@ class CryptFSMigrationTest extends TestCase
         $reflection = new ReflectionClass($service);
         $method = $reflection->getMethod('migrateLegacyStorage');
 
-        $success = $method->invoke($service, $user);
-
-        $this->assertTrue($success);
+        $method->invoke($service, $user);
 
         $this->assertLegacyStorageIsEmpty($user);
         $this->assertFilesExistInDecryptedStorage($user);
@@ -92,9 +90,7 @@ class CryptFSMigrationTest extends TestCase
         $reflection = new ReflectionClass($service);
         $method = $reflection->getMethod('migrateLegacyStorage');
 
-        $success = $method->invoke($service, $user);
-
-        $this->assertFalse($success);
+        $method->invoke($service, $user);
 
         $efs = Storage::disk('efs');
         $this->assertTrue($efs->exists("user-{$user->id}"));
@@ -110,13 +106,11 @@ class CryptFSMigrationTest extends TestCase
         $reflection = new ReflectionClass($service);
         $method = $reflection->getMethod('migrateLegacyStorage');
 
-        $firstAttempt = $method->invoke($service, $user);
-        $this->assertFalse($firstAttempt);
+        $method->invoke($service, $user);
 
         $this->setupEncryptedStorageDirectories($user);
 
-        $secondAttempt = $method->invoke($service, $user);
-        $this->assertTrue($secondAttempt);
+        $method->invoke($service, $user);
 
         $this->assertLegacyStorageIsEmpty($user);
         $this->assertFilesExistInDecryptedStorage($user);

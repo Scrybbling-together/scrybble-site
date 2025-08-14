@@ -10,6 +10,7 @@ use App\Http\Controllers\ReMarkableDocumentFeedbackController;
 use App\Http\Controllers\RMFiletreeController;
 use App\Http\Controllers\SyncController;
 use App\Models\Sync;
+use App\modules\CryptFS\Http\Controllers\ConfirmKeyReceivedController;
 use App\modules\CryptFS\Http\Middleware\HandleCryptFS;
 use App\Services\GumroadService;
 use App\Services\OnboardingStateService;
@@ -43,6 +44,8 @@ Route::group(['middleware' => ["auth:api", HandleCryptFS::class, "throttle:180,1
         Route::post('sync/RMFileTree', [RMFiletreeController::class, 'index']);
         Route::get('sync/inspect-sync', [InspectSyncController::class, 'index']);
     });
+
+    Route::get('sync/confirm-encryption-key', ConfirmKeyReceivedController::class);
 
     Route::post('sync/gumroadLicense', [ConnectedGumroadLicenseController::class, "store"]);
     Route::post('sync/onetimecode', [OnetimecodeController::class, 'create']);

@@ -63,3 +63,7 @@ Route::group(['middleware' => 'auth'], static function () {
 Route::get('shared_documents', [SharedDocumentsController::class, 'index']);
 Route::get('/home', [HomeController::class, 'index'])->name('home');
 Route::redirect('/app/', '/home');
+
+
+
+
