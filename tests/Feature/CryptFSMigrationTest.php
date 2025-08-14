@@ -5,7 +5,7 @@ namespace Tests\Feature;
 use App\Helpers\FileManipulations;
 use App\Helpers\UserStorage;
 use App\Models\User;
-use App\modules\CryptFS\Services\CryptFSService;
+use App\modules\CryptFS\Services\CryptFSMountingService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Storage;
 use ReflectionClass;
@@ -36,7 +36,7 @@ class CryptFSMigrationTest extends TestCase
         $this->createLegacyStorageWithTestFiles($user);
         $this->setupEncryptedStorageDirectories($user);
 
-        $service = new CryptFSService();
+        $service = new CryptFSMountingService();
         $reflection = new ReflectionClass($service);
         $method = $reflection->getMethod('migrateLegacyStorage');
 
@@ -52,7 +52,7 @@ class CryptFSMigrationTest extends TestCase
     {
         $user = User::factory()->create(['id' => $this->testUserId]);
 
-        $service = new CryptFSService();
+        $service = new CryptFSMountingService();
         $reflection = new ReflectionClass($service);
         $method = $reflection->getMethod('migrateLegacyStorage');
 
@@ -88,7 +88,7 @@ class CryptFSMigrationTest extends TestCase
 
         $this->createLegacyStorageWithTestFiles($user);
 
-        $service = new CryptFSService();
+        $service = new CryptFSMountingService();
         $reflection = new ReflectionClass($service);
         $method = $reflection->getMethod('migrateLegacyStorage');
 
@@ -106,7 +106,7 @@ class CryptFSMigrationTest extends TestCase
 
         $this->createLegacyStorageWithTestFiles($user);
 
-        $service = new CryptFSService();
+        $service = new CryptFSMountingService();
         $reflection = new ReflectionClass($service);
         $method = $reflection->getMethod('migrateLegacyStorage');
 

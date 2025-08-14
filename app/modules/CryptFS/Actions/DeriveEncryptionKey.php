@@ -3,6 +3,8 @@
 namespace App\modules\CryptFS\Actions;
 
 use App\Models\User;
+use App\modules\CryptFS\Services\CryptFSKeyService;
+use App\modules\CryptFS\Services\CryptFSSessionService;
 use Illuminate\Auth\Events\Authenticated;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Support\Facades\Log;
@@ -10,6 +12,11 @@ use Random\RandomException;
 
 class DeriveEncryptionKey
 {
+    public function __construct(
+        private CryptFSKeyService $keyService,
+        private CryptFSSessionService $sessionService
+    ) {}
+
     /**
      * @throws RandomException
      */
@@ -17,22 +24,28 @@ class DeriveEncryptionKey
     {
         /** @var User $user */
         $user = $event->user;
-        $cryptFS = $user->cryptFS ?? $user->cryptFS()->create([
-            'encryption_key_salt' => bin2hex(random_bytes(64))
-        ]);
+        
+        if (!$this->keyService->needsKeyDerivation($user)) {
+            return;
+        }
+        
         $request = request();
-
         $password = $request->only('password')[0] ?? $request->input('password');
+        
+        if (!$password) {
+            Log::warning("No password available for key derivation for user {$user->id}");
+            return;
+        }
 
-        Log::info("Logged in or password reset, password is: '{$password}'");
-        Log::info(json_encode(request()->all()));
-
-//        $derivedKey = $this->deriveKey($password, $cryptFS->encryption_key_salt);
-//        Cache::put("encryption_key_{$user->id}", $derivedKey, 60 * 60);
-    }
-
-    private function deriveKey(string $password, string $salt): string
-    {
-        return hash_pbkdf2("sha512", $password, $salt, iterations: 600000);
+        try {
+            $this->sessionService->withKeyDerivationLock($user, function () use ($user, $password) {
+                $this->keyService->deriveKey($user, $password);
+                Log::info("Key derived and stored for user {$user->id}");
+            });
+        } catch (\RuntimeException $e) {
+            Log::warning("Could not acquire key derivation lock for user {$user->id}: " . $e->getMessage());
+        } catch (\Exception $e) {
+            Log::error("Key derivation failed for user {$user->id}: " . $e->getMessage());
+        }
     }
 }

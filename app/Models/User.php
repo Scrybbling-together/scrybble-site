@@ -22,8 +22,6 @@ class User extends Authenticatable implements FilamentUser
     use HasFactory;
     use Notifiable;
 
-    public CryptFSTable|null $cryptFS;
-
     /**
      * The attributes that are mass assignable.
      *

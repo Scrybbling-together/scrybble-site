@@ -3,7 +3,8 @@
 namespace App\Console\Commands;
 
 use App\Models\User;
-use App\modules\CryptFS\Services\CryptFSService;
+use App\modules\CryptFS\Services\CryptFSMountingService;
+use App\modules\CryptFS\Services\CryptFSSessionService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redis;
@@ -14,12 +15,11 @@ class CleanupExpiredCryptFSSessions extends Command
 
     protected $description = 'Cleanup expired CryptFS sessions and unmount orphaned folders';
 
-    private CryptFSService $cryptFSService;
-
-    public function __construct(CryptFSService $cryptFSService)
-    {
+    public function __construct(
+        private CryptFSSessionService $sessionService,
+        private CryptFSMountingService $mountingService
+    ) {
         parent::__construct();
-        $this->cryptFSService = $cryptFSService;
     }
 
     public function handle(): int
@@ -40,7 +40,7 @@ class CleanupExpiredCryptFSSessions extends Command
 
     private function cleanupExpiredSessions(): int
     {
-        $expiredUserIds = $this->cryptFSService->getExpiredSessions();
+        $expiredUserIds = $this->sessionService->getExpiredSessions();
 
         if (empty($expiredUserIds)) {
             $this->info('No expired sessions found in Redis');
@@ -60,38 +60,13 @@ class CleanupExpiredCryptFSSessions extends Command
 
     private function cleanupOrphanedMounts(): int
     {
-        $decryptedBasePath = config('scrybble.cryptfs.decrypted_path');
-
-        if (!is_dir($decryptedBasePath)) {
-            return 0;
-        }
-
-        $mountedFolders = glob($decryptedBasePath . '/user-*', GLOB_ONLYDIR);
+        $mountedUserIds = $this->mountingService->getAllMountedFolders();
         $orphaned = 0;
 
-        foreach ($mountedFolders as $folderPath) {
-            // Extract user ID from folder name
-            $folderName = basename($folderPath);
-            if (!preg_match('/^user-(\d+)$/', $folderName, $matches)) {
-                continue;
-            }
-
-            $userId = (int) $matches[1];
-
-            // Check if this mount point is actually mounted
-            if (!$this->isFolderMounted($folderPath)) {
-                // Not mounted, just remove the empty directory
-                if (is_dir($folderPath) && $this->isDirectoryEmpty($folderPath)) {
-                    rmdir($folderPath);
-                }
-                continue;
-            }
-
-            // Check if there's a valid session in Redis
-            $sessionKey = "crypto_session:user_{$userId}";
-            $sessionExists = Redis::exists($sessionKey);
-
-            if (!$sessionExists) {
+        foreach ($mountedUserIds as $userId) {
+            // Check if there's a valid session in Redis for this mounted folder
+            $user = User::find($userId);
+            if (!$user || !$this->sessionService->hasActiveSession($user)) {
                 // Orphaned mount - no session in Redis
                 $this->warn("Found orphaned mount for user {$userId} (no Redis session)");
                 Log::warning("CryptFS cleanup: Orphaned mount found for user {$userId} - likely due to Redis restart");
@@ -114,7 +89,8 @@ class CleanupExpiredCryptFSSessions extends Command
                 return $this->directUnmount($userId);
             }
 
-            if ($this->cryptFSService->unmountUserFolder($user)) {
+            if ($this->mountingService->unmountUserFolder($user)) {
+                $this->sessionService->destroySession($user);
                 $this->info("Unmounted folder for user {$userId} ({$reason})");
                 return true;
             } else {
@@ -153,26 +129,4 @@ class CleanupExpiredCryptFSSessions extends Command
         return false;
     }
 
-    private function isFolderMounted(string $path): bool
-    {
-        if (!is_dir($path)) {
-            return false;
-        }
-
-        $result = \Illuminate\Support\Facades\Process::run(['mountpoint', '-q', $path]);
-        return $result->successful();
-    }
-
-    private function isDirectoryEmpty(string $path): bool
-    {
-        $handle = opendir($path);
-        while (false !== ($entry = readdir($handle))) {
-            if ($entry !== '.' && $entry !== '..') {
-                closedir($handle);
-                return false;
-            }
-        }
-        closedir($handle);
-        return true;
-    }
 }

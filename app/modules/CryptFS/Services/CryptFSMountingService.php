@@ -8,13 +8,13 @@ use App\Helpers\UserStorage;
 use App\Models\User;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Process;
-use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\Storage;
 
-class CryptFSService
+class CryptFSMountingService
 {
-    private const int MOUNT_TIMEOUT = 30; // seconds (fallback)
-    private const int SESSION_TTL = 600; // 10 minutes (fallback)
+    private const int MOUNT_TIMEOUT = 30;
+    private const int UNMOUNT_TIMEOUT = 10;
+    private const int INIT_TIMEOUT = 30;
 
     /**
      * @throws CryptFSException
@@ -22,35 +22,27 @@ class CryptFSService
     public function mountUserFolder(User $user, string $key): bool
     {
         $userId = $user->id;
-        $encryptedPath = config('scrybble.cryptfs.encrypted_path') . "/user-{$userId}";
-        $decryptedPath = config('scrybble.cryptfs.decrypted_path') . "/user-{$userId}";
+        $encryptedPath = $this->getEncryptedPath($userId);
+        $decryptedPath = $this->getDecryptedPath($userId);
 
-        // Check if already mounted
         if ($this->isUserFolderMounted($user)) {
-            $this->updateSession($user);
             return true;
         }
 
-        // Ensure directories exist
         $this->ensureDirectoriesExist($encryptedPath, $decryptedPath);
 
-        // Initialize encrypted folder if it doesn't exist
         if (!$this->isEncryptedFolderInitialized($encryptedPath)) {
             $this->initializeEncryptedFolder($encryptedPath, $key);
         }
 
-        // Mount the folder
         $timeout = config('scrybble.cryptfs.mount_timeout', self::MOUNT_TIMEOUT);
         $result = Process::timeout($timeout)->run([
             'gocryptfs', $encryptedPath, '-allow_other', '-extpass', 'echo', '-extpass', $key, $decryptedPath
         ]);
 
         if ($result->successful()) {
-            $this->createSession($user);
             Log::info("Successfully mounted encrypted folder for user {$userId}");
-
             $this->migrateLegacyStorage($user);
-
             return true;
         }
 
@@ -61,19 +53,17 @@ class CryptFSService
     public function unmountUserFolder(User $user): bool
     {
         $userId = $user->id;
-        $decryptedPath = config('scrybble.cryptfs.decrypted_path') . "/user-{$userId}";
+        $decryptedPath = $this->getDecryptedPath($userId);
 
         if (!$this->isUserFolderMounted($user)) {
-            return true; // Already unmounted
+            return true;
         }
 
-        // Unmount using fusermount
-        $result = Process::timeout(10)->run([
+        $result = Process::timeout(self::UNMOUNT_TIMEOUT)->run([
             'fusermount', '-u', $decryptedPath
         ]);
 
         if ($result->successful()) {
-            $this->destroySession($user);
             Log::info("Successfully unmounted folder for user {$userId}");
             return true;
         }
@@ -84,47 +74,47 @@ class CryptFSService
 
     public function isUserFolderMounted(User $user): bool
     {
-        $decryptedPath = config('scrybble.cryptfs.decrypted_path') . "/user-{$user->id}";
-        return is_dir($decryptedPath);
+        $decryptedPath = $this->getDecryptedPath($user->id);
+        
+        // In testing environment, we can't actually mount gocryptfs
+        // so we just check if the directory exists
+        if (app()->environment('testing')) {
+            return is_dir($decryptedPath);
+        }
+        
+        return is_dir($decryptedPath) && $this->isMountPoint($decryptedPath);
     }
 
-    public function updateSession(User $user): void
+    public function getAllMountedFolders(): array
     {
-        $key = "crypto_session:user_{$user->id}";
-        $ttl = config('scrybble.cryptfs.session_ttl', self::SESSION_TTL);
-        Redis::setex($key, $ttl, now()->timestamp);
-    }
+        $decryptedBasePath = config('scrybble.cryptfs.decrypted_path');
+        if (!is_dir($decryptedBasePath)) {
+            return [];
+        }
 
-    public function getExpiredSessions(): array
-    {
-        $pattern = "crypto_session:user_*";
-        $keys = Redis::keys($pattern);
-        $expiredSessions = [];
-
-        $ttl = config('scrybble.cryptfs.session_ttl', self::SESSION_TTL);
-        foreach ($keys as $key) {
-            $timestamp = Redis::get($key);
-            if ($timestamp && (now()->timestamp - $timestamp) > $ttl) {
-                // Extract user ID from Redis key
-                preg_match('/crypto_session:user_(\d+)/', $key, $matches);
+        $mountedFolders = [];
+        $folders = glob($decryptedBasePath . '/user-*', GLOB_ONLYDIR);
+        
+        foreach ($folders as $folder) {
+            if ($this->isMountPoint($folder)) {
+                preg_match('/user-(\d+)$/', $folder, $matches);
                 if (isset($matches[1])) {
-                    $expiredSessions[] = (int) $matches[1];
+                    $mountedFolders[] = (int) $matches[1];
                 }
             }
         }
 
-        return $expiredSessions;
+        return $mountedFolders;
     }
 
-    private function createSession(User $user): void
+    private function getEncryptedPath(int $userId): string
     {
-        $this->updateSession($user);
+        return config('scrybble.cryptfs.encrypted_path') . "/user-{$userId}";
     }
 
-    private function destroySession(User $user): void
+    private function getDecryptedPath(int $userId): string
     {
-        $key = "crypto_session:user_{$user->id}";
-        Redis::del($key);
+        return config('scrybble.cryptfs.decrypted_path') . "/user-{$userId}";
     }
 
     private function ensureDirectoriesExist(string $encryptedPath, string $decryptedPath): void
@@ -139,7 +129,6 @@ class CryptFSService
 
     private function isEncryptedFolderInitialized(string $encryptedPath): bool
     {
-        // Check for gocryptfs.conf file
         return file_exists($encryptedPath . '/gocryptfs.conf');
     }
 
@@ -148,7 +137,7 @@ class CryptFSService
      */
     private function initializeEncryptedFolder(string $encryptedPath, string $key): void
     {
-        $result = Process::timeout(30)->run([
+        $result = Process::timeout(self::INIT_TIMEOUT)->run([
             'gocryptfs', '-init', $encryptedPath, '-extpass', 'echo', '-extpass', $key
         ]);
 
@@ -157,6 +146,12 @@ class CryptFSService
         }
 
         Log::info("Initialized new encrypted folder at {$encryptedPath}");
+    }
+
+    private function isMountPoint(string $path): bool
+    {
+        $result = Process::run(['mountpoint', '-q', $path]);
+        return $result->successful();
     }
 
     private function migrateLegacyStorage(User $user): bool
@@ -169,7 +164,6 @@ class CryptFSService
             return true;
         }
 
-        // Check if encrypted folder is actually mounted before attempting migration
         if (!$this->isUserFolderMounted($user)) {
             Log::info("Skipping migration for user {$userId} - encrypted folder not mounted");
             return false;
@@ -193,6 +187,7 @@ class CryptFSService
         } catch (\Exception $e) {
             Log::error("Migration failed for user {$userId}: " . $e->getMessage());
         }
+        
         return false;
     }
 }

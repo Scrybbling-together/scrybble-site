@@ -5,7 +5,7 @@ namespace App\Helpers;
 
 use App\Exceptions\CryptFSException;
 use App\Models\User;
-use App\modules\CryptFS\Services\CryptFSService;
+use App\modules\CryptFS\Services\CryptFSMountingService;
 use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Support\Facades\Storage;
 
@@ -20,7 +20,7 @@ class UserStorage {
      * @throws CryptFSException
      */
     public static function get(User $user): Filesystem {
-        $cryptFs = app(CryptFSService::class);
+        $cryptFs = app(CryptFSMountingService::class);
 
         if ($cryptFs->isUserFolderMounted($user)) {
             // User folder is mounted - use decrypted mount point
