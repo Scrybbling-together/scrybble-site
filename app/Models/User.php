@@ -22,6 +22,8 @@ class User extends Authenticatable implements FilamentUser
     use HasFactory;
     use Notifiable;
 
+    public CryptFSTable|null $cryptFS;
+
     /**
      * The attributes that are mass assignable.
      *
@@ -60,5 +62,10 @@ class User extends Authenticatable implements FilamentUser
     public function canAccessPanel(Panel $panel): bool
     {
         return $this->id === 1;
+    }
+
+    public function cryptFS(): HasOne
+    {
+        return $this->hasOne(CryptFSTable::class);
     }
 }

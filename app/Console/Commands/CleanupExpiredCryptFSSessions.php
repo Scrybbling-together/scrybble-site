@@ -3,7 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Models\User;
-use App\Services\CryptFSService;
+use App\modules\CryptFS\Services\CryptFSService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redis;
@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Redis;
 class CleanupExpiredCryptFSSessions extends Command
 {
     protected $signature = 'cryptfs:cleanup';
-    
+
     protected $description = 'Cleanup expired CryptFS sessions and unmount orphaned folders';
 
     private CryptFSService $cryptFSService;
@@ -25,43 +25,43 @@ class CleanupExpiredCryptFSSessions extends Command
     public function handle(): int
     {
         $this->info('Starting CryptFS cleanup...');
-        
+
         // Step 1: Clean up expired sessions from Redis
         $expiredFromRedis = $this->cleanupExpiredSessions();
-        
+
         // Step 2: Find and clean up orphaned mount points
         $orphanedMounts = $this->cleanupOrphanedMounts();
-        
+
         $total = $expiredFromRedis + $orphanedMounts;
         $this->info("Cleanup complete: {$total} folders unmounted ({$expiredFromRedis} expired, {$orphanedMounts} orphaned)");
-        
+
         return 0;
     }
 
     private function cleanupExpiredSessions(): int
     {
         $expiredUserIds = $this->cryptFSService->getExpiredSessions();
-        
+
         if (empty($expiredUserIds)) {
             $this->info('No expired sessions found in Redis');
             return 0;
         }
 
         $unmounted = 0;
-        
+
         foreach ($expiredUserIds as $userId) {
             if ($this->unmountUserFolder($userId, 'expired session')) {
                 $unmounted++;
             }
         }
-        
+
         return $unmounted;
     }
 
     private function cleanupOrphanedMounts(): int
     {
         $decryptedBasePath = config('scrybble.cryptfs.decrypted_path');
-        
+
         if (!is_dir($decryptedBasePath)) {
             return 0;
         }
@@ -75,9 +75,9 @@ class CleanupExpiredCryptFSSessions extends Command
             if (!preg_match('/^user-(\d+)$/', $folderName, $matches)) {
                 continue;
             }
-            
+
             $userId = (int) $matches[1];
-            
+
             // Check if this mount point is actually mounted
             if (!$this->isFolderMounted($folderPath)) {
                 // Not mounted, just remove the empty directory
@@ -86,22 +86,22 @@ class CleanupExpiredCryptFSSessions extends Command
                 }
                 continue;
             }
-            
+
             // Check if there's a valid session in Redis
             $sessionKey = "crypto_session:user_{$userId}";
             $sessionExists = Redis::exists($sessionKey);
-            
+
             if (!$sessionExists) {
                 // Orphaned mount - no session in Redis
                 $this->warn("Found orphaned mount for user {$userId} (no Redis session)");
                 Log::warning("CryptFS cleanup: Orphaned mount found for user {$userId} - likely due to Redis restart");
-                
+
                 if ($this->unmountUserFolder($userId, 'orphaned mount')) {
                     $orphaned++;
                 }
             }
         }
-        
+
         return $orphaned;
     }
 
@@ -131,7 +131,7 @@ class CleanupExpiredCryptFSSessions extends Command
     private function directUnmount(int $userId): bool
     {
         $decryptedPath = config('scrybble.cryptfs.decrypted_path') . "/user-{$userId}";
-        
+
         if (!$this->isFolderMounted($decryptedPath)) {
             return true; // Already unmounted
         }
@@ -144,7 +144,7 @@ class CleanupExpiredCryptFSSessions extends Command
             // Clean up Redis session if it exists
             $sessionKey = "crypto_session:user_{$userId}";
             Redis::del($sessionKey);
-            
+
             $this->info("Successfully performed direct unmount for user {$userId}");
             return true;
         }

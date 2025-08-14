@@ -2,10 +2,10 @@
 
 namespace Tests\Feature;
 
+use App\Helpers\FileManipulations;
 use App\Helpers\UserStorage;
 use App\Models\User;
-use App\Services\CryptFSService;
-use App\Helpers\FileManipulations;
+use App\modules\CryptFS\Services\CryptFSService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Storage;
 use ReflectionClass;
@@ -65,19 +65,19 @@ class CryptFSMigrationTest extends TestCase
     public function test_legacy_storage_remains_accessible_without_encrypted_folders()
     {
         $user = User::factory()->create(['id' => $this->testUserId]);
-        
+
         $this->createLegacyStorageWithTestFiles($user);
-        
+
         $userStorage = UserStorage::get($user);
-        
+
         $this->assertTrue($userStorage->exists('test-file-1.txt'));
         $this->assertTrue($userStorage->exists('folder/test-file-2.txt'));
         $this->assertTrue($userStorage->exists('folder/subfolder/test-file-3.txt'));
-        
+
         $this->assertEquals("Content of test file 1", $userStorage->get('test-file-1.txt'));
         $this->assertEquals("Content of test file 2", $userStorage->get('folder/test-file-2.txt'));
         $this->assertEquals("Content of test file 3", $userStorage->get('folder/subfolder/test-file-3.txt'));
-        
+
         $efs = Storage::disk('efs');
         $this->assertTrue($efs->exists("user-{$user->id}"));
     }
@@ -85,17 +85,17 @@ class CryptFSMigrationTest extends TestCase
     public function test_migration_handles_missing_decrypted_directory_gracefully()
     {
         $user = User::factory()->create(['id' => $this->testUserId]);
-        
+
         $this->createLegacyStorageWithTestFiles($user);
-        
+
         $service = new CryptFSService();
         $reflection = new ReflectionClass($service);
         $method = $reflection->getMethod('migrateLegacyStorage');
-        
+
         $success = $method->invoke($service, $user);
-        
+
         $this->assertFalse($success);
-        
+
         $efs = Storage::disk('efs');
         $this->assertTrue($efs->exists("user-{$user->id}"));
     }
@@ -103,21 +103,21 @@ class CryptFSMigrationTest extends TestCase
     public function test_migration_retries_successfully_after_initial_failure()
     {
         $user = User::factory()->create(['id' => $this->testUserId]);
-        
+
         $this->createLegacyStorageWithTestFiles($user);
-        
+
         $service = new CryptFSService();
         $reflection = new ReflectionClass($service);
         $method = $reflection->getMethod('migrateLegacyStorage');
-        
+
         $firstAttempt = $method->invoke($service, $user);
         $this->assertFalse($firstAttempt);
-        
+
         $this->setupEncryptedStorageDirectories($user);
-        
+
         $secondAttempt = $method->invoke($service, $user);
         $this->assertTrue($secondAttempt);
-        
+
         $this->assertLegacyStorageIsEmpty($user);
         $this->assertFilesExistInDecryptedStorage($user);
     }

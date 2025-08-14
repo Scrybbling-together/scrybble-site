@@ -5,7 +5,7 @@ namespace App\Helpers;
 
 use App\Exceptions\CryptFSException;
 use App\Models\User;
-use App\Services\CryptFSService;
+use App\modules\CryptFS\Services\CryptFSService;
 use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Support\Facades\Storage;
 

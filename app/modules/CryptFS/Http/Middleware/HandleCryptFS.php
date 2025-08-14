@@ -1,13 +1,15 @@
 <?php
 
-namespace App\Http\Middleware;
+namespace App\modules\CryptFS\Http\Middleware;
 
-use App\Services\CryptFSService;
 use App\Exceptions\CryptFSException;
+use App\modules\CryptFS\Services\CryptFSService;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use SodiumException;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -22,7 +24,6 @@ class HandleCryptFS
 
     public function handle(Request $request, Closure $next): Response
     {
-        // Skip if user is not authenticated
         if (!Auth::check()) {
             return $next($request);
         }
@@ -39,7 +40,6 @@ class HandleCryptFS
         // If encryption key provided, attempt to mount
         if ($encryptionKey) {
             try {
-                // Decode the base64-encoded key
                 $decodedKey = base64_decode($encryptionKey, true);
                 if ($decodedKey === false) {
                     return response()->json([
@@ -47,10 +47,8 @@ class HandleCryptFS
                     ], 400);
                 }
 
-                // Mount the user folder
                 $this->cryptFSService->mountUserFolder($user, $decodedKey);
 
-                // Clear the key from memory
                 sodium_memzero($decodedKey);
 
                 return $next($request);
@@ -67,7 +65,17 @@ class HandleCryptFS
             }
         }
 
-        // Allow request to proceed without encryption (legacy mode)
-        return $next($request);
+        $response = $next($request);
+
+        if (Str::endsWith($request->route(), "/oauth/token")) {
+            $derived_key = Cache::get("cryptfs:pending_derived_key:{$user->id}");
+            if ($derived_key) {
+                $response->headers->set('X-Encryption-Key', $derived_key);
+            } else {
+                Log::warning("Cryptfs: No derived key available for user {$user->id} when requesting /oauth/token");
+            }
+        }
+
+        return $response;
     }
 }

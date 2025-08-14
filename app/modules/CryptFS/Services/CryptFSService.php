@@ -1,14 +1,14 @@
 <?php
 
-namespace App\Services;
+namespace App\modules\CryptFS\Services;
 
-use App\Models\User;
 use App\Exceptions\CryptFSException;
 use App\Helpers\FileManipulations;
 use App\Helpers\UserStorage;
+use App\Models\User;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Process;
 use Illuminate\Support\Facades\Redis;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
 class CryptFSService
