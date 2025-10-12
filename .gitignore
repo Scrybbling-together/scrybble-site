@@ -15,8 +15,9 @@ yarn-error.log
 /.vscode
 
 storage/efs/
-storage/storage-encrypted/
 storage/storage-decrypted/
+storage/storage-encrypted/
+
 xochitl-binaries/
 .ebextensions/
 .platform/

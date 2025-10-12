@@ -3,25 +3,34 @@
 namespace App\Services;
 
 use Exception;
+use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Http;
 use Log;
 
-readonly class CloudflareTurnstileService
-{
-    private string $url;
+readonly class CloudflareTurnstileService {
+    public const string CLOUDFLARE_CHALLENGE_URL = "https://challenges.cloudflare.com/turnstile/v0/siteverify";
 
-    public function __construct()
+    /**
+     * @return bool
+     */
+    public static function turnstileEnabled(): bool
     {
-        $this->url = "https://challenges.cloudflare.com/turnstile/v0/siteverify";
+        return !is_null(Config::get("scrybble.cloudflare.site_key")) && !is_null(Config::get("scrybble.cloudflare.secret_key"));
     }
 
-    public function verifyTurnstileToken(?string $token, string $remoteip)
+    public function verifyTurnstileToken(?string $token)
     {
+        if (is_null($token) || $token === "") {
+            return [
+                'success' => false,
+                'error' => ['Missing Cloudflare turnstile token']
+            ];
+        }
         try {
-            $response = Http::asForm()->post($this->url, [
+            $response = Http::asForm()->post(self::CLOUDFLARE_CHALLENGE_URL, [
                 'secret' => config('scrybble.cloudflare.secret_key'),
                 'response' => $token,
-                'remoteip' => $remoteip
+                'remoteip' => request()->ip()
             ]);
 
             return $response->json();
@@ -33,7 +42,7 @@ readonly class CloudflareTurnstileService
 
             return [
                 'success' => false,
-                'error_codes' => ['internal-error']
+                'error' => ['internal-error']
             ];
         }
     }

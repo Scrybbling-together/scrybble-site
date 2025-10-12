@@ -3,14 +3,25 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use Database\Factories\SyncFactory;
 use Eloquent\Pathogen\AbsolutePath;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Sync extends Model {
+    use HasFactory;
+    
     protected $table = 'sync';
+
+    protected $fillable = [
+        'user_id',
+        'filename', 
+        'completed',
+        'sync_id'
+    ];
 
     protected $casts = [
         'completed' => 'bool'

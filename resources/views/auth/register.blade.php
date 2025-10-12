@@ -16,7 +16,7 @@
                     <form method="POST" action="{{ route('register') }}">
                         @csrf
 
-                        @error('turnstile')
+                        @error('cf-turnstile-response')
                         <span class="invalid-feedback" role="alert">
                             <strong>{{ $message }}</strong>
                         </span>

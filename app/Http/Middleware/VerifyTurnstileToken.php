@@ -3,11 +3,12 @@
 namespace App\Http\Middleware;
 
 use Closure;
+use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Http\Request;
 use App\Services\CloudflareTurnstileService;
 use Symfony\Component\HttpFoundation\Response;
 
-class VerifyTurnstileToken
+class VerifyTurnstileToken implements ValidationRule
 {
     protected CloudflareTurnstileService $turnstileService;
 
@@ -25,19 +26,19 @@ class VerifyTurnstileToken
      */
     public function handle(Request $request, Closure $next): Response
     {
-        $token = $request->input('cf-turnstile-response');
-        $ip = $request->ip();
-
-        $result = $this->turnstileService->verifyTurnstileToken($token, $ip);
-
-        if (!$result['success']) {
-            return response()->json([
-                'errors' => [
-                    'turnstile' => 'Invalid or expired Turnstile token, try again.'
-                ]
-            ], 400);
-        }
 
         return $next($request);
+    }
+
+    public function validate(string $attribute, mixed $value, Closure $fail): void
+    {
+        $request = request();
+        $token = $request->input('cf-turnstile-response');
+
+        $result = $this->turnstileService->verifyTurnstileToken($token);
+
+        if (!$result['success']) {
+            $fail($result['error-codes'][0] ?? "Failed to validate cloudflare turnstile token");
+        }
     }
 }

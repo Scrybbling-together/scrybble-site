@@ -2,3 +2,6 @@ storage/logs/laravel.log
 ./result
 bootstrap/cache/*
 storage/efs/*
+storage/storage-encrypted/
+storage/storage-decrypted/
+vendor/

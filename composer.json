@@ -10,7 +10,6 @@
         "ext-sodium": "*",
         "erusev/parsedown": "^1.7",
         "filament/filament": "^3.3",
-        "filament/spatie-laravel-media-library-plugin": "^3.2",
         "flowframe/laravel-trend": "^0.4.0",
         "gboquizosanchez/filament-log-viewer": "^1.2",
         "guzzlehttp/guzzle": "^7.0",

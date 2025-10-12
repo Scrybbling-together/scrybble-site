@@ -1,6 +1,5 @@
-import {defineConfig, loadEnv} from 'vite';
+import {defineConfig} from 'vite';
 import laravel from 'laravel-vite-plugin';
-import ReactPlugin from "@vitejs/plugin-react";
 import sentryVitePlugin from "@sentry/vite-plugin";
 import dotenv from 'dotenv';
 import { execSync } from 'child_process'
@@ -44,7 +43,6 @@ export default ({mode}) => {
                 refresh: true,
             }),
             process.env.APP_DEBUG ? null : vitePlugin,
-            ReactPlugin()
         ],
         resolve: {
             alias: {

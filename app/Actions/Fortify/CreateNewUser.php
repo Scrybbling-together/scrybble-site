@@ -2,6 +2,7 @@
 
 namespace App\Actions\Fortify;
 
+use App\Http\Middleware\VerifyTurnstileToken;
 use App\Models\User;
 use App\Services\CloudflareTurnstileService;
 use Illuminate\Http\JsonResponse;
@@ -22,18 +23,7 @@ class CreateNewUser implements CreatesNewUsers
      */
     public function create(array $input): User|JsonResponse
     {
-        $token = request()->input('cf-turnstile-response');
-        $ip = request()->ip();
-
-        $result = app(CloudflareTurnstileService::class)->verifyTurnstileToken($token, $ip);
-
-        if (!$result['success']) {
-            return response()->json([
-                'errors' => [
-                    'turnstile' => 'Invalid or expired Turnstile token, try again.'
-                ]
-            ], 400);
-        }
+        $cloudflareService = new CloudflareTurnstileService();
 
         Validator::make($input, [
             'name' => ['required', 'string', 'max:255'],
@@ -45,6 +35,10 @@ class CreateNewUser implements CreatesNewUsers
                 Rule::unique(User::class),
             ],
             'password' => $this->passwordRules(),
+            ...($cloudflareService::turnstileEnabled() ? [
+                'cf-turnstile-response' => ['required', new VerifyTurnstileToken($cloudflareService)]
+            ] : [])
+
         ])->validate();
 
         return User::create([
@@ -53,4 +47,5 @@ class CreateNewUser implements CreatesNewUsers
             'password' => Hash::make($input['password']),
         ]);
     }
+
 }
