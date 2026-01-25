@@ -8,6 +8,9 @@ COPY . /app/
 WORKDIR /app/
 RUN composer install --prefer-dist --no-dev --optimize-autoloader --no-interaction
 
+# Clear any stale bootstrap cache before testing artisan
+RUN rm -f bootstrap/cache/*.php
+
 # This checks whether artisan is usable, it's a test.
 RUN php artisan about
 
@@ -51,4 +54,6 @@ RUN a2enmod rewrite
 RUN a2enmod expires
 RUN a2enmod headers
 
+# Clear any stale bootstrap cache before optimizing
+RUN rm -f bootstrap/cache/*.php
 RUN php artisan optimize
