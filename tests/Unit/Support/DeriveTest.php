@@ -158,6 +158,92 @@ class DeriveTest extends TestCase
         $this->assertEquals('nested', $child->derived_label);
     }
 
+    public function test_derives_with_create_quietly(): void
+    {
+        $factory = new class extends Factory {
+            use DerivesAttributes;
+            protected $model = DeriveChild::class;
+
+            public function definition(): array
+            {
+                return [
+                    'derived_label' => Derive::from('parent.label'),
+                ];
+            }
+        };
+
+        $child = $factory
+            ->for(DeriveParent::factory()->label('quiet'), 'parent')
+            ->createQuietly();
+
+        $this->assertEquals('quiet', $child->derived_label);
+    }
+
+    public function test_derives_across_multiple_models(): void
+    {
+        $factory = new class extends Factory {
+            use DerivesAttributes;
+            protected $model = DeriveChild::class;
+
+            public function definition(): array
+            {
+                return [
+                    'derived_label' => Derive::from('parent.label'),
+                ];
+            }
+        };
+
+        $children = $factory
+            ->count(3)
+            ->for(DeriveParent::factory()->label('batch'), 'parent')
+            ->create();
+
+        $this->assertCount(3, $children);
+        $children->each(fn ($child) => $this->assertEquals('batch', $child->derived_label));
+    }
+
+    public function test_throws_when_relationship_does_not_exist(): void
+    {
+        $factory = new class extends Factory {
+            use DerivesAttributes;
+            protected $model = DeriveChild::class;
+
+            public function definition(): array
+            {
+                return [
+                    'derived_label' => Derive::from('nonExistent.label'),
+                ];
+            }
+        };
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage("has no 'nonExistent' relationship");
+
+        $factory->create();
+    }
+
+    public function test_explicit_null_override_prevents_derivation(): void
+    {
+        $factory = new class extends Factory {
+            use DerivesAttributes;
+            protected $model = DeriveChild::class;
+
+            public function definition(): array
+            {
+                return [
+                    'derived_label' => Derive::from('parent.label'),
+                ];
+            }
+        };
+
+        $child = $factory
+            ->for(DeriveParent::factory()->label('hello'), 'parent')
+            ->state(['derived_label' => null])
+            ->create();
+
+        $this->assertNull($child->derived_label);
+    }
+
     public function test_transforms_derived_value_with_closure(): void
     {
         $factory = new class extends Factory {

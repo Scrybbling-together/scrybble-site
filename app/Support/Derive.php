@@ -88,6 +88,15 @@ class Derive
      */
     public function resolve(Model $model): mixed
     {
+        $relation = explode('.', $this->path, 2)[0];
+
+        if (!method_exists($model, $relation)) {
+            throw new \InvalidArgumentException(
+                "Derive path '{$this->path}' is invalid: "
+                . get_class($model) . " has no '{$relation}' relationship."
+            );
+        }
+
         $value = data_get($model, $this->path);
 
         if ($value !== null && $this->transformer !== null) {
