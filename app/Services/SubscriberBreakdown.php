@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\SubscriberTier;
 use App\Enums\SubscriptionPeriod;
 use App\Models\GumroadSubscriber;
 use App\Models\GumroadSale;
@@ -32,40 +33,50 @@ class SubscriberBreakdown
         $twoYearly = SubscriptionPeriod::EveryTwoYears->value;
 
         return [
-            ['SUM(CASE WHEN recurrence = ? THEN cnt ELSE 0 END) as monthly', [$monthly]],
-            ['SUM(CASE WHEN recurrence = ? THEN cnt ELSE 0 END) as yearly', [$yearly]],
-            ['SUM(CASE WHEN recurrence = ? THEN cnt ELSE 0 END) as two_yearly', [$twoYearly]],
+            ['SUM(CASE WHEN is_trial THEN cnt ELSE 0 END) as trial', []],
+            ['SUM(CASE WHEN NOT is_trial AND recurrence = ? THEN cnt ELSE 0 END) as monthly', [$monthly]],
+            ['SUM(CASE WHEN NOT is_trial AND recurrence = ? THEN cnt ELSE 0 END) as yearly', [$yearly]],
+            ['SUM(CASE WHEN NOT is_trial AND recurrence = ? THEN cnt ELSE 0 END) as two_yearly', [$twoYearly]],
+            ['SUM(CASE WHEN NOT is_trial THEN cnt ELSE 0 END) as total_active', []],
             ['SUM(cnt) as total', []],
         ];
     }
 
+    private function allTiersScaffold(): QueryBuilder
+    {
+        $cases = SubscriberTier::cases();
+        $first = array_shift($cases);
+
+        $query = DB::query()->selectRaw('? as tier', [$first->value]);
+
+        foreach ($cases as $tier) {
+            $query->unionAll(DB::query()->selectRaw('? as tier', [$tier->value]));
+        }
+
+        return $query;
+    }
+
     public function byTierAndRecurrenceQuery(): QueryBuilder
     {
-        $tiers = DB::query()->fromSub($this->tierInnerQuery(), 'grouped')
-            ->where('is_trial', false)
-            ->groupBy('tier')
-            ->selectRaw('tier as id')
-            ->selectRaw('tier')
+        $tiers = DB::query()
+            ->fromSub($this->allTiersScaffold(), 'all_tiers')
+            ->leftJoinSub($this->tierInnerQuery(), 'grouped', 'all_tiers.tier', '=', 'grouped.tier')
+            ->groupBy('all_tiers.tier')
+            ->selectRaw('all_tiers.tier as id')
+            ->selectRaw('all_tiers.tier')
             ->selectRaw('0 as sort_order');
-
-        $trial = DB::query()->fromSub($this->tierInnerQuery(), 'trial')
-            ->where('is_trial', true)
-            ->selectRaw("'Trial' as id")
-            ->selectRaw("'Trial' as tier")
-            ->selectRaw('1 as sort_order');
 
         $totals = DB::query()->fromSub($this->tierInnerQuery(), 'totals')
             ->selectRaw("'Total' as id")
             ->selectRaw("'Total' as tier")
-            ->selectRaw('2 as sort_order');
+            ->selectRaw('1 as sort_order');
 
         foreach ($this->pivotColumns() as [$expr, $bindings]) {
             $tiers->selectRaw($expr, $bindings);
-            $trial->selectRaw($expr, $bindings);
             $totals->selectRaw($expr, $bindings);
         }
 
-        return $tiers->unionAll($trial)->unionAll($totals);
+        return $tiers->unionAll($totals);
     }
 
     public function byTierAndRecurrence(): Collection

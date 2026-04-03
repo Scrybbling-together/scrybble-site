@@ -37,7 +37,10 @@ class ActiveSubscribersByTier extends TableWidget
                 TextColumn::make('tier')
                     ->label('Tier')
                     ->formatStateUsing(fn (string $state) => $tierLabels->get($state, $state))
-                    ->weight(fn ($record) => in_array($record->tier, ['Total', 'Trial']) ? 'bold' : null),
+                    ->weight(fn ($record) => $record->tier === 'Total' ? 'bold' : null),
+                TextColumn::make('trial')
+                    ->label('Trial')
+                    ->alignEnd(),
                 TextColumn::make('monthly')
                     ->label('Monthly')
                     ->alignEnd(),
@@ -47,6 +50,10 @@ class ActiveSubscribersByTier extends TableWidget
                 TextColumn::make('two_yearly')
                     ->label('Two-yearly')
                     ->alignEnd(),
+                TextColumn::make('total_active')
+                    ->label('Total Active')
+                    ->alignEnd()
+                    ->weight('bold'),
                 TextColumn::make('total')
                     ->label('Total')
                     ->alignEnd()

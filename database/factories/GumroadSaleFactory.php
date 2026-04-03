@@ -6,11 +6,14 @@ use App\Enums\SubscriberTier;
 use App\Enums\SubscriptionPeriod;
 use App\Models\GumroadSale;
 use App\Models\GumroadSubscriber;
+use App\Support\Derive;
+use App\Support\DerivesAttributes;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /** @extends Factory<GumroadSale> */
 class GumroadSaleFactory extends Factory
 {
+    use DerivesAttributes;
     protected $model = GumroadSale::class;
 
     public function definition(): array
@@ -20,7 +23,7 @@ class GumroadSaleFactory extends Factory
             'subscription_id' => null,
             'created_at' => $this->faker->dateTimeBetween('-1 year'),
             'price' => $this->faker->numberBetween(500, 5000),
-            'subscription_duration' => SubscriptionPeriod::Monthly,
+            'subscription_duration' => Derive::from('subscriber.recurrence'),
             'variants' => ['Tier' => SubscriberTier::Professional->value],
             'paid' => true,
         ];
@@ -40,10 +43,10 @@ class GumroadSaleFactory extends Factory
         ]);
     }
 
-    public function yearly(): static
+    public function recurrence(SubscriptionPeriod $period): static
     {
         return $this->state([
-            'subscription_duration' => SubscriptionPeriod::Yearly,
+            'subscription_duration' => $period,
         ]);
     }
 

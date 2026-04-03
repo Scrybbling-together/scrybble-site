@@ -30,17 +30,10 @@ class GumroadSubscriberFactory extends Factory
         ]);
     }
 
-    public function yearly(): static
+    public function recurrence(SubscriptionPeriod $period): static
     {
         return $this->state([
-            'recurrence' => SubscriptionPeriod::Yearly,
-        ]);
-    }
-
-    public function everyTwoYears(): static
-    {
-        return $this->state([
-            'recurrence' => SubscriptionPeriod::EveryTwoYears,
+            'recurrence' => $period,
         ]);
     }
 
