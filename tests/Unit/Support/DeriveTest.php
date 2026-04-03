@@ -2,54 +2,180 @@
 
 namespace Tests\Unit\Support;
 
-use App\Enums\SubscriptionPeriod;
-use App\Models\GumroadSale;
-use App\Models\GumroadSubscriber;
+use App\Support\Derive;
+use App\Support\DerivesAttributes;
+use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Str;
+use Tests\Support\Derive\DeriveChild;
+use Tests\Support\Derive\DeriveGrandparent;
+use Tests\Support\Derive\DeriveParent;
 use Tests\TestCase;
 
 class DeriveTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        Schema::create('derive_test_grandparents', function (Blueprint $table) {
+            $table->id();
+            $table->string('label');
+            $table->timestamps();
+        });
+
+        Schema::create('derive_test_parents', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('grandparent_id')->nullable();
+            $table->string('label');
+            $table->timestamps();
+        });
+
+        Schema::create('derive_test_children', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('parent_id')->nullable();
+            $table->string('derived_label')->nullable();
+            $table->timestamps();
+        });
+    }
+
     public function test_derives_attribute_from_parent(): void
     {
-        $sale = GumroadSale::factory()
-            ->for(GumroadSubscriber::factory()->recurrence(SubscriptionPeriod::Yearly), 'subscriber')
+        $factory = new class extends Factory {
+            use DerivesAttributes;
+            protected $model = DeriveChild::class;
+
+            public function definition(): array
+            {
+                return [
+                    'derived_label' => Derive::from('parent.label'),
+                ];
+            }
+        };
+
+        $child = $factory
+            ->for(DeriveParent::factory()->label('hello'), 'parent')
             ->create();
 
-        $this->assertEquals(SubscriptionPeriod::Yearly, $sale->subscription_duration);
+        $this->assertEquals('hello', $child->derived_label);
     }
 
     public function test_explicit_override_wins(): void
     {
-        $sale = GumroadSale::factory()
-            ->for(GumroadSubscriber::factory()->recurrence(SubscriptionPeriod::Yearly), 'subscriber')
-            ->recurrence(SubscriptionPeriod::Monthly)
+        $factory = new class extends Factory {
+            use DerivesAttributes;
+            protected $model = DeriveChild::class;
+
+            public function definition(): array
+            {
+                return [
+                    'derived_label' => Derive::from('parent.label'),
+                ];
+            }
+        };
+
+        $child = $factory
+            ->for(DeriveParent::factory()->label('hello'), 'parent')
+            ->state(['derived_label' => 'overridden'])
             ->create();
 
-        $this->assertEquals(SubscriptionPeriod::Monthly, $sale->subscription_duration);
+        $this->assertEquals('overridden', $child->derived_label);
     }
 
     public function test_works_without_parent(): void
     {
-        $sale = GumroadSale::factory()->create();
+        $factory = new class extends Factory {
+            use DerivesAttributes;
+            protected $model = DeriveChild::class;
 
-        $this->assertNull($sale->subscription_duration);
+            public function definition(): array
+            {
+                return [
+                    'derived_label' => Derive::from('parent.label'),
+                ];
+            }
+        };
+
+        $child = $factory->create();
+
+        $this->assertNull($child->derived_label);
     }
 
     public function test_coexists_with_factory_configure_callbacks(): void
     {
         $callbackRan = false;
 
-        $sale = GumroadSale::factory()
-            ->for(GumroadSubscriber::factory()->recurrence(SubscriptionPeriod::Yearly), 'subscriber')
+        $factory = new class extends Factory {
+            use DerivesAttributes;
+            protected $model = DeriveChild::class;
+
+            public function definition(): array
+            {
+                return [
+                    'derived_label' => Derive::from('parent.label'),
+                ];
+            }
+        };
+
+        $child = $factory
+            ->for(DeriveParent::factory()->label('hello'), 'parent')
             ->afterCreating(function () use (&$callbackRan) {
                 $callbackRan = true;
             })
             ->create();
 
         $this->assertTrue($callbackRan);
-        $this->assertEquals(SubscriptionPeriod::Yearly, $sale->subscription_duration);
+        $this->assertEquals('hello', $child->derived_label);
+    }
+
+    public function test_derives_through_nested_relations(): void
+    {
+        $factory = new class extends Factory {
+            use DerivesAttributes;
+            protected $model = DeriveChild::class;
+
+            public function definition(): array
+            {
+                return [
+                    'derived_label' => Derive::from('parent.grandparent.label'),
+                ];
+            }
+        };
+
+        $grandparent = DeriveGrandparent::factory()->label('nested')->create();
+        $parent = DeriveParent::factory()
+            ->for($grandparent, 'grandparent')
+            ->create();
+
+        $child = $factory
+            ->for($parent, 'parent')
+            ->create();
+
+        $this->assertEquals('nested', $child->derived_label);
+    }
+
+    public function test_transforms_derived_value_with_closure(): void
+    {
+        $factory = new class extends Factory {
+            use DerivesAttributes;
+            protected $model = DeriveChild::class;
+
+            public function definition(): array
+            {
+                return [
+                    'derived_label' => Derive::from('parent.label')->transform(fn (string $value) => Str::slug($value)),
+                ];
+            }
+        };
+
+        $child = $factory
+            ->for(DeriveParent::factory()->label('Hello World'), 'parent')
+            ->create();
+
+        $this->assertEquals('hello-world', $child->derived_label);
     }
 }
