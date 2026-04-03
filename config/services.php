@@ -32,7 +32,8 @@ return [
     ],
 
     'gumroad' => [
-        'token' => env('GUMROAD_ACCESS_TOKEN')
+        'token' => env('GUMROAD_ACCESS_TOKEN'),
+        'product_id' => env('GUMROAD_PRODUCT_ID'),
     ]
 
 ];

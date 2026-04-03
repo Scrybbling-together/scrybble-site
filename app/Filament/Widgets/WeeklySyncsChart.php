@@ -2,20 +2,24 @@
 
 namespace App\Filament\Widgets;
 
-use Filament\Widgets\ChartWidget;
 use App\Models\Sync;
 
-class WeeklySyncsChart extends ChartWidget
+class WeeklySyncsChart extends ExportableChartWidget
 {
     protected ?string $heading = 'Weekly Syncs';
 
-    protected function getData(): array
+    private function query()
     {
-        $data = Sync::selectRaw("DATE_FORMAT(created_at, '%V-%X') as week, COUNT(*) as syncs_count")
+        return Sync::selectRaw("DATE_FORMAT(created_at, '%V-%X') as week, COUNT(*) as syncs_count")
             ->whereNotNull('created_at')
             ->groupByRaw("DATE_FORMAT(created_at, '%V-%X')")
             ->orderByRaw("DATE_FORMAT(created_at, '%V-%X') ASC")
             ->get();
+    }
+
+    protected function getData(): array
+    {
+        $data = $this->query();
 
         return [
             'datasets' => [
@@ -27,6 +31,16 @@ class WeeklySyncsChart extends ChartWidget
                 ]
             ],
             'labels' => $data->pluck('week')->toArray(),
+        ];
+    }
+
+    protected function getExportData(): array
+    {
+        $data = $this->query();
+
+        return [
+            'headers' => ['Week', 'Syncs'],
+            'rows' => $data->map(fn ($row) => [$row->week, $row->syncs_count])->toArray(),
         ];
     }
 

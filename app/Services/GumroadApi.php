@@ -53,4 +53,23 @@ class GumroadApi
             ]
         ])->withHeader('Content-Type', 'application/json');
     }
+
+    public function getSubscribers(string $productId): array
+    {
+        $response = $this->client->get("products/$productId/subscribers");
+
+        return json_decode($response->getBody()->getContents(), true);
+    }
+
+    public function getSales(?string $pageKey = null): array
+    {
+        $query = ['access_token' => config('services.gumroad.token')];
+        if ($pageKey) {
+            $query['page_key'] = $pageKey;
+        }
+
+        $response = $this->client->get('sales', ['query' => $query]);
+
+        return json_decode($response->getBody()->getContents(), true);
+    }
 }

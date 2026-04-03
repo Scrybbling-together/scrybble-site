@@ -2,20 +2,24 @@
 
 namespace App\Filament\Widgets;
 
-use Filament\Widgets\ChartWidget;
 use App\Models\Sync;
 
-class SyncsChart extends ChartWidget
+class SyncsChart extends ExportableChartWidget
 {
     protected ?string $heading = 'Daily Syncs';
 
-    protected function getData(): array
+    private function query()
     {
-        $data = Sync::selectRaw('DATE(created_at) as day, COUNT(*) as syncs_count')
+        return Sync::selectRaw('DATE(created_at) as day, COUNT(*) as syncs_count')
             ->whereNotNull('created_at')
             ->groupByRaw('DATE(created_at)')
             ->orderByRaw('DATE(created_at) ASC')
             ->get();
+    }
+
+    protected function getData(): array
+    {
+        $data = $this->query();
 
         return [
             'datasets' => [
@@ -27,6 +31,16 @@ class SyncsChart extends ChartWidget
                 ]
             ],
             'labels' => $data->pluck('day')->toArray(),
+        ];
+    }
+
+    protected function getExportData(): array
+    {
+        $data = $this->query();
+
+        return [
+            'headers' => ['Date', 'Syncs'],
+            'rows' => $data->map(fn ($row) => [$row->day, $row->syncs_count])->toArray(),
         ];
     }
 
