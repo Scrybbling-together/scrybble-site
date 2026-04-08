@@ -32,6 +32,8 @@ use Illuminate\Database\Eloquent\Model;
 class Derive
 {
     private ?Closure $transformer = null;
+    private mixed $default = null;
+    private bool $hasDefault = false;
 
     /**
      * @param string $path Dot-notated path through relations to the source attribute.
@@ -61,6 +63,14 @@ class Derive
      *
      * @example Derive::from('parent.name')->transform(fn (string $name) => Str::slug($name))
      */
+    public function default(mixed $default): static
+    {
+        $this->default = $default;
+        $this->hasDefault = true;
+
+        return $this;
+    }
+
     public function transform(Closure $transformer): static
     {
         $this->transformer = $transformer;
@@ -98,6 +108,10 @@ class Derive
         }
 
         $value = data_get($model, $this->path);
+
+        if ($value === null && $this->hasDefault) {
+            return $this->default;
+        }
 
         if ($value !== null && $this->transformer !== null) {
             return ($this->transformer)($value);

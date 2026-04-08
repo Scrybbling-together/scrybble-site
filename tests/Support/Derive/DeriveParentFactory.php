@@ -16,7 +16,7 @@ class DeriveParentFactory extends Factory
         ];
     }
 
-    public function label(string $label): static
+    public function label(?string $label): static
     {
         return $this->state(['label' => $label]);
     }

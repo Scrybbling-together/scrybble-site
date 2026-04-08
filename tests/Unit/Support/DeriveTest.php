@@ -24,14 +24,14 @@ class DeriveTest extends TestCase
 
         Schema::create('derive_test_grandparents', function (Blueprint $table) {
             $table->id();
-            $table->string('label');
+            $table->string('label')->nullable();
             $table->timestamps();
         });
 
         Schema::create('derive_test_parents', function (Blueprint $table) {
             $table->id();
             $table->foreignId('grandparent_id')->nullable();
-            $table->string('label');
+            $table->string('label')->nullable();
             $table->timestamps();
         });
 
@@ -242,6 +242,71 @@ class DeriveTest extends TestCase
             ->create();
 
         $this->assertNull($child->derived_label);
+    }
+
+    public function test_default_is_used_when_relation_attribute_is_null(): void
+    {
+        $factory = new class extends Factory {
+            use DerivesAttributes;
+            protected $model = DeriveChild::class;
+
+            public function definition(): array
+            {
+                return [
+                    'derived_label' => Derive::from('parent.label')->default('untitled'),
+                ];
+            }
+        };
+
+        $child = $factory
+            ->for(DeriveParent::factory()->label(null), 'parent')
+            ->create();
+
+        $this->assertEquals('untitled', $child->derived_label);
+    }
+
+    public function test_default_is_not_used_when_relation_attribute_has_value(): void
+    {
+        $factory = new class extends Factory {
+            use DerivesAttributes;
+            protected $model = DeriveChild::class;
+
+            public function definition(): array
+            {
+                return [
+                    'derived_label' => Derive::from('parent.label')->default('untitled'),
+                ];
+            }
+        };
+
+        $child = $factory
+            ->for(DeriveParent::factory()->label('hello'), 'parent')
+            ->create();
+
+        $this->assertEquals('hello', $child->derived_label);
+    }
+
+    public function test_transform_does_not_apply_to_default(): void
+    {
+        $factory = new class extends Factory {
+            use DerivesAttributes;
+            protected $model = DeriveChild::class;
+
+            public function definition(): array
+            {
+                return [
+                    'derived_label' => Derive::from('parent.label')
+                        ->transform(fn (string $value) => Str::slug($value))
+                        ->default('untitled'),
+                ];
+            }
+        };
+
+        $child = $factory
+            ->for(DeriveParent::factory()->label(null), 'parent')
+            ->create();
+
+        $this->assertEquals('untitled', $child->derived_label);
     }
 
     public function test_transforms_derived_value_with_closure(): void
