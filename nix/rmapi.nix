@@ -8,8 +8,8 @@ let
     src = pkgs.fetchFromGitHub {
       owner = "scrybbling-together";
       repo = "rmapi";
-      rev = "23dca7a5431ee88074747a1e2a9617d16e2e7745";
-      sha256 = "sha256-MD5UUV6bKMd8cEvp0DMiacwnIyJxlCcS2Rcd++vzgYk=";
+      rev = "797a932c22d569d20d65cc1019099d18bd071fb4";
+      sha256 = "sha256-uOJdyLq0KqkerIaMyP2raP/glVn4cWgzim38I+jJYVY=";
     };
 
     vendorHash = "sha256-Qisfw+lCFZns13jRe9NskCaCKVj5bV1CV8WPpGBhKFc=";
