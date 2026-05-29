@@ -11,7 +11,11 @@ services:
       redis:
         condition: service_healthy
       remarks:
-        condition: service_healthy
+        # `service_started` (not `service_healthy`): the remarks image does not
+        # define a healthcheck, and requiring `service_healthy` against a service
+        # without one makes `docker compose up` hang/error. Restore to
+        # `service_healthy` once the remarks image exposes a healthcheck.
+        condition: service_started
       on_startup:
         condition: service_completed_successfully
       # Uncomment if you want to use letsencrypt
