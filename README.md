@@ -119,6 +119,8 @@ To get started with the `.env` file, copy the `.env.example` file and name the n
 
 For security, you are recommended to choose a username, password and root password for your database.
 
+`REMARKS_HOST` and `REMARKS_PORT` point Scrybble at the remarks rendering service. They default to `remarks:5000`, matching the `remarks` service in the bundled docker-compose files; only set them if you rename that service or run the renderer on a different host or port.
+
 #### Make modifications to the docker-compose file if you wish
 
 The docker-compose file is configured to be secure by default, so the database and redis ports aren't opened.

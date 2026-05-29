@@ -18,7 +18,7 @@ class RemarksHTTPServer implements RemarksService
     public function extractNotesAndHighlights(AbsolutePathInterface $sourceDirectory, AbsolutePathInterface $targetDirectory): string
     {
         $efsRoot = AbsolutePath::fromString(Storage::disk('efs')->path("."));
-        $res = Http::timeout(5 * 60)->post("remarks:5000/process", [
+        $res = Http::timeout(5 * 60)->post(sprintf("%s:%s/process", config('remarks.host'), config('remarks.port')), [
             "in_path" => "/efs/" . $sourceDirectory->relativeTo($efsRoot)->string(),
             "out_path" => "/efs/" . $sourceDirectory->relativeTo($efsRoot)->string()
         ]);
