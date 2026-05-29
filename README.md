@@ -119,6 +119,17 @@ To get started with the `.env` file, copy the `.env.example` file and name the n
 
 For security, you are recommended to choose a username, password and root password for your database.
 
+The most relevant settings are:
+
+- `APP_URL` — the public URL of your server (e.g. `https://scrybble.example.com`).
+- `DB_HOST`, `DB_PORT`, `DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD` — your database connection.
+- `REDIS_HOST`, `REDIS_PORT` — your Redis connection (used for the job queue).
+- `REMARKS_HOST`, `REMARKS_PORT` — only needed if you rename the `remarks` service or run it elsewhere (default `remarks:5000`).
+
+The server rebuilds its configuration cache from this `.env` file every time the
+container starts, so your values are always honored. You do **not** need to add
+Docker network aliases or mount a cache volume to make these settings take effect.
+
 #### Make modifications to the docker-compose file if you wish
 
 The docker-compose file is configured to be secure by default, so the database and redis ports aren't opened.
