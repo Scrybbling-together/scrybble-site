@@ -33,13 +33,16 @@ class DownloadRemarkableFileJob implements ShouldQueue
         ]);
         try {
             if ($this->sync_context->rm_file_id !== null) {
-                // Use ID-based download
-                $results = $RMapi->getById(
-                    $this->sync_context->rm_file_id,
-                    $this->sync_context->input_filename
-                );
+                try {
+                    $results = $RMapi->getById(
+                        $this->sync_context->rm_file_id,
+                        $this->sync_context->input_filename
+                    );
+                } catch (FileNotFoundException $e) {
+                    $this->sync_context->logStep("ID-based download failed, retrying by path");
+                    $results = $RMapi->get($this->sync_context->input_filename);
+                }
             } else {
-                // Use legacy path-based download
                 $results = $RMapi->get($this->sync_context->input_filename);
             }
         } catch (EmptyPathException|NonAbsolutePathException $e) {

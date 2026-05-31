@@ -64,6 +64,11 @@ class Sync extends Model
         return (!$this->completed && $isOld) || $definiteError;
     }
 
+    public function latestError(): ?string
+    {
+        return $this->logs()->where('severity', 'error')->latest('id')->value('message');
+    }
+
     public function complete(): void
     {
         $this->completed = true;
@@ -78,7 +83,8 @@ class Sync extends Model
             'path' => $sync->filename,
             'created_at' => $sync->created_at->diffForHumans(),
             'completed' => $sync->completed,
-            'error' => $sync->hasError()
+            'error' => $sync->hasError(),
+            'error_message' => $sync->latestError()
         ];
     }
 

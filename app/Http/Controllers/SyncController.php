@@ -49,7 +49,8 @@ class SyncController extends Controller
             "filename" => $sync->filename,
             "id" => $sync->id,
             "completed" => $sync->completed,
-            "error" => $sync->hasError()
+            "error" => $sync->hasError(),
+            "error_message" => $sync->latestError()
         ];
 
         if ($sync->completed) {
