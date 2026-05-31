@@ -58,11 +58,6 @@ RUN a2enmod headers
 RUN rm -f bootstrap/cache/*.php
 RUN php artisan optimize
 
-# The optimize above bakes a config/route/view cache into the image using the
-# build-time (placeholder) environment. That cache would otherwise shadow the
-# operator's real runtime environment. The entrypoint rebuilds the cache from the
-# live environment on every container start, so DB_HOST/DB_USERNAME/REDIS_HOST/
-# REMARKS_HOST etc. are always honored — no network aliases or cache volume needed.
 COPY --chown=www-data:www-data deployment/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]

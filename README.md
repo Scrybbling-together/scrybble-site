@@ -124,7 +124,6 @@ The most relevant settings are:
 - `APP_URL` — the public URL of your server (e.g. `https://scrybble.example.com`).
 - `DB_HOST`, `DB_PORT`, `DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD` — your database connection.
 - `REDIS_HOST`, `REDIS_PORT` — your Redis connection (used for the job queue).
-- `REMARKS_HOST`, `REMARKS_PORT` — only needed if you rename the `remarks` service or run it elsewhere (default `remarks:5000`).
 
 The server rebuilds its configuration cache from this `.env` file every time the
 container starts, so your values are always honored. You do **not** need to add
