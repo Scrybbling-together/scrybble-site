@@ -327,8 +327,7 @@ class RMapi
      */
     public function get(string $filePath): array
     {
-        $rmapi_download_path = escapeshellarg($filePath);
-        [$output, $exit_code] = $this->executeRMApiCommand(['get', $rmapi_download_path]);
+        [$output, $exit_code] = $this->executeRMApiCommand(['get', $filePath]);
         if ($exit_code !== 0) {
             if ($output && Str::contains($output->implode(""), "file doesn't exist")) {
                 throw new FileNotFoundException("Failed downloading file, it doesn't seem to exist (have you deleted the file? Otherwise try resyncing the file on your device)");
