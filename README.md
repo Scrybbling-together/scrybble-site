@@ -129,6 +129,8 @@ The server rebuilds its configuration cache from this `.env` file every time the
 container starts, so your values are always honored. You do **not** need to add
 Docker network aliases or mount a cache volume to make these settings take effect.
 
+On start-up the web container also applies any pending database migrations, so a fresh database and future upgrades are migrated automatically. Set `SCRYBBLE_AUTO_MIGRATE=false` if you prefer to run migrations yourself.
+
 #### Make modifications to the docker-compose file if you wish
 
 The docker-compose file is configured to be secure by default, so the database and redis ports aren't opened.
