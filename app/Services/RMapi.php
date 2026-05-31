@@ -327,6 +327,10 @@ class RMapi
      */
     public function get(string $filePath): array
     {
+        // rmapi runs in Process array mode, so a leading "-" in the path would be
+        // parsed as a flag. reMarkable paths are absolute; reject anything else.
+        $folders = AbsolutePath::fromString($filePath);
+
         [$output, $exit_code] = $this->executeRMApiCommand(['get', $filePath]);
         if ($exit_code !== 0) {
             if ($output && Str::contains($output->implode(""), "file doesn't exist")) {
@@ -335,8 +339,6 @@ class RMapi
             throw new RuntimeException('RMapi `get` command failed for an unknown reason');
         }
         $location = $this->getDownloadedZipLocation($filePath)->toRelative();
-
-        $folders = AbsolutePath::fromString($filePath);
 
         $newLocation = static::hashedFilepath($filePath);
         if (!$this->storage->move($location, $newLocation)) {
