@@ -13,7 +13,10 @@ return [
     |                  You can also use this value for development
     | - "commercial": Deployment for multiple (and paid) users
      */
-    'deployment_environment' => strtolower(env("SCRYBBLE_DEPLOYMENT_ENVIRONMENT", 'self-hosted')),
+    'deployment_environment' => match (preg_replace('/[^a-z]/', '', strtolower((string) env("SCRYBBLE_DEPLOYMENT_ENVIRONMENT", 'self-hosted')))) {
+        'commercial' => 'commercial',
+        default => 'self-hosted',
+    },
 
 
     /*
