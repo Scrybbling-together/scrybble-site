@@ -26,9 +26,6 @@ use JetBrains\PhpStorm\ArrayShape;
 use RuntimeException;
 use Sentry;
 
-/**
- *
- */
 class RMapi
 {
     private Filesystem $storage;
@@ -68,11 +65,11 @@ class RMapi
     #[ArrayShape([Collection::class, 'int'])]
     public function executeRMApiCommand(array $command): array
     {
-        [$outputLines, $exit_code] = $this->runner->run(
+        $result = $this->runner->run(
             argv: array_merge(['--json', '-ni'], $command),
         );
 
-        $output = collect($outputLines)->filter(function ($line) {
+        $output = collect(explode("\n", $result->combined))->filter(function ($line) {
             if (Str::startsWith($line, 'Refreshing tree')) {
                 return false;
             }
@@ -88,15 +85,15 @@ class RMapi
             return true;
         });
 
-        return [$output, $exit_code];
+        return [$output, $result->exitCode];
     }
 
     public function authenticate(string $code): bool
     {
-        [$outputLines, $exit_code] = $this->runner->run(argv: [], stdin: $code);
-        $command_output = implode("\n", $outputLines);
+        $result = $this->runner->run(argv: [], stdin: $code);
+        $exit_code = $result->exitCode;
 
-        $index = Str::lower($command_output);
+        $index = Str::lower($result->combined);
         if (Str::contains($index, 'refresh') || Str::contains($index, "syncversion: 1.5")) {
             event(new ReMarkableAuthenticatedEvent());
             return true;
@@ -111,7 +108,6 @@ class RMapi
             Sentry::captureException(new RMApiNonZeroStatusCodeException(
                 'authenticate',
                 $exit_code,
-                explode("\n", $command_output)
             ));
         }
         throw new RuntimeException('unknown error');
@@ -174,9 +170,6 @@ class RMapi
             ->values();
     }
 
-    /**
-     *
-     */
     public function list(string $path = '/'): Collection
     {
         [$output, $exit_code] = $this->executeRMApiCommand(['ls', $path]);
@@ -290,7 +283,7 @@ class RMapi
      * Download a file by its reMarkable document ID.
      *
      * @throws RuntimeException
-     * @throws FileNotFoundException
+     * @throws FileNotFoundException|EmptyPathException
      */
     public function getById(string $rmFileId, string $name): array
     {

@@ -5,6 +5,7 @@ namespace Tests\Unit\Services;
 
 use App\Models\User;
 use App\Services\RMapi;
+use App\Services\RMapiProcessOutput;
 use App\Services\RMapiProcessRunner;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Storage;
@@ -24,13 +25,23 @@ final class RMapiArgvTest extends TestCase
         return new RMapi(User::factory()->create(), $runner);
     }
 
+    private function processOutput(string $stdout = '', string $stderr = '', int $exitCode = 0): RMapiProcessOutput
+    {
+        return new RMapiProcessOutput(
+            combined: $stdout . $stderr,
+            stdout:   $stdout,
+            stderr:   $stderr,
+            exitCode: $exitCode,
+        );
+    }
+
     public function test_list_passes_path_verbatim(): void
     {
         $runner = $this->createMock(RMapiProcessRunner::class);
         $runner->expects($this->once())
             ->method('run')
             ->with(['--json', '-ni', 'ls', '/Daily Journal/'])
-            ->willReturn([['[]'], 0]);
+            ->willReturn($this->processOutput(stdout: '[]'));
 
         $this->makeRMapi($runner)->list('/Daily Journal/');
     }
@@ -41,7 +52,7 @@ final class RMapiArgvTest extends TestCase
         $runner->expects($this->once())
             ->method('run')
             ->with(['--json', '-ni', 'find', '--starred', '--tag=work', '--tag=todo', '/', 'notes'])
-            ->willReturn([['[]'], 0]);
+            ->willReturn($this->processOutput(stdout: '[]'));
 
         $this->makeRMapi($runner)->find(query: 'notes', starred: true, tags: ['work', 'todo']);
     }
@@ -52,7 +63,7 @@ final class RMapiArgvTest extends TestCase
         $runner->expects($this->once())
             ->method('run')
             ->with(['--json', '-ni', 'get', '--id', 'abc-123'])
-            ->willReturn([['boom'], 1]);
+            ->willReturn($this->processOutput(stderr: 'boom', exitCode: 1));
 
         // getById is meant to create files, we don't care about file operations so the fake binary fails
         $this->expectException(RuntimeException::class);
@@ -65,7 +76,7 @@ final class RMapiArgvTest extends TestCase
         $runner->expects($this->once())
             ->method('run')
             ->with(['--json', '-ni', 'get', "/Work/Carol"])
-            ->willReturn([['boom'], 1]);
+            ->willReturn($this->processOutput(stderr: 'boom', exitCode: 1));
 
         $this->expectException(RuntimeException::class);
         $this->makeRMapi($runner)->get('/Work/Carol');
@@ -77,7 +88,7 @@ final class RMapiArgvTest extends TestCase
         $runner->expects($this->once())
             ->method('run')
             ->with([], 'one-time-code')
-            ->willReturn([['unrecognised output'], 0]);
+            ->willReturn($this->processOutput(stdout: 'unrecognised output'));
 
         $this->expectException(RuntimeException::class);
         $this->makeRMapi($runner)->authenticate('one-time-code');
