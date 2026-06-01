@@ -14,7 +14,6 @@ use App\Exceptions\RMApi\RMApiRefreshFailedException;
 use App\Exceptions\RMApi\RMApiTokenCreationFailedException;
 use App\Exceptions\RMApi\RMApiUnknownAuthOutputException;
 use App\Exceptions\RMApi\RMApiZipMoveFailedException;
-use App\Exceptions\RMApiNonZeroStatusCodeException;
 use App\Helpers\UserStorage;
 use App\Models\User;
 use App\Support\RmAuthenticationFile;
@@ -27,10 +26,8 @@ use Illuminate\Contracts\Filesystem\FileNotFoundException;
 use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Str;
-use Sentry;
 
 class RMapi
 {
@@ -40,10 +37,10 @@ class RMapi
 
     public function __construct(?User $user = null, ?RMapiProcessRunner $runner = null)
     {
-        $user1 = $user ?? Auth::user();
-        $this->storage = UserStorage::get($user1);
-        $this->userId = $user1->id;
-        $this->runner = $runner ?? RMapiProcessRunner::forUser($user1);
+        $user = $user ?? Auth::user();
+        $this->storage = UserStorage::get($user);
+        $this->userId = $user->id;
+        $this->runner = $runner ?? RMapiProcessRunner::forUser($user);
     }
 
     /**
@@ -59,9 +56,8 @@ class RMapi
 
         if ($authFile->hasValidAuthenticationValues()) {
             return true;
-        } else {
-            throw new MissingRMApiAuthenticationTokenException();
         }
+        throw new MissingRMApiAuthenticationTokenException();
     }
 
     /**
@@ -72,26 +68,19 @@ class RMapi
     public function authenticate(string $code): bool
     {
         $result = $this->runner->run(argv: [], stdin: $code);
-        $exit_code = $result->exitCode;
 
-        $stdout = Str::lower($result->combined);
-        if (Str::contains($stdout, 'refresh') || Str::contains($stdout, "syncversion: 1.5")) {
+        $commandOutput = Str::lower($result->combined);
+        if (Str::contains($commandOutput, 'refresh') || Str::contains($commandOutput, "syncversion: 1.5")) {
             event(new ReMarkableAuthenticatedEvent());
             return true;
         }
-        if (Str::contains($stdout, 'incorrect') || Str::contains($stdout, "enter one-time code")) {
+        if (Str::contains($commandOutput, 'incorrect') || Str::contains($commandOutput, "enter one-time code")) {
             throw new RMApiInvalidCodeException('Invalid code');
         }
-        if (Str::contains($stdout, 'failed to create a new device token')) {
+        if (Str::contains($commandOutput, 'failed to create a new device token')) {
             throw new RMApiTokenCreationFailedException('Failed to create token');
         }
-        if ($exit_code !== 0) {
-            Sentry::captureException(new RMApiNonZeroStatusCodeException(
-                'authenticate',
-                $exit_code,
-            ));
-        }
-        throw new RMApiUnknownAuthOutputException("Authentication produced unrecognized output (exit code {$exit_code}): {$result->combined}");
+        throw new RMApiUnknownAuthOutputException("Authentication produced unrecognized output (exit code {$result->exitCode}): {$result->combined}");
     }
 
     /**
@@ -121,11 +110,7 @@ class RMapi
             throw new RMApiFindFailedException("rmapi find failed with exit code `{$result->exitCode}`: {$result->combined}");
         }
 
-        $nodes = json_decode($result->stdout, associative: true);
-
-        if (json_last_error() !== JSON_ERROR_NONE) {
-            throw new RMApiJsonParseException("Failed to parse rmapi JSON output: " . json_last_error_msg());
-        }
+        $nodes = $this->parseJsonNodes($result->stdout);
 
         return collect($nodes)->map(function (array $node) {
             $type = match ($node['type']) {
@@ -157,11 +142,7 @@ class RMapi
             throw new RMApiListFailedException("rmapi ls path failed with exit code `{$result->exitCode}`: {$result->combined}");
         }
 
-        $nodes = json_decode($result->stdout, associative: true);
-
-        if (json_last_error() !== JSON_ERROR_NONE) {
-            throw new RMApiJsonParseException("Failed to parse rmapi JSON output: " . json_last_error_msg());
-        }
+        $nodes = $this->parseJsonNodes($result->stdout);
 
         return collect($nodes)->map(function (array $node) use ($path) {
             $type = match ($node['type']) {
@@ -215,8 +196,7 @@ class RMapi
             } elseif ($strategy === "hard") {
                 $hardRefresh();
             }
-            $redis->set($key, "", [// 120 seconds
-                "EX" => 120]);
+            $redis->set($key, "", ["EX" => 120]);
             return true;
         }
 
@@ -294,5 +274,17 @@ class RMapi
     {
         $filename = Path::fromString($rmapiDownloadPath)->name();
         return Path::fromString($filename)->joinExtensions('rmdoc');
+    }
+
+    /**
+     * @throws RMApiJsonParseException
+     */
+    private function parseJsonNodes(string $stdout): array
+    {
+        $nodes = json_decode($stdout, associative: true);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            throw new RMApiJsonParseException("Failed to parse rmapi JSON output: " . json_last_error_msg());
+        }
+        return $nodes;
     }
 }
