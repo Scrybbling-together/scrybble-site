@@ -25,7 +25,6 @@ use InvalidArgumentException;
 use JetBrains\PhpStorm\ArrayShape;
 use RuntimeException;
 use Sentry;
-use Symfony\Component\Process\Process;
 
 /**
  *
@@ -34,12 +33,14 @@ class RMapi
 {
     private Filesystem $storage;
     private int $userId;
+    private RMapiProcessRunner $runner;
 
-    public function __construct(User $user = null)
+    public function __construct(?User $user = null, ?RMapiProcessRunner $runner = null)
     {
         $user1 = $user ?? Auth::user();
         $this->storage = UserStorage::get($user1);
         $this->userId = $user1->id;
+        $this->runner = $runner ?? RMapiProcessRunner::forUser($user1);
     }
 
     /**
@@ -67,9 +68,8 @@ class RMapi
     #[ArrayShape([Collection::class, 'int'])]
     public function executeRMApiCommand(array $command): array
     {
-        [$outputLines, $exit_code] = $this->execWithProcess(
-            arguments: array_merge(['--json', '-ni'], $command),
-            workingDirectory: $this->storage->path('')
+        [$outputLines, $exit_code] = $this->runner->run(
+            argv: array_merge(['--json', '-ni'], $command),
         );
 
         $output = collect($outputLines)->filter(function ($line) {
@@ -91,69 +91,9 @@ class RMapi
         return [$output, $exit_code];
     }
 
-    /**
-     * Execute rmapi command using Symfony Process
-     *
-     * @param array $arguments Additional arguments to pass to rmapi
-     * @param string|null $input Input to pass via stdin
-     * @param string|null $workingDirectory Working directory for the process
-     * @return array [output_lines, exit_code]
-     */
-    private function execWithProcess(
-        ?array   $arguments = null,
-        ?string $input = null,
-        ?string $workingDirectory = null
-    ): array
-    {
-        $rmapi = base_path('binaries/rmapi');
-
-        // Build the process with rmapi + any additional arguments
-        if ($arguments !== null) {
-            $process = new Process(array_merge([$rmapi], $arguments));
-        } else {
-            $process = new Process([$rmapi]);
-        }
-        $process->setEnv([
-            'RMAPI_CONFIG' => $this->storage->path('.rmapi-auth'),
-            'XDG_CACHE_HOME' => $this->storage->path(''),
-        ]);
-        $process->setTimeout(60);
-
-        if ($input !== null) {
-            $process->setInput($input);
-        }
-
-        if ($workingDirectory !== null) {
-            $process->setWorkingDirectory($workingDirectory);
-        }
-
-        // Capture both stdout and stderr chronologically
-        $combinedOutput = [];
-        $process->run(function ($type, $buffer) use (&$combinedOutput) {
-            $combinedOutput[] = $buffer;
-        });
-
-        $exit_code = $process->getExitCode();
-
-        // Handle SIGPIPE like the original
-        if ($exit_code >= 128) {
-            $exit_code -= 128;
-        }
-        if ($exit_code === SIGPIPE) {
-            $exit_code = 0;
-        }
-
-        // Split combined output into lines
-        $allOutput = implode('', $combinedOutput);
-        $outputLines = explode("\n", $allOutput);
-
-        return [$outputLines, $exit_code];
-    }
-
-
     public function authenticate(string $code): bool
     {
-        [$outputLines, $exit_code] = $this->execWithProcess(input: $code);
+        [$outputLines, $exit_code] = $this->runner->run(argv: [], stdin: $code);
         $command_output = implode("\n", $outputLines);
 
         $index = Str::lower($command_output);
@@ -327,8 +267,8 @@ class RMapi
      */
     public function get(string $filePath): array
     {
-        $rmapi_download_path = escapeshellarg($filePath);
-        [$output, $exit_code] = $this->executeRMApiCommand(['get', $rmapi_download_path]);
+        $folders = AbsolutePath::fromString($filePath);
+        [$output, $exit_code] = $this->executeRMApiCommand(['get', $filePath]);
         if ($exit_code !== 0) {
             if ($output && Str::contains($output->implode(""), "file doesn't exist")) {
                 throw new FileNotFoundException("Failed downloading file, it doesn't seem to exist (have you deleted the file? Otherwise try resyncing the file on your device)");
@@ -337,7 +277,6 @@ class RMapi
         }
         $location = $this->getDownloadedZipLocation($filePath)->toRelative();
 
-        $folders = AbsolutePath::fromString($filePath);
 
         $newLocation = static::hashedFilepath($filePath);
         if (!$this->storage->move($location, $newLocation)) {
@@ -375,20 +314,6 @@ class RMapi
         // For ID-based downloads, we don't have the folder path
         return ['output' => $output, 'downloaded_zip_location' => $newLocation, 'folder' => '/'];
     }
-
-    /**
-     * @return void
-     */
-    public function configureEnv(): array
-    {
-        putenv('RMAPI_CONFIG=' . $this->storage->path('.rmapi-auth'));
-        putenv('XDG_CACHE_HOME=' . $this->storage->path(''));
-
-        return [
-
-        ];
-    }
-
 
     /**
      * @param string $rmapiDownloadPath
