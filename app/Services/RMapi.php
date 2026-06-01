@@ -22,7 +22,6 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Str;
 use InvalidArgumentException;
-use JetBrains\PhpStorm\ArrayShape;
 use RuntimeException;
 use Sentry;
 
@@ -58,50 +57,20 @@ class RMapi
         }
     }
 
-    /**
-     * @param array $command
-     * @return array
-     */
-    #[ArrayShape([Collection::class, 'int'])]
-    public function executeRMApiCommand(array $command): array
-    {
-        $result = $this->runner->run(
-            argv: array_merge(['--json', '-ni'], $command),
-        );
-
-        $output = collect(explode("\n", $result->combined))->filter(function ($line) {
-            if (Str::startsWith($line, 'Refreshing tree')) {
-                return false;
-            }
-            if (Str::startsWith($line, 'WARNING')) {
-                return false;
-            }
-            if (Str::contains($line, 'Using the new 1.5 sync')) {
-                return false;
-            }
-            if (Str::contains($line, 'Make sure you have a backup')) {
-                return false;
-            }
-            return true;
-        });
-
-        return [$output, $result->exitCode];
-    }
-
     public function authenticate(string $code): bool
     {
         $result = $this->runner->run(argv: [], stdin: $code);
         $exit_code = $result->exitCode;
 
-        $index = Str::lower($result->combined);
-        if (Str::contains($index, 'refresh') || Str::contains($index, "syncversion: 1.5")) {
+        $stdout = Str::lower($result->combined);
+        if (Str::contains($stdout, 'refresh') || Str::contains($stdout, "syncversion: 1.5")) {
             event(new ReMarkableAuthenticatedEvent());
             return true;
         }
-        if (Str::contains($index, 'incorrect') || Str::contains($index, "enter one-time code")) {
+        if (Str::contains($stdout, 'incorrect') || Str::contains($stdout, "enter one-time code")) {
             throw new InvalidArgumentException('Invalid code');
         }
-        if (Str::contains($index, 'failed to create a new device token')) {
+        if (Str::contains($stdout, 'failed to create a new device token')) {
             throw new RuntimeException('Failed to create token');
         }
         if ($exit_code !== 0) {
@@ -134,15 +103,13 @@ class RMapi
             $commandParts[] = $query;
         }
 
-        [$output, $exit_code] = $this->executeRMApiCommand($commandParts);
+        $result = $this->runner->run(array_merge(['--json', '-ni'], $commandParts));
 
-        if ($exit_code !== 0) {
-            $error = implode("\n", $output->toArray());
-            throw new RuntimeException("rmapi find failed with exit code `$exit_code`: " . $error);
+        if ($result->exitCode !== 0) {
+            throw new RuntimeException("rmapi find failed with exit code `{$result->exitCode}`: {$result->combined}");
         }
 
-        $jsonOutput = $output->implode("");
-        $nodes = json_decode($jsonOutput, associative: true);
+        $nodes = json_decode($result->stdout, associative: true);
 
         if (json_last_error() !== JSON_ERROR_NONE) {
             throw new RuntimeException("Failed to parse rmapi JSON output: " . json_last_error_msg());
@@ -172,15 +139,13 @@ class RMapi
 
     public function list(string $path = '/'): Collection
     {
-        [$output, $exit_code] = $this->executeRMApiCommand(['ls', $path]);
+        $result = $this->runner->run(['--json', '-ni', 'ls', $path]);
 
-        if ($exit_code !== 0) {
-            $error = implode("\n", $output->toArray());
-            throw new RuntimeException("rmapi ls path failed with exit code `$exit_code`: " . $error);
+        if ($result->exitCode !== 0) {
+            throw new RuntimeException("rmapi ls path failed with exit code `{$result->exitCode}`: {$result->combined}");
         }
 
-        $jsonOutput = $output->implode("");
-        $nodes = json_decode($jsonOutput, associative: true);
+        $nodes = json_decode($result->stdout, associative: true);
 
         if (json_last_error() !== JSON_ERROR_NONE) {
             throw new RuntimeException("Failed to parse rmapi JSON output: " . json_last_error_msg());
@@ -222,10 +187,9 @@ class RMapi
     {
         $hardRefresh = fn() => $this->storage->delete("rmapi/tree.cache");
         $softRefresh = function () {
-            [$refresh_output, $refresh_exit_code] = $this->executeRMApiCommand(['refresh']);
-            if ($refresh_exit_code !== 0) {
-                $all_refresh_output = implode("\n", $refresh_output);
-                throw new RuntimeException("Failed to refresh: `$all_refresh_output`");
+            $result = $this->runner->run(['--json', '-ni', 'refresh']);
+            if ($result->exitCode !== 0) {
+                throw new RuntimeException("Failed to refresh: `{$result->combined}`");
             }
         };
 
@@ -261,12 +225,12 @@ class RMapi
     public function get(string $filePath): array
     {
         $folders = AbsolutePath::fromString($filePath);
-        [$output, $exit_code] = $this->executeRMApiCommand(['get', $filePath]);
-        if ($exit_code !== 0) {
-            if ($output && Str::contains($output->implode(""), "file doesn't exist")) {
+        $result = $this->runner->run(['--json', '-ni', 'get', $filePath]);
+        if ($result->exitCode !== 0) {
+            if (Str::contains($result->combined, "file doesn't exist")) {
                 throw new FileNotFoundException("Failed downloading file, it doesn't seem to exist (have you deleted the file? Otherwise try resyncing the file on your device)");
             }
-            throw new RuntimeException('RMapi `get` command failed for an unknown reason');
+            throw new RuntimeException("RMapi `get` command failed: {$result->combined}");
         }
         $location = $this->getDownloadedZipLocation($filePath)->toRelative();
 
@@ -276,7 +240,7 @@ class RMapi
             throw new RuntimeException("Unable to rename downloaded RMZip to hashed filePath " . $location . " to " . $newLocation);
         }
 
-        return ['output' => $output, 'downloaded_zip_location' => $newLocation, 'folder' => $folders->replaceName("")->string()];
+        return ['output' => $result->combined, 'downloaded_zip_location' => $newLocation, 'folder' => $folders->replaceName("")->string()];
     }
 
     /**
@@ -287,12 +251,12 @@ class RMapi
      */
     public function getById(string $rmFileId, string $name): array
     {
-        [$output, $exit_code] = $this->executeRMApiCommand(['get', '--id', $rmFileId]);
-        if ($exit_code !== 0) {
-            if ($output && Str::contains($output->implode(""), "doesn't exist")) {
+        $result = $this->runner->run(['--json', '-ni', 'get', '--id', $rmFileId]);
+        if ($result->exitCode !== 0) {
+            if (Str::contains($result->combined, "doesn't exist")) {
                 throw new FileNotFoundException("Failed downloading file, it doesn't seem to exist (have you deleted the file? Otherwise try resyncing the file on your device)");
             }
-            throw new RuntimeException('RMapi `get --id` command failed for an unknown reason');
+            throw new RuntimeException("RMapi `get --id` command failed: {$result->combined}");
         }
 
         // Downloaded file is named after the document name, not the ID
@@ -305,7 +269,7 @@ class RMapi
         }
 
         // For ID-based downloads, we don't have the folder path
-        return ['output' => $output, 'downloaded_zip_location' => $newLocation, 'folder' => '/'];
+        return ['output' => $result->combined, 'downloaded_zip_location' => $newLocation, 'folder' => '/'];
     }
 
     /**

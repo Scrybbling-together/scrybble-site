@@ -46,6 +46,21 @@ final class RMapiArgvTest extends TestCase
         $this->makeRMapi($runner)->list('/Daily Journal/');
     }
 
+    public function test_list_parses_json_from_stdout_only(): void
+    {
+        $runner = $this->createMock(RMapiProcessRunner::class);
+        $runner->method('run')
+            ->willReturn($this->processOutput(
+                stdout: '[{"id":"abc","name":"Notes","type":"DocumentType"}]',
+                stderr: 'Refreshing tree...',
+            ));
+
+        $items = $this->makeRMapi($runner)->list('/');
+
+        $this->assertCount(1, $items);
+        $this->assertSame('Notes', $items->first()['name']);
+    }
+
     public function test_find_builds_flags_in_order(): void
     {
         $runner = $this->createMock(RMapiProcessRunner::class);
@@ -55,6 +70,21 @@ final class RMapiArgvTest extends TestCase
             ->willReturn($this->processOutput(stdout: '[]'));
 
         $this->makeRMapi($runner)->find(query: 'notes', starred: true, tags: ['work', 'todo']);
+    }
+
+    public function test_find_parses_json_from_stdout_only(): void
+    {
+        $runner = $this->createMock(RMapiProcessRunner::class);
+        $runner->method('run')
+            ->willReturn($this->processOutput(
+                stdout: '[{"id":"abc","name":"Notes","type":"DocumentType"}]',
+                stderr: 'Refreshing tree...',
+            ));
+
+        $items = $this->makeRMapi($runner)->find();
+
+        $this->assertCount(1, $items);
+        $this->assertSame('Notes', $items->first()['name']);
     }
 
     public function test_getById_passes_id_as_separate_argv_element(): void
@@ -70,6 +100,18 @@ final class RMapiArgvTest extends TestCase
         $this->makeRMapi($runner)->getById('abc-123', 'Carol');
     }
 
+    public function test_getById_error_message_includes_rmapi_output(): void
+    {
+        $runner = $this->createMock(RMapiProcessRunner::class);
+        $runner->method('run')
+            ->willReturn($this->processOutput(stderr: 'rmapi: device offline', exitCode: 1));
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('device offline');
+
+        $this->makeRMapi($runner)->getById('abc-123', 'Carol');
+    }
+
     public function test_get_currently_shell_escapes_path(): void
     {
         $runner = $this->createMock(RMapiProcessRunner::class);
@@ -80,6 +122,30 @@ final class RMapiArgvTest extends TestCase
 
         $this->expectException(RuntimeException::class);
         $this->makeRMapi($runner)->get('/Work/Carol');
+    }
+
+    public function test_get_error_message_includes_rmapi_output(): void
+    {
+        $runner = $this->createMock(RMapiProcessRunner::class);
+        $runner->method('run')
+            ->willReturn($this->processOutput(stderr: 'rmapi: connection refused', exitCode: 1));
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('connection refused');
+
+        $this->makeRMapi($runner)->get('/Work/Carol');
+    }
+
+    public function test_refresh_throws_RuntimeException_with_rmapi_output_on_failure(): void
+    {
+        $runner = $this->createMock(RMapiProcessRunner::class);
+        $runner->method('run')
+            ->willReturn($this->processOutput(stderr: 'rmapi: refresh failed', exitCode: 1));
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('refresh failed');
+
+        $this->makeRMapi($runner)->refresh();
     }
 
     public function test_authenticate_passes_code_via_stdin_not_argv(): void
