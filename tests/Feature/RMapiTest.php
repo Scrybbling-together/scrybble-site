@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-namespace Tests\Unit\Services;
+namespace Feature;
 
 use App\Events\ReMarkableAuthenticatedEvent;
 use App\Helpers\UserStorage;
@@ -17,11 +17,9 @@ use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 /**
- * End-to-end behavior of {@see RMapi} command methods:
- * happy paths, side effects (events, Redis, storage),
- * and the FileNotFoundException branch of get/getById.
+ * @covers \App\Services\RMapi
  */
-final class RMapiBehaviorTest extends TestCase
+final class RMapiTest extends TestCase
 {
     use RefreshDatabase;
 

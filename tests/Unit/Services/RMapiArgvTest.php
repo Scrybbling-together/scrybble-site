@@ -21,7 +21,8 @@ use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 /**
- * Pins the exact argv that {@see RMapi} hands to the rmapi binary.
+ * @covers \App\Services\RMapi
+ * Pins the exact argv handed to the rmapi binary.
  */
 final class RMapiArgvTest extends TestCase
 {
