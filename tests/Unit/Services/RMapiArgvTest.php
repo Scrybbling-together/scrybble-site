@@ -61,6 +61,36 @@ final class RMapiArgvTest extends TestCase
         $this->assertSame('Notes', $items->first()['name']);
     }
 
+    public function test_list_throws_RMApiJsonParseException_on_invalid_json(): void
+    {
+        $runner = $this->createMock(RMapiProcessRunner::class);
+        $runner->method('run')
+            ->willReturn($this->processOutput(stdout: 'not valid json at all'));
+
+        $this->expectException(\App\Exceptions\RMApi\RMApiJsonParseException::class);
+        $this->makeRMapi($runner)->list('/');
+    }
+
+    public function test_find_throws_RMApiJsonParseException_on_invalid_json(): void
+    {
+        $runner = $this->createMock(RMapiProcessRunner::class);
+        $runner->method('run')
+            ->willReturn($this->processOutput(stdout: 'not valid json at all'));
+
+        $this->expectException(\App\Exceptions\RMApi\RMApiJsonParseException::class);
+        $this->makeRMapi($runner)->find();
+    }
+
+    public function test_list_throws_RMApiListFailedException_on_non_zero_exit(): void
+    {
+        $runner = $this->createMock(RMapiProcessRunner::class);
+        $runner->method('run')
+            ->willReturn($this->processOutput(stderr: 'rmapi: something unknown bad happened', exitCode: 1));
+
+        $this->expectException(\App\Exceptions\RMApi\RMApiListFailedException::class);
+        $this->makeRMapi($runner)->list('/');
+    }
+
     public function test_find_builds_flags_in_order(): void
     {
         $runner = $this->createMock(RMapiProcessRunner::class);
@@ -87,6 +117,16 @@ final class RMapiArgvTest extends TestCase
         $this->assertSame('Notes', $items->first()['name']);
     }
 
+    public function test_find_throws_RMApiFindFailedException_on_non_zero_exit(): void
+    {
+        $runner = $this->createMock(RMapiProcessRunner::class);
+        $runner->method('run')
+            ->willReturn($this->processOutput(stderr: 'rmapi: something unknown bad happened', exitCode: 1));
+
+        $this->expectException(\App\Exceptions\RMApi\RMApiFindFailedException::class);
+        $this->makeRMapi($runner)->find();
+    }
+
     public function test_getById_passes_id_as_separate_argv_element(): void
     {
         $runner = $this->createMock(RMapiProcessRunner::class);
@@ -96,7 +136,7 @@ final class RMapiArgvTest extends TestCase
             ->willReturn($this->processOutput(stderr: 'boom', exitCode: 1));
 
         // getById is meant to create files, we don't care about file operations so the fake binary fails
-        $this->expectException(RuntimeException::class);
+        $this->expectException(\App\Exceptions\RMApi\RMApiGetFailedException::class);
         $this->makeRMapi($runner)->getById('abc-123', 'Carol');
     }
 
@@ -106,7 +146,7 @@ final class RMapiArgvTest extends TestCase
         $runner->method('run')
             ->willReturn($this->processOutput(stderr: 'rmapi: device offline', exitCode: 1));
 
-        $this->expectException(RuntimeException::class);
+        $this->expectException(\App\Exceptions\RMApi\RMApiGetFailedException::class);
         $this->expectExceptionMessage('device offline');
 
         $this->makeRMapi($runner)->getById('abc-123', 'Carol');
@@ -120,7 +160,7 @@ final class RMapiArgvTest extends TestCase
             ->with(['--json', '-ni', 'get', "/Work/Carol"])
             ->willReturn($this->processOutput(stderr: 'boom', exitCode: 1));
 
-        $this->expectException(RuntimeException::class);
+        $this->expectException(\App\Exceptions\RMApi\RMApiGetFailedException::class);
         $this->makeRMapi($runner)->get('/Work/Carol');
     }
 
@@ -130,19 +170,29 @@ final class RMapiArgvTest extends TestCase
         $runner->method('run')
             ->willReturn($this->processOutput(stderr: 'rmapi: connection refused', exitCode: 1));
 
-        $this->expectException(RuntimeException::class);
+        $this->expectException(\App\Exceptions\RMApi\RMApiGetFailedException::class);
         $this->expectExceptionMessage('connection refused');
 
         $this->makeRMapi($runner)->get('/Work/Carol');
     }
 
-    public function test_refresh_throws_RuntimeException_with_rmapi_output_on_failure(): void
+    public function test_get_throws_RMApiZipMoveFailedException_when_storage_move_fails(): void
+    {
+        $runner = $this->createMock(RMapiProcessRunner::class);
+        $runner->method('run')
+            ->willReturn($this->processOutput(stdout: '', exitCode: 0));
+
+        $this->expectException(\App\Exceptions\RMApi\RMApiZipMoveFailedException::class);
+        $this->makeRMapi($runner)->get('/Work/Carol');
+    }
+
+    public function test_refresh_throws_RMApiRefreshFailedException_on_failure(): void
     {
         $runner = $this->createMock(RMapiProcessRunner::class);
         $runner->method('run')
             ->willReturn($this->processOutput(stderr: 'rmapi: refresh failed', exitCode: 1));
 
-        $this->expectException(RuntimeException::class);
+        $this->expectException(\App\Exceptions\RMApi\RMApiRefreshFailedException::class);
         $this->expectExceptionMessage('refresh failed');
 
         $this->makeRMapi($runner)->refresh();
@@ -156,7 +206,37 @@ final class RMapiArgvTest extends TestCase
             ->with([], 'one-time-code')
             ->willReturn($this->processOutput(stdout: 'unrecognised output'));
 
-        $this->expectException(RuntimeException::class);
+        $this->expectException(\App\Exceptions\RMApi\RMApiUnknownAuthOutputException::class);
+        $this->makeRMapi($runner)->authenticate('one-time-code');
+    }
+
+    public function test_authenticate_throws_RMApiInvalidCodeException_when_output_says_incorrect(): void
+    {
+        $runner = $this->createMock(RMapiProcessRunner::class);
+        $runner->method('run')
+            ->willReturn($this->processOutput(stdout: 'incorrect code'));
+
+        $this->expectException(\App\Exceptions\RMApi\RMApiInvalidCodeException::class);
+        $this->makeRMapi($runner)->authenticate('bad-code');
+    }
+
+    public function test_authenticate_throws_RMApiTokenCreationFailedException_when_output_says_device_token_failure(): void
+    {
+        $runner = $this->createMock(RMapiProcessRunner::class);
+        $runner->method('run')
+            ->willReturn($this->processOutput(stdout: 'failed to create a new device token'));
+
+        $this->expectException(\App\Exceptions\RMApi\RMApiTokenCreationFailedException::class);
+        $this->makeRMapi($runner)->authenticate('one-time-code');
+    }
+
+    public function test_authenticate_throws_RMApiUnknownAuthOutputException_when_output_is_unrecognized(): void
+    {
+        $runner = $this->createMock(RMapiProcessRunner::class);
+        $runner->method('run')
+            ->willReturn($this->processOutput(stdout: 'gibberish nobody understands'));
+
+        $this->expectException(\App\Exceptions\RMApi\RMApiUnknownAuthOutputException::class);
         $this->makeRMapi($runner)->authenticate('one-time-code');
     }
 }
