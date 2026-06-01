@@ -247,4 +247,5 @@ final class RMapiArgvTest extends TestCase
         $this->expectException(RMApiUnknownAuthOutputException::class);
         $this->makeRMapi($runner)->authenticate('one-time-code');
     }
+
 }

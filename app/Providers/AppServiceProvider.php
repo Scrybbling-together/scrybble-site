@@ -12,6 +12,7 @@ use App\Services\Remarks\RemarksService;
 use App\Services\RMapi;
 use Event;
 use Illuminate\Auth\Events\Authenticated;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
@@ -29,8 +30,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        $this->app->singleton(RMapi::class, function () {
-            return new RMapi();
+        $this->app->scoped(RMapi::class, function () {
+            return new RMapi(Auth::user());
         });
 
         $this->app->bind(RemarksService::class, fn() => match (config('scrybble.host_runner')) {

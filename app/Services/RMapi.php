@@ -25,7 +25,6 @@ use Eloquent\Pathogen\PathInterface;
 use Illuminate\Contracts\Filesystem\FileNotFoundException;
 use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Str;
 
@@ -35,9 +34,8 @@ class RMapi
     private int $userId;
     private RMapiProcessRunner $runner;
 
-    public function __construct(?User $user = null, ?RMapiProcessRunner $runner = null)
+    public function __construct(User $user, ?RMapiProcessRunner $runner = null)
     {
-        $user = $user ?? Auth::user();
         $this->storage = UserStorage::get($user);
         $this->userId = $user->id;
         $this->runner = $runner ?? RMapiProcessRunner::forUser($user);
