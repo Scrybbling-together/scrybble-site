@@ -10,17 +10,7 @@ use Symfony\Component\Process\Process;
 
 /**
  * Tenant-scoped runner for the bundled `rmapi` binary.
- *
- * Constructed once per user (via {@see self::forUser()}); each {@see self::run()}
- * call only takes the command's argv (+ optional stdin/timeout). The tenant's
- * config path, cache home, and working directory are captured at construction.
- *
- * The binary is always invoked through Symfony Process in array mode, so argv
- * elements are passed as literal `argv[]` entries to `execvp(3)` — no shell
- * parses or unquotes them. Callers MUST NOT shell-escape arguments.
  */
-// Not `final` so PHPUnit's createMock() can double it in tests; this is the
-// only injection seam between RMapi and the rmapi binary.
 readonly class RMapiProcessRunner
 {
     public function __construct(
