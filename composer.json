@@ -29,7 +29,6 @@
         "verschuur/laravel-robotstxt": "^5.2"
     },
     "require-dev": {
-        "ext-xdebug": "*",
         "fakerphp/faker": "^1.9.1",
         "filament/upgrade": "^4.0",
         "laravel/sail": "^1.0.1",
