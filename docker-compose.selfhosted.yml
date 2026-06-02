@@ -2,6 +2,12 @@ services:
   app:
     image: "laauurraaa/scrybble-server:latest"
     restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:80/up || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
     ports:
       # comment this out if you want to use letsencrypt.
       - "80:80"
