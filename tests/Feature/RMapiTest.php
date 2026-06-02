@@ -14,11 +14,10 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\Storage;
+use PHPUnit\Framework\Attributes\CoversClass;
 use Tests\TestCase;
 
-/**
- * @covers \App\Services\RMapi
- */
+#[CoversClass(RMapi::class)]
 final class RMapiTest extends TestCase
 {
     use RefreshDatabase;

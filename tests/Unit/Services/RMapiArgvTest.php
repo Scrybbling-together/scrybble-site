@@ -18,12 +18,13 @@ use App\Services\RMapiProcessOutput;
 use App\Services\RMapiProcessRunner;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Storage;
+use PHPUnit\Framework\Attributes\CoversClass;
 use Tests\TestCase;
 
 /**
- * @covers \App\Services\RMapi
  * Pins the exact argv handed to the rmapi binary.
  */
+#[CoversClass(RMapi::class)]
 final class RMapiArgvTest extends TestCase
 {
     use RefreshDatabase;
@@ -53,6 +54,17 @@ final class RMapiArgvTest extends TestCase
             ->willReturn($this->processOutput(stdout: '[]'));
 
         $this->makeRMapi($runner)->list('/Daily Journal/');
+    }
+
+    public function test_list_validates_path_is_absolute(): void
+    {
+        // get() guards against flag-like paths via AbsolutePath::fromString.
+        // list() should do the same.
+        $runner = $this->createMock(RMapiProcessRunner::class);
+        $runner->expects($this->never())->method('run');
+
+        $this->expectException(\Eloquent\Pathogen\Exception\NonAbsolutePathException::class);
+        $this->makeRMapi($runner)->list('--help');
     }
 
     public function test_list_parses_json_from_stdout_only(): void

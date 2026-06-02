@@ -132,9 +132,13 @@ class RMapi
             ->values();
     }
 
+    /**
+     * @throws NonAbsolutePathException
+     */
     public function list(string $path = '/'): Collection
     {
-        $result = $this->runner->run(['--json', '-ni', 'ls', $path]);
+        $folders = AbsolutePath::fromString($path);
+        $result = $this->runner->run(['--json', '-ni', 'ls', $folders]);
 
         if ($result->exitCode !== 0) {
             throw new RMApiListFailedException("rmapi ls path failed with exit code `{$result->exitCode}`: {$result->combined}");
