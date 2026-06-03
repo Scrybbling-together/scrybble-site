@@ -67,3 +67,6 @@ WORKDIR /var/www/html
 
 RUN composer install --prefer-dist --optimize-autoloader --no-interaction --no-scripts \
     && php artisan passport:keys --force
+
+ENTRYPOINT []
+CMD []
