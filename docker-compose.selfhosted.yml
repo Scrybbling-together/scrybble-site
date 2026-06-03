@@ -83,6 +83,7 @@ services:
       - ./.env:/var/www/html/.env
     environment:
       PHP_FPM_POOL_NAME: "scrybble_horizon"
+      SCRYBBLE_AUTO_MIGRATE: "false"
   # Uncomment if you want to use letsencrypt
 #  nginx-proxy:
 #    restart: always
