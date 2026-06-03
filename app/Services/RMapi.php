@@ -5,7 +5,15 @@ namespace App\Services;
 
 use App\Events\ReMarkableAuthenticatedEvent;
 use App\Exceptions\MissingRMApiAuthenticationTokenException;
-use App\Exceptions\RMApiNonZeroStatusCodeException;
+use App\Exceptions\RMApi\RMApiFindFailedException;
+use App\Exceptions\RMApi\RMApiGetFailedException;
+use App\Exceptions\RMApi\RMApiInvalidCodeException;
+use App\Exceptions\RMApi\RMApiJsonParseException;
+use App\Exceptions\RMApi\RMApiListFailedException;
+use App\Exceptions\RMApi\RMApiRefreshFailedException;
+use App\Exceptions\RMApi\RMApiTokenCreationFailedException;
+use App\Exceptions\RMApi\RMApiUnknownAuthOutputException;
+use App\Exceptions\RMApi\RMApiZipMoveFailedException;
 use App\Helpers\UserStorage;
 use App\Models\User;
 use App\Support\RmAuthenticationFile;
@@ -17,29 +25,20 @@ use Eloquent\Pathogen\PathInterface;
 use Illuminate\Contracts\Filesystem\FileNotFoundException;
 use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Str;
-use InvalidArgumentException;
-use JetBrains\PhpStorm\ArrayShape;
-use RuntimeException;
-use Sentry;
-use Symfony\Component\Process\Process;
 
-/**
- *
- */
 class RMapi
 {
     private Filesystem $storage;
     private int $userId;
+    private RMapiProcessRunner $runner;
 
-    public function __construct(User $user = null)
+    public function __construct(User $user, ?RMapiProcessRunner $runner = null)
     {
-        $user1 = $user ?? Auth::user();
-        $this->storage = UserStorage::get($user1);
-        $this->userId = $user1->id;
+        $this->storage = UserStorage::get($user);
+        $this->userId = $user->id;
+        $this->runner = $runner ?? RMapiProcessRunner::forUser($user);
     }
 
     /**
@@ -55,126 +54,31 @@ class RMapi
 
         if ($authFile->hasValidAuthenticationValues()) {
             return true;
-        } else {
-            throw new MissingRMApiAuthenticationTokenException();
         }
+        throw new MissingRMApiAuthenticationTokenException();
     }
 
     /**
-     * @param array $command
-     * @return array
+     * @throws RMApiInvalidCodeException
+     * @throws RMApiTokenCreationFailedException
+     * @throws RMApiUnknownAuthOutputException
      */
-    #[ArrayShape([Collection::class, 'int'])]
-    public function executeRMApiCommand(array $command): array
-    {
-        [$outputLines, $exit_code] = $this->execWithProcess(
-            arguments: array_merge(['--json', '-ni'], $command),
-            workingDirectory: $this->storage->path('')
-        );
-
-        $output = collect($outputLines)->filter(function ($line) {
-            if (Str::startsWith($line, 'Refreshing tree')) {
-                return false;
-            }
-            if (Str::startsWith($line, 'WARNING')) {
-                return false;
-            }
-            if (Str::contains($line, 'Using the new 1.5 sync')) {
-                return false;
-            }
-            if (Str::contains($line, 'Make sure you have a backup')) {
-                return false;
-            }
-            return true;
-        });
-
-        return [$output, $exit_code];
-    }
-
-    /**
-     * Execute rmapi command using Symfony Process
-     *
-     * @param array $arguments Additional arguments to pass to rmapi
-     * @param string|null $input Input to pass via stdin
-     * @param string|null $workingDirectory Working directory for the process
-     * @return array [output_lines, exit_code]
-     */
-    private function execWithProcess(
-        ?array   $arguments = null,
-        ?string $input = null,
-        ?string $workingDirectory = null
-    ): array
-    {
-        $rmapi = base_path('binaries/rmapi');
-
-        // Build the process with rmapi + any additional arguments
-        if ($arguments !== null) {
-            $process = new Process(array_merge([$rmapi], $arguments));
-        } else {
-            $process = new Process([$rmapi]);
-        }
-        $process->setEnv([
-            'RMAPI_CONFIG' => $this->storage->path('.rmapi-auth'),
-            'XDG_CACHE_HOME' => $this->storage->path(''),
-        ]);
-        $process->setTimeout(60);
-
-        if ($input !== null) {
-            $process->setInput($input);
-        }
-
-        if ($workingDirectory !== null) {
-            $process->setWorkingDirectory($workingDirectory);
-        }
-
-        // Capture both stdout and stderr chronologically
-        $combinedOutput = [];
-        $process->run(function ($type, $buffer) use (&$combinedOutput) {
-            $combinedOutput[] = $buffer;
-        });
-
-        $exit_code = $process->getExitCode();
-
-        // Handle SIGPIPE like the original
-        if ($exit_code >= 128) {
-            $exit_code -= 128;
-        }
-        if ($exit_code === SIGPIPE) {
-            $exit_code = 0;
-        }
-
-        // Split combined output into lines
-        $allOutput = implode('', $combinedOutput);
-        $outputLines = explode("\n", $allOutput);
-
-        return [$outputLines, $exit_code];
-    }
-
-
     public function authenticate(string $code): bool
     {
-        [$outputLines, $exit_code] = $this->execWithProcess(input: $code);
-        $command_output = implode("\n", $outputLines);
+        $result = $this->runner->run(argv: [], stdin: $code);
 
-        $index = Str::lower($command_output);
-        if (Str::contains($index, 'refresh') || Str::contains($index, "syncversion: 1.5")) {
+        $commandOutput = Str::lower($result->combined);
+        if (Str::contains($commandOutput, 'refresh') || Str::contains($commandOutput, "syncversion: 1.5")) {
             event(new ReMarkableAuthenticatedEvent());
             return true;
         }
-        if (Str::contains($index, 'incorrect') || Str::contains($index, "enter one-time code")) {
-            throw new InvalidArgumentException('Invalid code');
+        if (Str::contains($commandOutput, 'incorrect') || Str::contains($commandOutput, "enter one-time code")) {
+            throw new RMApiInvalidCodeException('Invalid code');
         }
-        if (Str::contains($index, 'failed to create a new device token')) {
-            throw new RuntimeException('Failed to create token');
+        if (Str::contains($commandOutput, 'failed to create a new device token')) {
+            throw new RMApiTokenCreationFailedException('Failed to create token');
         }
-        if ($exit_code !== 0) {
-            Sentry::captureException(new RMApiNonZeroStatusCodeException(
-                'authenticate',
-                $exit_code,
-                explode("\n", $command_output)
-            ));
-        }
-        throw new RuntimeException('unknown error');
+        throw new RMApiUnknownAuthOutputException("Authentication produced unrecognized output (exit code {$result->exitCode}): {$result->combined}");
     }
 
     /**
@@ -198,19 +102,13 @@ class RMapi
             $commandParts[] = $query;
         }
 
-        [$output, $exit_code] = $this->executeRMApiCommand($commandParts);
+        $result = $this->runner->run(array_merge(['--json', '-ni'], $commandParts));
 
-        if ($exit_code !== 0) {
-            $error = implode("\n", $output->toArray());
-            throw new RuntimeException("rmapi find failed with exit code `$exit_code`: " . $error);
+        if ($result->exitCode !== 0) {
+            throw new RMApiFindFailedException("rmapi find failed with exit code `{$result->exitCode}`: {$result->combined}");
         }
 
-        $jsonOutput = $output->implode("");
-        $nodes = json_decode($jsonOutput, associative: true);
-
-        if (json_last_error() !== JSON_ERROR_NONE) {
-            throw new RuntimeException("Failed to parse rmapi JSON output: " . json_last_error_msg());
-        }
+        $nodes = $this->parseJsonNodes($result->stdout);
 
         return collect($nodes)->map(function (array $node) {
             $type = match ($node['type']) {
@@ -235,23 +133,18 @@ class RMapi
     }
 
     /**
-     *
+     * @throws NonAbsolutePathException
      */
     public function list(string $path = '/'): Collection
     {
-        [$output, $exit_code] = $this->executeRMApiCommand(['ls', $path]);
+        $folders = AbsolutePath::fromString($path);
+        $result = $this->runner->run(['--json', '-ni', 'ls', $folders]);
 
-        if ($exit_code !== 0) {
-            $error = implode("\n", $output->toArray());
-            throw new RuntimeException("rmapi ls path failed with exit code `$exit_code`: " . $error);
+        if ($result->exitCode !== 0) {
+            throw new RMApiListFailedException("rmapi ls path failed with exit code `{$result->exitCode}`: {$result->combined}");
         }
 
-        $jsonOutput = $output->implode("");
-        $nodes = json_decode($jsonOutput, associative: true);
-
-        if (json_last_error() !== JSON_ERROR_NONE) {
-            throw new RuntimeException("Failed to parse rmapi JSON output: " . json_last_error_msg());
-        }
+        $nodes = $this->parseJsonNodes($result->stdout);
 
         return collect($nodes)->map(function (array $node) use ($path) {
             $type = match ($node['type']) {
@@ -289,10 +182,9 @@ class RMapi
     {
         $hardRefresh = fn() => $this->storage->delete("rmapi/tree.cache");
         $softRefresh = function () {
-            [$refresh_output, $refresh_exit_code] = $this->executeRMApiCommand(['refresh']);
-            if ($refresh_exit_code !== 0) {
-                $all_refresh_output = implode("\n", $refresh_output);
-                throw new RuntimeException("Failed to refresh: `$all_refresh_output`");
+            $result = $this->runner->run(['--json', '-ni', 'refresh']);
+            if ($result->exitCode !== 0) {
+                throw new RMApiRefreshFailedException("Failed to refresh: `{$result->combined}`");
             }
         };
 
@@ -306,8 +198,7 @@ class RMapi
             } elseif ($strategy === "hard") {
                 $hardRefresh();
             }
-            $redis->set($key, "", [// 120 seconds
-                "EX" => 120]);
+            $redis->set($key, "", ["EX" => 120]);
             return true;
         }
 
@@ -322,45 +213,46 @@ class RMapi
     /**
      * @throws EmptyPathException
      * @throws NonAbsolutePathException
-     * @throws RuntimeException
+     * @throws RMApiGetFailedException
+     * @throws RMApiZipMoveFailedException
      * @throws FileNotFoundException
      */
     public function get(string $filePath): array
     {
-        $rmapi_download_path = escapeshellarg($filePath);
-        [$output, $exit_code] = $this->executeRMApiCommand(['get', $rmapi_download_path]);
-        if ($exit_code !== 0) {
-            if ($output && Str::contains($output->implode(""), "file doesn't exist")) {
+        $folders = AbsolutePath::fromString($filePath);
+        $result = $this->runner->run(['--json', '-ni', 'get', $filePath]);
+        if ($result->exitCode !== 0) {
+            if (Str::contains($result->combined, "file doesn't exist")) {
                 throw new FileNotFoundException("Failed downloading file, it doesn't seem to exist (have you deleted the file? Otherwise try resyncing the file on your device)");
             }
-            throw new RuntimeException('RMapi `get` command failed for an unknown reason');
+            throw new RMApiGetFailedException("RMapi `get` command failed: {$result->combined}");
         }
         $location = $this->getDownloadedZipLocation($filePath)->toRelative();
 
-        $folders = AbsolutePath::fromString($filePath);
 
         $newLocation = static::hashedFilepath($filePath);
         if (!$this->storage->move($location, $newLocation)) {
-            throw new RuntimeException("Unable to rename downloaded RMZip to hashed filePath " . $location . " to " . $newLocation);
+            throw new RMApiZipMoveFailedException("Unable to rename downloaded RMZip to hashed filePath " . $location . " to " . $newLocation);
         }
 
-        return ['output' => $output, 'downloaded_zip_location' => $newLocation, 'folder' => $folders->replaceName("")->string()];
+        return ['output' => $result->combined, 'downloaded_zip_location' => $newLocation, 'folder' => $folders->replaceName("")->string()];
     }
 
     /**
      * Download a file by its reMarkable document ID.
      *
-     * @throws RuntimeException
-     * @throws FileNotFoundException
+     * @throws RMApiGetFailedException
+     * @throws RMApiZipMoveFailedException
+     * @throws FileNotFoundException|EmptyPathException
      */
     public function getById(string $rmFileId, string $name): array
     {
-        [$output, $exit_code] = $this->executeRMApiCommand(['get', '--id', $rmFileId]);
-        if ($exit_code !== 0) {
-            if ($output && Str::contains($output->implode(""), "doesn't exist")) {
+        $result = $this->runner->run(['--json', '-ni', 'get', '--id', $rmFileId]);
+        if ($result->exitCode !== 0) {
+            if (Str::contains($result->combined, "doesn't exist")) {
                 throw new FileNotFoundException("Failed downloading file, it doesn't seem to exist (have you deleted the file? Otherwise try resyncing the file on your device)");
             }
-            throw new RuntimeException('RMapi `get --id` command failed for an unknown reason');
+            throw new RMApiGetFailedException("RMapi `get --id` command failed: {$result->combined}");
         }
 
         // Downloaded file is named after the document name, not the ID
@@ -369,26 +261,12 @@ class RMapi
         // Hash based on ID for uniqueness
         $newLocation = static::hashedFilepath($rmFileId);
         if (!$this->storage->move($location, $newLocation)) {
-            throw new RuntimeException("Unable to rename downloaded RMZip to hashed filePath " . $location . " to " . $newLocation);
+            throw new RMApiZipMoveFailedException("Unable to rename downloaded RMZip to hashed filePath " . $location . " to " . $newLocation);
         }
 
         // For ID-based downloads, we don't have the folder path
-        return ['output' => $output, 'downloaded_zip_location' => $newLocation, 'folder' => '/'];
+        return ['output' => $result->combined, 'downloaded_zip_location' => $newLocation, 'folder' => '/'];
     }
-
-    /**
-     * @return void
-     */
-    public function configureEnv(): array
-    {
-        putenv('RMAPI_CONFIG=' . $this->storage->path('.rmapi-auth'));
-        putenv('XDG_CACHE_HOME=' . $this->storage->path(''));
-
-        return [
-
-        ];
-    }
-
 
     /**
      * @param string $rmapiDownloadPath
@@ -398,5 +276,17 @@ class RMapi
     {
         $filename = Path::fromString($rmapiDownloadPath)->name();
         return Path::fromString($filename)->joinExtensions('rmdoc');
+    }
+
+    /**
+     * @throws RMApiJsonParseException
+     */
+    private function parseJsonNodes(string $stdout): array
+    {
+        $nodes = json_decode($stdout, associative: true);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            throw new RMApiJsonParseException("Failed to parse rmapi JSON output: " . json_last_error_msg());
+        }
+        return $nodes;
     }
 }
