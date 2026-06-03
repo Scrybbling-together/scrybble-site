@@ -133,6 +133,8 @@ The most relevant settings are:
 - `DB_HOST`, `DB_PORT`, `DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD` — your database connection.
     - Do **not** forget to configure a password
 - `REDIS_HOST`, `REDIS_PORT` — your Redis connection (used for the job queue).
+- `REMARKS_HOST` and `REMARKS_PORT` point Scrybble at the remarks rendering service. They default to `remarks:5000`, matching the `remarks` service in the bundled docker-compose files; only set them if you rename that service or run the renderer on a different host or port.
+
 
 The scrybble app caches the configuration, if you make changes to the .env file make sure to restart your container.
 
@@ -233,5 +235,4 @@ Visit `http://{YOUR DOMAIN}/admin`, log-in with the admin account and select the
 ## External resources
 
 - [Official Laravel documentation](https://laravel.com/docs/12.x/installation)
--
-Article: [Self-Hosting Scrybble: reMarkable to Obsidian Sync with Lessons Learned](https://andrewdoering.org/blog/2026/hosting-scrybble/?utm_source=atom_feed#optional-using-rmfakecloud)
+- Article: [Self-Hosting Scrybble: reMarkable to Obsidian Sync with Lessons Learned](https://andrewdoering.org/blog/2026/hosting-scrybble/?utm_source=atom_feed#optional-using-rmfakecloud)
