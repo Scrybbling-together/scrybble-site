@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Enums\DeploymentEnvironment;
 use App\Models\User;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Hash;
@@ -27,8 +28,7 @@ class SetupAdminAccount extends Command
      */
     public function handle(): int
     {
-        // Check if deployment environment is "self-hosted"
-        if (config("scrybble.deployment_environment") !== "self-hosted") {
+        if (!DeploymentEnvironment::current()->isSelfHosted()) {
             $this->error('This command can only be run in a self-hosted environment.');
             return 1;
         }

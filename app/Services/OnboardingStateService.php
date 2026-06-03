@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\DeploymentEnvironment;
 use App\Exceptions\MissingRMApiAuthenticationTokenException;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
@@ -23,7 +24,7 @@ class OnboardingStateService
             return "unauthenticated";
         }
 
-        if (config("scrybble.deployment_environment") === "commercial" && !$user->gumroadLicense()->exists()) {
+        if (DeploymentEnvironment::current()->isCommercial() && !$user->gumroadLicense()->exists()) {
             return "setup-gumroad";
         }
 
