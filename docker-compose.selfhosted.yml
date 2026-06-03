@@ -61,7 +61,7 @@ services:
       MYSQL_USER: "${DB_USERNAME}"
       MYSQL_PASSWORD: "${DB_PASSWORD}"
     volumes:
-      - ./database/:/var/lib/mysql
+      - /var/lib/mysql
     networks:
       - scrybble-network
   horizon:
