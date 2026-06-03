@@ -42,7 +42,7 @@ export default ({mode}) => {
                 ],
                 refresh: true,
             }),
-            process.env.APP_DEBUG ? null : vitePlugin,
+            process.env.SENTRY_AUTH_TOKEN ? vitePlugin : null,
         ],
         resolve: {
             alias: {

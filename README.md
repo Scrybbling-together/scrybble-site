@@ -121,13 +121,14 @@ For security, you are recommended to choose a username, password and root passwo
 
 The most relevant settings are:
 
-- `APP_URL` — the public URL of your server (e.g. `https://scrybble.example.com`).
+- `APP_URL` — the public URL of your server.
+  - If you host locally, this should be `localhost`
+  - If you host on a server with a domain name, pick the domain name: `https://mysite.example.com`
 - `DB_HOST`, `DB_PORT`, `DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD` — your database connection.
+  - Do **not** forget to configure a password
 - `REDIS_HOST`, `REDIS_PORT` — your Redis connection (used for the job queue).
 
-The server rebuilds its configuration cache from this `.env` file every time the
-container starts, so your values are always honored. You do **not** need to add
-Docker network aliases or mount a cache volume to make these settings take effect.
+The scrybble app caches the configuration, if you make changes to the .env file make sure to restart your container.
 
 On start-up the web container also applies any pending database migrations, so a fresh database and future upgrades are migrated automatically. Set `SCRYBBLE_AUTO_MIGRATE=false` if you prefer to run migrations yourself.
 

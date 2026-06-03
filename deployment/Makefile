@@ -13,7 +13,7 @@ release: build-app upload-app
 	echo "Releasing ${container}"
 
 build-app: check-branch
-	docker build -t ${container} --build-arg RELEASE_HASH=${commit} -f App.Dockerfile ..
+	docker build --target production -t ${container} --build-arg RELEASE_HASH=${commit} -f App.Dockerfile ..
 
 upload-app: check-branch
 	docker tag ${container} ${container_name}:latest
