@@ -3,6 +3,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Enums\DeploymentEnvironment;
 use Closure;
 use Illuminate\Http\Request;
 
@@ -17,7 +18,7 @@ class SelfHostedMiddleware
      */
     public function handle(Request $request, Closure $next): mixed
     {
-        if (config('scrybble.deployment_environment') !== 'self-hosted') {
+        if (!DeploymentEnvironment::current()->isSelfHosted()) {
             abort(404);
         }
 

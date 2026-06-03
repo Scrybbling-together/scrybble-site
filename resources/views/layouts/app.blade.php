@@ -1,4 +1,5 @@
-<!doctype html>
+@php use App\Enums\DeploymentEnvironment; @endphp
+    <!doctype html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="h-100">
 <head>
     <meta charset="utf-8">
@@ -10,7 +11,7 @@
 
     <title>{{ $title ?? "Scrybble Sync - Think analog, organize digital"}}</title>
 
-    @if( config('scrybble.deployment_environment') === "commercial" )
+    @if( DeploymentEnvironment::current()->isCommercial() )
         <script src="https://analytics.ahrefs.com/analytics.js" data-key="y6foK17D1uxnfx43uJn9pw" async></script>
     @endif
 

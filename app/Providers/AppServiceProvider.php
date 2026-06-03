@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Enums\DeploymentEnvironment;
 use App\Models\User;
 use App\Services\PRMStorage\DiskPRMStorage;
 use App\Services\PRMStorage\PRMStorageInterface;
@@ -15,7 +16,6 @@ use Illuminate\Auth\Events\Authenticated;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\ServiceProvider;
 use Laravel\Passport\Passport;
 use Sentry\Laravel\Integration;
@@ -53,6 +53,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        DeploymentEnvironment::current();
+
         Blade::if('cloudflareTurnstile', function () {
             $configuredCorrectly = config('scrybble.cloudflare.secret_key') && config('scrybble.cloudflare.site_key');
 
