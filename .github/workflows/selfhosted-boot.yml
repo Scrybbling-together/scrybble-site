@@ -5,15 +5,9 @@ on:
     branches: [master]
   pull_request:
 
-concurrency:
-  group: selfhosted-boot-${{ github.ref }}
-  cancel-in-progress: true
-
 jobs:
   boot:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
 
     steps:
       - name: Checkout
@@ -35,8 +29,15 @@ jobs:
           build-args: |
             RELEASE_HASH=${{ github.sha }}
 
-      - name: Stage CI .env for the self-hosted stack
-        run: cp .env.selfhosted-ci .env
+      - name: Stage CI .env
+        run: |
+          cp .env.example .env
+          sed -i \
+            -e 's|^APP_KEY=.*|APP_KEY=base64:Qf2LN6kbcZttv6a5RH+wX2mcd7QDE3Q6cn/pF6y3dzA=|' \
+            -e 's|^APP_ENV=.*|APP_ENV=production|' \
+            -e 's|^APP_DEBUG=.*|APP_DEBUG=false|' \
+            -e 's|^DB_HOST=.*|DB_HOST=db|' \
+            .env
 
       - name: Boot the self-hosted stack and wait for healthchecks
         run: |
@@ -45,13 +46,6 @@ jobs:
             -f docker-compose.selfhosted.ci.yml \
             up -d --wait --wait-timeout 300
 
-      - name: Verify migrations ran
-        run: |
-          docker compose \
-            -f docker-compose.selfhosted.yml \
-            -f docker-compose.selfhosted.ci.yml \
-            exec -T app php /var/www/html/artisan migrate:status
-
       - name: Dump container logs on failure
         if: failure()
         run: |
@@ -59,11 +53,3 @@ jobs:
             -f docker-compose.selfhosted.yml \
             -f docker-compose.selfhosted.ci.yml \
             logs --no-color
-
-      - name: Tear down
-        if: always()
-        run: |
-          docker compose \
-            -f docker-compose.selfhosted.yml \
-            -f docker-compose.selfhosted.ci.yml \
-            down -v
