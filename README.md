@@ -1,6 +1,7 @@
 # Scrybble
 
-This is the back-end and front-end for [Scrybble](https://scrybble.ink). It's relatively easy to set-up locally, but does require some technical knowledge.
+This is the back-end and front-end for [Scrybble](https://scrybble.ink). It's relatively easy to set-up locally, but
+does require some technical knowledge.
 
 ## Development
 
@@ -49,7 +50,6 @@ I host a dockerfile at hub.docker.com, tagged `laauurraaa/remarks-bin:latest`.
 
 `docker run -v "$PWD/YOUR FOLDER WITH REMARKABLE STUFF/":/store laauurraaa/remarks-bin:0.2.1 /store/in/YOUR_NOTEBOOK /store/out`
 
-
 ## Self-hosting
 
 Because Scrybble is entirely open-source, you are free to self-host Scrybble if you prefer.
@@ -72,14 +72,19 @@ There are two options here
 
 Either will work.
 
-The most convenient is to host it on a server somewhere, so you can sync at any time. Alternatively, you can host it on a local computer.
+The most convenient is to host it on a server somewhere, so you can sync at any time. Alternatively, you can host it on
+a local computer.
 
 There are two considerations here.
 
-1. To sync from reMarkable to Obsidian, the Scrybble server needs to be running. So if you want to host it on your own computer, you need to make sure that it is turned on when you want to use the Obsidian plugin to sync
-2. The Obsidian plugin needs to be able to communicate with the Scrybble server. If you choose to host Scrybble on your own computer, you need to make additional configurations to your network if you want to access your Scrybble server from outside your own home (ie, at work or when travelling)
+1. To sync from reMarkable to Obsidian, the Scrybble server needs to be running. So if you want to host it on your own
+   computer, you need to make sure that it is turned on when you want to use the Obsidian plugin to sync
+2. The Obsidian plugin needs to be able to communicate with the Scrybble server. If you choose to host Scrybble on your
+   own computer, you need to make additional configurations to your network if you want to access your Scrybble server
+   from outside your own home (ie, at work or when travelling)
 
-So the first thing you need to do is make a choice, do you host locally and deal with the tradeoff that Scrybble sync might not always be available?
+So the first thing you need to do is make a choice, do you host locally and deal with the tradeoff that Scrybble sync
+might not always be available?
 
 Or do you find a hosting provider to host Scrybble on?
 
@@ -89,7 +94,8 @@ Of course, you could always choose to host it on a homelab like a raspberry pi.
 
 Scrybble is deployed using Docker Compose. So you will need to install Docker on your target computer.
 
-We strongly recommend using Linux or MacOS, because it works best with Docker, but you can use Docker on Windows with WSL too if you so desire.
+We strongly recommend using Linux or MacOS, because it works best with Docker, but you can use Docker on Windows with
+WSL too if you so desire.
 Note that Docker will always run better on Linux-native computers.
 
 - [Install docker](https://docs.docker.com/engine/install/)
@@ -122,25 +128,28 @@ For security, you are recommended to choose a username, password and root passwo
 The most relevant settings are:
 
 - `APP_URL` — the public URL of your server.
-  - If you host locally, this should be `localhost`
-  - If you host on a server with a domain name, pick the domain name: `https://mysite.example.com`
+    - If you host locally, this should be `localhost`
+    - If you host on a server with a domain name, pick the domain name: `https://mysite.example.com`
 - `DB_HOST`, `DB_PORT`, `DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD` — your database connection.
-  - Do **not** forget to configure a password
+    - Do **not** forget to configure a password
 - `REDIS_HOST`, `REDIS_PORT` — your Redis connection (used for the job queue).
 
 The scrybble app caches the configuration, if you make changes to the .env file make sure to restart your container.
 
-On start-up the web container also applies any pending database migrations, so a fresh database and future upgrades are migrated automatically. Set `SCRYBBLE_AUTO_MIGRATE=false` if you prefer to run migrations yourself.
+On start-up the web container also applies any pending database migrations, so a fresh database and future upgrades are
+migrated automatically. Set the env var `SCRYBBLE_AUTO_MIGRATE=false` if you prefer to run migrations yourself.
 
 #### Make modifications to the docker-compose file if you wish
 
 The docker-compose file is configured to be secure by default, so the database and redis ports aren't opened.
 
-If you want to host on a server with your own domain name, the docker-compose file includes commented out code for a reverse-proxy that provides SSL for you automatically.
+If you want to host on a server with your own domain name, the docker-compose file includes commented out code for a
+reverse-proxy that provides SSL for you automatically.
 
 #### Start the server
 
-Next, the `docker-compose.selfhosted.yml` file describes your server's configuration. This is where you can open, close or change ports for the internal database, redis and web app.
+Next, the `docker-compose.selfhosted.yml` file describes your server's configuration. This is where you can open, close
+or change ports for the internal database, redis and web app.
 
 Last, to start your Scrybble server, run `docker compose -f docker-compose.selfhosted.yml up -d`
 
@@ -150,7 +159,8 @@ We're almost done configuring the server!
 
 The last thing you need to do is run the set-up on the server itself.
 
-There are three simple steps. You need to generate the encryption key used by Laravel, set-up an admin account, and lastly set up the OAuth authentication server.
+There are three simple steps. You need to generate the encryption key used by Laravel, set-up an admin account, and
+lastly set up the OAuth authentication server.
 
 If this sounds like magic to you, don't worry, just follow the steps carefully and you'll be fine :)
 
@@ -159,30 +169,35 @@ They are used to connect the Obsidian plugin with your server.
 
 Make sure to pick a good username and password!
 
-Quick tip: If you get tired of typing "docker compose -f docker-compose.selfhosted.yml ..." all the time, you can create an [alias](https://www.geeksforgeeks.org/alias-command-in-linux-with-examples/)!
+Quick tip: If you get tired of typing "docker compose -f docker-compose.selfhosted.yml ..." all the time, you can create
+an [alias](https://www.geeksforgeeks.org/alias-command-in-linux-with-examples/)!
 
 1. Run `docker compose -f docker-compose.selfhosted.yml exec --user www-data app php artisan key:generate`
-   - This generates an encryption key unique to your set-up. This key is saved in the .env file under `APP_KEY`.
+    - This generates an encryption key unique to your set-up. This key is saved in the .env file under `APP_KEY`.
 2. Run `docker compose -f docker-compose.selfhosted.yml exec --user www-data app php artisan app:setup-admin-account`
-    - Make sure to pick a good username and password, it's used to connect the Obsidian Scrybble plugin with your server.
+    - Make sure to pick a good username and password, it's used to connect the Obsidian Scrybble plugin with your
+      server.
     - Additionally, this account is what you use to log in to your Scrybble dashboard on the website.
 3. Run `docker compose -f docker-compose.selfhosted.yml exec --user www-data app php artisan passport:install`
 4. Run `docker compose -f docker-compose.selfhosted.yml exec --user www-data app php artisan passport:client --device`
-   - It is essential that you store the client secret somewhere safe
+    - It is essential that you store the client secret somewhere safe
 
 If you mess up in the set-up stage, you can start over from fresh by running
 
 `docker compose exec app php artisan migrate:fresh`. This fully resets the database.
 
-Note, this command deletes _everything_ in the database on the server. You will lose sync history, and you'll have to start over with this "set-up" section.
+Note, this command deletes _everything_ in the database on the server. You will lose sync history, and you'll have to
+start over with this "set-up" section.
 
-You're done! You can now visit http://localhost (or your domain!) to see your Scrybble set-up, and you can log in to your admin account.
+You're done! You can now visit http://localhost (or your domain!) to see your Scrybble set-up, and you can log in to
+your admin account.
 
 #### Configuring your Obsidian plugin
 
 In Obsidian, go to the plugin settings and enable the "Self hosted" toggle.
 
-In here, you need to configure your hostname. If you have it on a server, fill in the server's ip address or the domain name if you set it up using a domain name. Otherwise fill in "http://localhost"
+In here, you need to configure your hostname. If you have it on a server, fill in the server's ip address or the domain
+name if you set it up using a domain name. Otherwise fill in "http://localhost"
 
 If you are using a different port that port 80, you can configure that in the same Endpoint field.
 
@@ -192,7 +207,8 @@ That's it! You should be able to use your own self-hosted Scrybble now :)
 
 ### Where are my files stored?
 
-The documents you sync are stored in a folder named "efs", which can be found in the same directory as your docker-compose file.
+The documents you sync are stored in a folder named "efs", which can be found in the same directory as your
+docker-compose file.
 It is automatically generated when you set up the server.
 
 In this folder structure, a directory will be created for each user that syncs a document.
@@ -217,4 +233,5 @@ Visit `http://{YOUR DOMAIN}/admin`, log-in with the admin account and select the
 ## External resources
 
 - [Official Laravel documentation](https://laravel.com/docs/12.x/installation)
-- Article: [Self-Hosting Scrybble: reMarkable to Obsidian Sync with Lessons Learned](https://andrewdoering.org/blog/2026/hosting-scrybble/?utm_source=atom_feed#optional-using-rmfakecloud)
+-
+Article: [Self-Hosting Scrybble: reMarkable to Obsidian Sync with Lessons Learned](https://andrewdoering.org/blog/2026/hosting-scrybble/?utm_source=atom_feed#optional-using-rmfakecloud)
