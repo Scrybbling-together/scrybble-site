@@ -119,6 +119,17 @@ To get started with the `.env` file, copy the `.env.example` file and name the n
 
 For security, you are recommended to choose a username, password and root password for your database.
 
+The most relevant settings are:
+
+- `APP_URL` — the public URL of your server.
+  - If you host locally, this should be `localhost`
+  - If you host on a server with a domain name, pick the domain name: `https://mysite.example.com`
+- `DB_HOST`, `DB_PORT`, `DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD` — your database connection.
+  - Do **not** forget to configure a password
+- `REDIS_HOST`, `REDIS_PORT` — your Redis connection (used for the job queue).
+
+The scrybble app caches the configuration, if you make changes to the .env file make sure to restart your container.
+
 #### Make modifications to the docker-compose file if you wish
 
 The docker-compose file is configured to be secure by default, so the database and redis ports aren't opened.

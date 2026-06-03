@@ -16,10 +16,10 @@ services:
     depends_on:
       redis:
         condition: service_healthy
+      db:
+        condition: service_healthy
       remarks:
         condition: service_healthy
-      on_startup:
-        condition: service_completed_successfully
       # Uncomment if you want to use letsencrypt
       # nginx-proxy:
       #   condition: service_healthy
@@ -46,6 +46,12 @@ services:
     # uncomment to open up your database to external connections
     # ports:
     # - "3306:3306"
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost" ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
     expose:
       - 3306
     environment:
@@ -58,25 +64,13 @@ services:
       - ./database/:/var/lib/mysql
     networks:
       - scrybble-network
-  on_startup:
-    image: "laauurraaa/scrybble-server:latest"
-    networks:
-      - scrybble-network
-    depends_on:
-      - redis
-    volumes:
-      - ./.env:/var/www/html/.env
-    command:
-      - /bin/bash
-      - -c
-      - |
-        php /var/www/html/artisan migrate --force
-        php /var/www/html/artisan optimize:clear
-        php /var/www/html/artisan optimize
   horizon:
     image: "laauurraaa/scrybble-server:latest"
     depends_on:
-      - redis
+      redis:
+        condition: service_healthy
+      db:
+        condition: service_healthy
     user: www-data
     restart:
       always
