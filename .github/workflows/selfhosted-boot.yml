@@ -1,0 +1,69 @@
+name: Self-hosted boot
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+concurrency:
+  group: selfhosted-boot-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  boot:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build production image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: deployment/App.Dockerfile
+          target: production
+          tags: laauurraaa/scrybble-server:latest
+          load: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            RELEASE_HASH=${{ github.sha }}
+
+      - name: Stage CI .env for the self-hosted stack
+        run: cp .env.selfhosted-ci .env
+
+      - name: Boot the self-hosted stack and wait for healthchecks
+        run: |
+          docker compose \
+            -f docker-compose.selfhosted.yml \
+            -f docker-compose.selfhosted.ci.yml \
+            up -d --wait --wait-timeout 300
+
+      - name: Verify migrations ran
+        run: |
+          docker compose \
+            -f docker-compose.selfhosted.yml \
+            -f docker-compose.selfhosted.ci.yml \
+            exec -T app php /var/www/html/artisan migrate:status
+
+      - name: Dump container logs on failure
+        if: failure()
+        run: |
+          docker compose \
+            -f docker-compose.selfhosted.yml \
+            -f docker-compose.selfhosted.ci.yml \
+            logs --no-color
+
+      - name: Tear down
+        if: always()
+        run: |
+          docker compose \
+            -f docker-compose.selfhosted.yml \
+            -f docker-compose.selfhosted.ci.yml \
+            down -v

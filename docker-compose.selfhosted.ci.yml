@@ -1,0 +1,15 @@
+services:
+  app:
+    pull_policy: never
+  horizon:
+    pull_policy: never
+  remarks:
+    image: laauurraaa/scrybble-server:latest
+    pull_policy: never
+    command: ["sleep", "infinity"]
+    healthcheck:
+      test: ["CMD", "true"]
+      interval: 2s
+      timeout: 2s
+      retries: 1
+      start_period: 1s
