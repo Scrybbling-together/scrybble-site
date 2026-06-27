@@ -19,7 +19,7 @@ services:
       mysql:
         condition: service_healthy
       remarks:
-        condition: service_healthy
+        condition: service_started
       # Uncomment if you want to use letsencrypt
       # nginx-proxy:
       #   condition: service_healthy
