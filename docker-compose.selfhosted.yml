@@ -16,7 +16,7 @@ services:
     depends_on:
       redis:
         condition: service_healthy
-      db:
+      mysql:
         condition: service_healthy
       remarks:
         condition: service_healthy
