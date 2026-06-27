@@ -16,7 +16,7 @@ services:
     depends_on:
       redis:
         condition: service_healthy
-      db:
+      mysql:
         condition: service_healthy
       remarks:
         condition: service_healthy
@@ -40,7 +40,7 @@ services:
       VIRTUAL_PORT: '80'
       # Uncomment if you want to use letsencrypt
       # LETSENCRYPT_HOST: '${APP_URL}'
-  db:
+  mysql:
     image: mysql:9.1
     restart: always
     # uncomment to open up your database to external connections
@@ -61,7 +61,7 @@ services:
       MYSQL_USER: "${DB_USERNAME}"
       MYSQL_PASSWORD: "${DB_PASSWORD}"
     volumes:
-      - ./database/:/var/lib/mysql
+      - /var/lib/mysql
     networks:
       - scrybble-network
   horizon:
@@ -69,7 +69,7 @@ services:
     depends_on:
       redis:
         condition: service_healthy
-      db:
+      mysql:
         condition: service_healthy
     user: www-data
     restart:

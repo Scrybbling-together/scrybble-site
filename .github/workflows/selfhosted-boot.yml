@@ -1,0 +1,54 @@
+name: Self-hosted boot
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+jobs:
+  boot:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build production image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: deployment/App.Dockerfile
+          target: production
+          tags: laauurraaa/scrybble-server:latest
+          load: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            RELEASE_HASH=${{ github.sha }}
+
+      - name: Stage CI .env
+        run: |
+          cp .env.example .env
+          sed -i \
+            -e 's|^APP_KEY=.*|APP_KEY=base64:Qf2LN6kbcZttv6a5RH+wX2mcd7QDE3Q6cn/pF6y3dzA=|' \
+            -e 's|^APP_ENV=.*|APP_ENV=production|' \
+            -e 's|^APP_DEBUG=.*|APP_DEBUG=false|' \
+            .env
+
+      - name: Boot the self-hosted stack and wait for healthchecks
+        run: |
+          docker compose \
+            -f docker-compose.selfhosted.yml \
+            -f docker-compose.selfhosted.ci.yml \
+            up -d --wait --wait-timeout 300
+
+      - name: Dump container logs on failure
+        if: failure()
+        run: |
+          docker compose \
+            -f docker-compose.selfhosted.yml \
+            -f docker-compose.selfhosted.ci.yml \
+            logs --no-color
