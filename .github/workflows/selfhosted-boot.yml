@@ -36,7 +36,6 @@ jobs:
             -e 's|^APP_KEY=.*|APP_KEY=base64:Qf2LN6kbcZttv6a5RH+wX2mcd7QDE3Q6cn/pF6y3dzA=|' \
             -e 's|^APP_ENV=.*|APP_ENV=production|' \
             -e 's|^APP_DEBUG=.*|APP_DEBUG=false|' \
-            -e 's|^DB_HOST=.*|DB_HOST=db|' \
             .env
 
       - name: Boot the self-hosted stack and wait for healthchecks
