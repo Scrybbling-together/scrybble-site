@@ -40,7 +40,7 @@ services:
       VIRTUAL_PORT: '80'
       # Uncomment if you want to use letsencrypt
       # LETSENCRYPT_HOST: '${APP_URL}'
-  db:
+  mysql:
     image: mysql:9.1
     restart: always
     # uncomment to open up your database to external connections
