@@ -71,6 +71,8 @@ services:
         condition: service_healthy
       mysql:
         condition: service_healthy
+      app:
+        condition: service_healthy
     user: www-data
     restart:
       always
