@@ -1,7 +1,6 @@
 @props([
     'title' => '',
     'status' => '',
-    'statusVariant' => 'primary',
     'expected' => null,
     'borderClass' => 'border-primary',
     'headerBg' => 'bg-light',
@@ -11,13 +10,13 @@
 ])
 
 @php
-    $statusVariants = [
-        'success' => ['bg' => 'bg-success', 'text' => ''],
-        'primary' => ['bg' => 'bg-primary', 'text' => 'text-dark'],
-        'warning' => ['bg' => 'bg-warning', 'text' => 'text-dark'],
-        'info' => ['bg' => 'bg-info', 'text' => 'text-dark'],
+    $statusMap = [
+        'completed'   => ['bg' => 'bg-success', 'text' => ''],
+        'in progress' => ['bg' => 'bg-primary', 'text' => 'text-dark'],
+        'planned'     => ['bg' => 'bg-warning', 'text' => 'text-dark'],
+        'exploring'   => ['bg' => 'bg-info', 'text' => 'text-dark'],
     ];
-    $variant = $statusVariants[$statusVariant] ?? $statusVariants['primary'];
+    $variant = $statusMap[strtolower($status)] ?? $statusMap['in progress'];
 @endphp
 
 <div class="card g-col-12 g-col-lg-6 {{ $borderClass }}" {{ $attributes }}>

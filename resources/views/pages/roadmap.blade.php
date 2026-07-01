@@ -70,7 +70,6 @@
                         <x-roadmap-card
                             title="Improving sync"
                             status="In progress"
-                            statusVariant="primary"
                             expected="During 2026"
                         >
                             <p>Synchronization from reMarkable to Obsidian has some rough edges that need to be worked
@@ -87,7 +86,6 @@
                         <x-roadmap-card
                             title="Zotero x reMarkable integration"
                             status="In progress"
-                            statusVariant="primary"
                             expected="2026"
                         >
                             <p>Many people using the reMarkable use it within a research context, Zotero is the go-to
@@ -117,7 +115,6 @@
                         <x-roadmap-card
                             title="Highlight support for scanned documents"
                             status="Exploring"
-                            statusVariant="info"
                             expected="Q4 2025"
                         >
                             <p><strong>Problem:</strong> Highlights don't work on scanned PDFs without embedded text</p>
@@ -127,7 +124,6 @@
                         <x-roadmap-card
                             title="Automatic sync functionality"
                             status="Planned"
-                            statusVariant="warning"
                             expected="Q4 2026"
                         >
                             <p><strong>Problem:</strong> You have to manually click a file to get it synced or updated
@@ -141,7 +137,6 @@
                         <x-roadmap-card
                             title="Two-way sync"
                             status="Exploring"
-                            statusVariant="info"
                             expected="Late 2026"
                         >
                             <p><strong>Problem:</strong> At the moment, the Obsidian plugin only allows you to sync from reMarkable to Obsidian</p>
@@ -166,7 +161,6 @@
                         <x-roadmap-card
                             title="Convert structured annotations into popular formats"
                             status="Exploring"
-                            statusVariant="info"
                             borderClass="border-0 bg-white bg-opacity-10"
                             headerBg="bg-transparent"
                             headerBorder="border-0"
@@ -183,7 +177,6 @@
                         <x-roadmap-card
                             title="reMarkable x Readwise integration"
                             status="Exploring"
-                            statusVariant="info"
                             borderClass="border-0 bg-white bg-opacity-10"
                             headerBg="bg-transparent"
                             headerBorder="border-0"
@@ -197,7 +190,6 @@
                         <x-roadmap-card
                             title="Anki x reMarkable integration"
                             status="Exploring"
-                            statusVariant="info"
                             borderClass="border-0 bg-white bg-opacity-10"
                             headerBg="bg-transparent"
                             headerBorder="border-0"
