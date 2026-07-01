@@ -78,7 +78,7 @@
                                 <li>We need to add support for images</li>
                                 <li>When a sync error occurs, this should be communicated correctly in the plugin</li>
                                 <li>Support for reMarkable templates (not methods!)</li>
-                                <li>Pen rendering can be improved</li>
+                                <li>Pen rendering improvements</li>
                             </ul>
                             <p><strong>Solution</strong> just a bunch of development work :)</p>
                         </x-roadmap-card>
