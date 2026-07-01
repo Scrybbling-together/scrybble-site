@@ -128,7 +128,7 @@
                             title="Automatic sync functionality"
                             status="Planned"
                             statusVariant="warning"
-                            expected="Q4 2025"
+                            expected="Q4 2026"
                         >
                             <p><strong>Problem:</strong> You have to manually click a file to get it synced or updated
                                 within Obsidian</p>
