@@ -6,28 +6,36 @@ on:
   pull_request:
 
 jobs:
+  build:
+    uses: ./.github/workflows/build.yml
+    with:
+      target: production
+    permissions:
+      contents: read
+      packages: write
+
   boot:
+    needs: build
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Build production image
-        uses: docker/build-push-action@v5
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
         with:
-          context: .
-          file: deployment/App.Dockerfile
-          target: production
-          tags: laauurraaa/scrybble-server:latest
-          load: true
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-          build-args: |
-            RELEASE_HASH=${{ github.sha }}
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Pull and retag for compose
+        run: |
+          docker pull "${{ needs.build.outputs.image-ref }}"
+          docker tag "${{ needs.build.outputs.image-ref }}" laauurraaa/scrybble-server:latest
 
       - name: Stage CI .env
         run: |
