@@ -24,9 +24,9 @@
                     <li class="nav-item" >
                         <a href="/news" class="nav-link">News</a>
                     </li>
-{{--                    <li class="nav-item" >--}}
-{{--                        <a href="/articles" class="nav-link">Articles</a>--}}
-{{--                    </li>--}}
+                    <li class="nav-item" >
+                        <a href="/blog" class="nav-link">Blog</a>
+                    </li>
                 </ul>
 
                 <ul class="navbar-nav">

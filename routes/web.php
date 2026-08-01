@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\BlogController;
 use App\Http\Controllers\ConnectedGumroadLicenseController;
 use App\Http\Controllers\CustomHostInformationController;
 use App\Http\Controllers\HomeController;
@@ -30,8 +31,8 @@ Route::get('/purchased', fn () => view('pages.purchased'));
 Route::get('/news', [NewsController::class, 'index'])->name('news.index');
 Route::get('/news/{slug}', [NewsController::class, 'show'])->name('news.show');
 
-//Route::get('/news', [BlogController::class, 'index']);
-//Route::get('/news/{slug}', [BlogController::class, 'show']);
+Route::get('/blog', [BlogController::class, 'index'])->name('blog.index');
+Route::get('/blog/{slug}', [BlogController::class, 'show'])->name('blog.show');
 
 /**
  * Legal
