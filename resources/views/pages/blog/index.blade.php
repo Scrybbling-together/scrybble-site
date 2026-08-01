@@ -26,7 +26,7 @@
             <div class="text-center">
                 <h1 class="display-2 fw-bolder mb-4">Blog</h1>
                 <p class="fs-5 text-muted mx-auto" style="max-width: 40rem;">
-                    Explorable explanations of how reMarkable works under the hood — coordinate systems, rendering, file formats, and the engineering behind Scrybble.
+                    Explorable explanations and the engineering behind Scrybble.
                 </p>
             </div>
         </div>
@@ -57,7 +57,7 @@
                         <div class="mt-auto">
                             <div class="d-flex justify-content-between align-items-center text-muted small">
                                 <span>By Laura Brekelmans</span>
-                                <span>2025</span>
+                                <span>2nd of August, 2026</span>
                             </div>
 
                             <div class="mt-2">

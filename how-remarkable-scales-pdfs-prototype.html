@@ -1,0 +1,3349 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&display=swap"
+      rel="stylesheet"
+    />
+    <title>Understanding the reMarkable coordinate system — draft</title>
+    <style>
+      /* ============ Scrybble palette ============
+     Base colors from the brand guide, plus the ramp shades used
+     for lines and text (from the tints/shades sheet).            */
+      :root {
+        --citron: #bec36b;
+        --citron-25: #9ba041;
+        --citron-37: #828637;
+        --citron-tint: #dee1b5;
+        --kobold: #efd3cf;
+        --kobold-12: #e1aba4;
+        --kobold-25: #d3847a;
+        --kobold-tint: #f9eeec;
+        --flame: #e86837;
+        --flame-25: #c04616;
+        --envisage: #95bdb5;
+        --envisage-25: #619b90;
+        --envisage-37: #518178;
+        --envisage-50: #416860;
+        --envisage-t1: #d7e6e3;
+        --envisage-t2: #cadeda;
+        --acorn: #f0a740;
+        --acorn-12: #ed971f;
+        --acorn-dark: #8e570b;
+        --acorn-t1: #fbe9d0;
+        --acorn-t2: #f5c889;
+        --paper: #ffffff;
+        --page: #f8f9fa;
+        --hero-bg: #cadeda; /* Envisage +50%: lighter, not greyer */
+
+        --ink: #262317; /* warm near-black, Baby Powder −87.5% */
+        --dim: #6f6a5f;
+        --faint: #98938a;
+      }
+      html {
+        -webkit-text-size-adjust: 100%;
+      }
+      body {
+        margin: 0;
+        background: var(--page);
+        color: var(--ink);
+        font:
+          17px/1.65 -apple-system,
+          system-ui,
+          "Segoe UI",
+          Roboto,
+          "Helvetica Neue",
+          Arial,
+          sans-serif;
+      }
+      main {
+        max-width: 41rem;
+        margin: 0 auto;
+        padding: 2.2rem 1.1rem 4rem;
+      }
+      h1 {
+        font-size: 1.7rem;
+        line-height: 1.25;
+        margin: 1rem 0 0.8rem;
+      }
+      h2 {
+        font-size: 1.35rem;
+        margin: 2.6rem 0 0.6rem;
+      }
+      h3 {
+        font-size: 1.12rem;
+        margin: 2rem 0 0.5rem;
+      }
+      h4 {
+        font-size: 1rem;
+        margin: 1.8rem 0 0.4rem;
+      }
+      p {
+        margin: 0.85rem 0;
+      }
+      ol,
+      ul {
+        margin: 0.85rem 0;
+        padding-left: 1.5rem;
+      }
+      a {
+        color: var(--envisage-37);
+      }
+      a:hover {
+        color: var(--acorn-12);
+      }
+      code {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: 0.85em;
+        background: var(--paper);
+        border: 1px solid var(--envisage-t1);
+        border-radius: 4px;
+        padding: 0 4px;
+      }
+      .note-inline {
+        color: var(--kobold-25);
+        background: var(--kobold-tint);
+        border-radius: 4px;
+        padding: 0 4px;
+        font-size: 0.9em;
+      }
+      .ednote {
+        background: var(--kobold-tint);
+        border: 1px dashed var(--kobold-12);
+        border-radius: 6px;
+        padding: 0.6rem 0.8rem;
+        color: var(--kobold-25);
+        font-size: 0.9em;
+        margin: 1rem 0;
+      }
+      .badges {
+        display: inline-flex;
+        gap: 6px;
+        margin-left: auto;
+        flex-wrap: wrap;
+      }
+      .badge {
+        background: var(--page);
+        border: 1px solid #e7e5dc;
+        border-radius: 5px;
+        padding: 1px 8px;
+        font-family: ui-monospace, Menlo, Consolas, monospace;
+        font-size: 0.72rem;
+        color: var(--faint);
+        white-space: nowrap;
+      }
+      .tut {
+        position: absolute;
+        top: 8px;
+        left: 8px;
+        background: var(--paper);
+        border: 1px solid var(--envisage-t2);
+        border-radius: 8px;
+        padding: 7px 12px;
+        font-size: 0.78rem;
+        color: var(--ink);
+        box-shadow: 0 1px 5px rgba(38, 35, 23, 0.08);
+        transition: opacity 0.5s;
+        pointer-events: none;
+      }
+      .tstep {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        padding: 2px 0;
+        transition: opacity 0.4s;
+      }
+      .tstep.done {
+        opacity: 0.35;
+        text-decoration: line-through;
+      }
+      .tnum {
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background: var(--flame-25);
+        color: #fff;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.66rem;
+        flex: none;
+      }
+      .tut.gone {
+        opacity: 0;
+      }
+      .chip-bg {
+        fill: var(--paper);
+        opacity: 0.94;
+      }
+      .bubble-box {
+        fill: var(--flame-25);
+      }
+      .bubble-tail {
+        fill: var(--flame-25);
+      }
+      .bubble-text {
+        fill: #fff;
+        font:
+          12px system-ui,
+          sans-serif;
+      }
+
+      /* ---- hero header: full-bleed drifting scrybbles ---- */
+      .hero {
+        position: relative;
+        width: 100%;
+        height: 480px;
+        background: var(--hero-bg);
+        overflow: hidden;
+      }
+      .header-art {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+      }
+      .header-art svg {
+        display: block;
+        width: 100%;
+        height: 100%;
+      }
+      .hero-inner {
+        position: relative;
+        max-width: 41rem;
+        margin: 0 auto;
+        height: 100%;
+        padding: 0 1.1rem;
+      }
+      .hero-title {
+        position: absolute;
+        left: 1.1rem;
+        bottom: 30px;
+        max-width: calc(100% - 2.2rem);
+      }
+      .hero-title h1 {
+        margin: 0.35rem 0 0;
+        font-family: "Fraunces", "Iowan Old Style", Georgia, serif;
+        font-weight: 600;
+        font-size: clamp(1.9rem, 4.6vw, 2.7rem);
+        line-height: 1.14;
+        letter-spacing: -0.012em;
+        text-shadow:
+          0 1px 0 var(--hero-bg),
+          0 0 14px var(--hero-bg);
+      }
+      .hero-sub {
+        margin-top: 0.35rem;
+        font:
+          italic 600 1.05rem "Fraunces",
+          "Iowan Old Style",
+          Georgia,
+          serif;
+        color: var(--envisage-50);
+        letter-spacing: 0.01em;
+      }
+      @keyframes hdraw {
+        to {
+          stroke-dashoffset: 0;
+        }
+      }
+      .h-draw {
+        stroke-dasharray: 1;
+        stroke-dashoffset: 1;
+        animation: hdraw 1.5s ease-out forwards;
+      }
+      .fig-draw {
+        stroke-dasharray: 1;
+        stroke-dashoffset: 1;
+        animation: hdraw 1.1s ease-out forwards;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .h-draw,
+        .fig-draw {
+          animation: none;
+          stroke-dashoffset: 0;
+        }
+      }
+
+      /* ---- interactive figure shell: white paper cards on Baby Powder ---- */
+      figure.interactive {
+        margin: 1.5rem 0;
+        background: var(--paper);
+        border: 1px solid var(--envisage-t1);
+        border-radius: 8px;
+        padding: 10px;
+      }
+      .svg-wrap {
+        position: relative;
+      }
+      .svg-wrap svg {
+        display: block;
+        width: 100%;
+        border-radius: 4px;
+      }
+      svg.pz {
+        touch-action: none;
+        cursor: grab;
+      }
+      svg.pz:active {
+        cursor: grabbing;
+      }
+      svg text {
+        user-select: none;
+        -webkit-user-select: none;
+      }
+
+      .bar {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px 14px;
+        align-items: center;
+        margin-top: 8px;
+        font-size: 0.82rem;
+        color: var(--dim);
+      }
+      .bar .ro {
+        margin-left: auto;
+        font-family: ui-monospace, Menlo, Consolas, monospace;
+        font-size: 0.76rem;
+        color: var(--faint);
+        white-space: nowrap;
+      }
+      button.chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        font: inherit;
+        font-size: 0.8rem;
+        border: none;
+        background: none;
+        padding: 2px;
+        cursor: pointer;
+        color: var(--ink);
+      }
+      button.chip:hover {
+        color: var(--envisage-37);
+      }
+      button.chip.off {
+        opacity: 0.4;
+        text-decoration: line-through;
+      }
+      .steps {
+        display: inline-flex;
+        gap: 6px;
+        flex-wrap: wrap;
+      }
+      .panel-caps {
+        display: flex;
+        margin-top: 2px;
+      }
+      .panel-caps div {
+        flex: 1;
+        text-align: center;
+        font-size: 0.8rem;
+        color: var(--dim);
+        padding: 4px 8px 0;
+      }
+      button.chip.on {
+        background: var(--flame);
+        border-color: var(--flame);
+        color: #fff;
+      }
+      .chip .sw {
+        width: 14px;
+        height: 14px;
+        border-radius: 3px;
+        flex: none;
+      }
+      .legend {
+        display: inline-flex;
+        gap: 14px;
+        flex-wrap: wrap;
+      }
+      .lg {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .lg .sw {
+        width: 11px;
+        height: 11px;
+        border-radius: 3px;
+        flex: none;
+        border: 1px solid var(--envisage-t2);
+      }
+      label.ctl {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+      }
+      input[type="range"] {
+        accent-color: var(--flame);
+        width: 150px;
+        vertical-align: middle;
+      }
+      select,
+      button.plain {
+        font: inherit;
+        font-size: 0.82rem;
+        padding: 3px 8px;
+        border: 1px solid var(--citron-tint);
+        border-radius: 6px;
+        background: var(--paper);
+        color: var(--ink);
+        cursor: pointer;
+      }
+      select:hover,
+      button.plain:hover {
+        border-color: var(--citron);
+      }
+
+      /* ---- SVG element styles ---- */
+      line.grid {
+        stroke: var(--envisage-t1);
+        stroke-width: 1;
+      }
+      text.grid-label {
+        fill: var(--envisage-25);
+        font:
+          11px ui-monospace,
+          Menlo,
+          Consolas,
+          monospace;
+      }
+      .axis {
+        stroke: var(--envisage-50);
+        stroke-width: 1.5;
+      }
+      .axis-arrow {
+        fill: var(--envisage-50);
+      }
+      .axis-letter {
+        font:
+          italic 13px Georgia,
+          serif;
+        fill: var(--envisage-50);
+      }
+      .soft-line {
+        stroke: var(--envisage-25);
+        stroke-width: 1.5;
+      }
+      .small-label {
+        font:
+          11.5px system-ui,
+          sans-serif;
+        fill: var(--envisage-37);
+      }
+      .mono-label {
+        font:
+          11px ui-monospace,
+          Menlo,
+          Consolas,
+          monospace;
+        fill: var(--envisage-37);
+      }
+      .device-rect {
+        stroke-width: 2;
+      }
+      .device-label {
+        font:
+          11.5px system-ui,
+          sans-serif;
+      }
+      .ink {
+        stroke: var(--ink);
+        fill: none;
+        stroke-width: 2.5;
+        stroke-linejoin: round;
+        stroke-linecap: round;
+      }
+      .ghost {
+        stroke: var(--kobold-12);
+        fill: none;
+        stroke-width: 2;
+        stroke-linejoin: round;
+        stroke-linecap: round;
+      }
+      .arrow-line {
+        stroke: var(--kobold-25);
+        stroke-width: 1.3;
+        opacity: 0.55;
+      }
+      .anchor-dot {
+        fill: var(--flame);
+        stroke: #fff;
+        stroke-width: 2;
+        cursor: grab;
+      }
+      .origin-ring {
+        fill: none;
+        stroke: var(--envisage-50);
+        stroke-width: 2;
+      }
+      .origin-dot {
+        fill: var(--envisage-50);
+      }
+      .page-rect {
+        fill: var(--page);
+        stroke: var(--envisage-t2);
+        stroke-width: 1.5;
+      }
+      .frame-rect {
+        fill: none;
+        stroke-width: 2.5;
+      }
+      .view-rect {
+        stroke-width: 2.5;
+        cursor: grab;
+      }
+      .view-rect:active {
+        cursor: grabbing;
+      }
+      .tip-line {
+        stroke: rgba(65, 104, 96, 0.16);
+        stroke-width: 1;
+      }
+      .tip-box {
+        fill: var(--paper);
+        stroke: var(--envisage-t2);
+        stroke-width: 1;
+      }
+      .tip-text {
+        fill: var(--ink);
+        font:
+          12px ui-monospace,
+          Menlo,
+          Consolas,
+          monospace;
+      }
+      .xg {
+        cursor: pointer;
+      }
+      .xg circle {
+        fill: var(--paper);
+        stroke: var(--envisage-t2);
+        stroke-width: 1;
+      }
+      .xg:hover circle {
+        fill: var(--acorn-t1);
+        stroke: var(--acorn-t2);
+      }
+      .xg path {
+        stroke: var(--flame);
+        stroke-width: 1.6;
+        fill: none;
+      }
+
+      .sig {
+        margin-top: 2.4rem;
+        font-family: "Fraunces", "Iowan Old Style", Georgia, serif;
+        font-style: italic;
+        color: var(--dim);
+      }
+      .big-label {
+        font:
+          600 14px ui-monospace,
+          Menlo,
+          Consolas,
+          monospace;
+        fill: var(--ink);
+      }
+
+      .tablewrap {
+        overflow-x: auto;
+        margin: 1.2rem 0;
+      }
+      table {
+        border-collapse: collapse;
+        font-size: 0.88rem;
+        min-width: 430px;
+      }
+      th,
+      td {
+        text-align: left;
+        padding: 0.42rem 1rem 0.42rem 0;
+        border-bottom: 1px solid #e9e7de;
+        font-variant-numeric: tabular-nums;
+        white-space: nowrap;
+      }
+      th {
+        font-weight: 600;
+        color: var(--citron-37);
+        font-size: 0.76rem;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+      }
+    </style>
+  </head>
+  <body>
+    <header class="hero">
+      <div class="header-art" aria-hidden="true"></div>
+      <div class="hero-inner">
+        <div class="hero-title">
+          <h1>Understanding the reMarkable coordinate system</h1>
+          <div class="hero-sub">Scrybble</div>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <p>
+        reMarkable tablets are super neat devices for taking notes at work,
+        studying, researching, sketching, journaling, planning and more.
+      </p>
+
+      <p>
+        If you ever wondered what's going on behind the scenes, this is the
+        article for you. In this article, we'll be looking at how reMarkable's
+        coordinate system works.
+      </p>
+
+      <p>
+        Note that this article is an explorable explanation, all the examples
+        are interactive, meaning you can learn from them by playing with them.
+      </p>
+
+      <h2>Coordinates</h2>
+
+      <p>
+        The reMarkable lines format stores lines in a coordinate system. A
+        common coordinate system in computer science is the cartesian coordinate
+        system. It's the same one used on high school graph paper where you have
+        an x-axis and a y-axis.
+      </p>
+
+      <figure
+        class="interactive"
+        data-fig="cartesian-intro"
+        aria-label="A pannable, zoomable cartesian coordinate system with a three-step tutorial overlay"
+      ></figure>
+
+      <h3>Quick recap on coordinate systems</h3>
+
+      <p>
+        This article is going to go dive into some detail behind these
+        coordinate systems. A little bit of background knowledge on a few core
+        concepts will make things a lot clearer to understand. We'll quickly
+        cover the cartesian coordinate system, what origin coordinates are and
+        the "screen coordinate system".
+      </p>
+
+      <h4>The cartesian coordinate system</h4>
+
+      <p>
+        A "cartesian coordinate system" is just a fancy term for the coordinate
+        system you're already used to. There's an x-axis and a y-axis. The
+        y-axis is vertical and the x-axis horizontal. Nothing special here.
+      </p>
+
+      <p>
+        Why's it called cartesian? It was named after René Descartes (you might
+        know him of "I think therefore I am" fame!).
+      </p>
+
+      <figure
+        class="interactive"
+        data-fig="cartesian-origin"
+        aria-label="A pannable, zoomable cartesian coordinate system with the origin highlighted"
+      ></figure>
+
+      <p>
+        Note there is one coordinate in this system that is really important,
+        it's called the <strong>origin</strong> coordinate, the origin
+        coordinate is always set to (0, 0).
+      </p>
+
+      <h4>Computers do it sliightly differently than what you're used to</h4>
+
+      <p>
+        When these graphs appear on paper, the origin coordinate is often
+        visually in the center. This makes sense, because when working with
+        mathematical functions, you want to show what the function does both
+        above and below 0 for both the axes.
+      </p>
+
+      <figure
+        class="interactive"
+        data-fig="paper-centered"
+        aria-label="A cartesian graph as it looks on paper, with the origin in the center, thick and bold"
+      ></figure>
+
+      <p>
+        Another common example is with bar graphs, line charts and the like,
+        where the origin coordinate tends to appears in the bottom left.
+      </p>
+
+      <figure
+        class="interactive"
+        data-fig="paper-chart"
+        aria-label="A cartesian graph as used in a line chart, with the origin in the bottom left, thick and bold"
+      ></figure>
+
+      <p>
+        But computers are a bit of an odd duck here. If you're playing a game or
+        editing photos in photoshop, the programmers who make the pixels appear
+        on the screen are working with choices that deviate from most charts you
+        see in everyday situations:
+      </p>
+
+      <ol>
+        <li>The (0, 0) coordinate is actually in the top-left of the canvas</li>
+        <li>
+          As you go down the y coordinate, y <em>increases</em> rather than
+          decreases
+        </li>
+      </ol>
+
+      <p>
+        This system is called the <strong>Screen Coordinate System</strong>.
+        These two differences have advantages for computer programming, if
+        you're curious to learn more you can read
+        <a href="https://mislav.github.io/diveintohtml5/canvas"
+          >this excellent article</a
+        >.
+      </p>
+
+      <p>
+        That's all you need to know about the cartesian coordinate systems,
+        simple!
+      </p>
+
+      <h4>Now, on to the reMarkable coordinate system</h4>
+
+      <p>
+        reMarkable's system deviates slightly from the traditional Screen
+        Coordinate System, let's call it the
+        <strong>reMarkable coordinate system</strong>.
+      </p>
+
+      <p>
+        In the reMarkable coordinate system, the origin coordinate isn't in the
+        center, not in the bottom-right and not even in the top-left. Nope!
+        Instead, the origin coordinate is in the top middle. It
+        <em>did</em> make the same choice as the Screen Coordinate System to
+        increase the y-coordinate as you go down.
+      </p>
+
+      <figure
+        class="interactive"
+        data-fig="rcs-origin"
+        aria-label="The reMarkable coordinate system, with emphasis on the origin at the top center"
+      ></figure>
+
+      <p>
+        Where they also deviate from the Screen Coordinate System is that you
+        usually can't actually achieve a negative y coordinate. In a game, a
+        negative y-coordinate (going up) would leave your cursor above your
+        monitor. Whoops!
+      </p>
+
+      <p>
+        On the reMarkable, this <em>is</em> possible, because you can pan the
+        view and go <em>above</em> a pdf or notebook to add margin notes.
+      </p>
+
+      <h2>Let's look at reMarkable's tablets</h2>
+
+      <p>
+        As of the moment of writing, reMarkable have a total of 5 tablets. Note
+        that the rM classic and rM 2 share the same resolutions but the newer
+        tablets have different resolutions, screen sizes and DPIs!
+      </p>
+
+      <div class="tablewrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Device</th>
+              <th>Resolution (px)</th>
+              <th>DPI (Dots per inch)</th>
+              <th>Screen size (mm)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><a href="https://support.remarkable.com/s/article/About-reMarkable-1">rM classic</a></td>
+              <td>1404 × 1872</td>
+              <td>226</td>
+              <td>157 × 209</td>
+            </tr>
+            <tr>
+              <td><a href="https://support.remarkable.com/s/article/About-reMarkable-2">rM 2</a></td>
+              <td>1404 × 1872</td>
+              <td>226</td>
+              <td>157 × 209</td>
+            </tr>
+            <tr>
+              <td><a href="https://support.remarkable.com/s/article/About-reMarkable-Paper-Pro">rM paper pro</a></td>
+              <td>1620 × 2160</td>
+              <td>229</td>
+              <td>180 × 240</td>
+            </tr>
+            <tr>
+              <td><a href="https://support.remarkable.com/s/article/About-reMarkable-Paper-Pro-Move">rM paper pro move</a></td>
+              <td>954 × 1696</td>
+              <td>264</td>
+              <td>91 × 162</td>
+            </tr>
+            <tr>
+              <td><a href="https://support.remarkable.com/s/article/About-reMarkable-Paper-Pure">rM paper pure</a></td>
+              <td>1404 × 1872</td>
+              <td>226</td>
+              <td>157 × 209</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p>
+        On top of these tablets different tablet sizes, reMarkable also have a
+        phone app and a webapp where your drawn annotations, highlights and
+        typed text need to show on an almost infinite variety of screen sizes
+        and aspect ratios!
+      </p>
+
+      <p>
+        Now, let's look at what happens if you tried to fit these tablets on the
+        regular Screen Coordinate System.
+      </p>
+
+      <figure
+        class="interactive"
+        data-fig="devices-scs"
+        aria-label="The tablet screens rendered in the Screen Coordinate System, anchored to the top-left origin, with a legend of toggles"
+      ></figure>
+
+      <p>
+        Note how the tablets are all anchored to the top-left origin coordinate.
+        So far, this looks totally fine.
+      </p>
+
+      <p>
+        For comparison, let's look at how this looks in the reMarkable
+        coordinate system:
+      </p>
+
+      <figure
+        class="interactive"
+        data-fig="devices-rcs"
+        aria-label="The tablet screens rendered in the reMarkable coordinate system, anchored by their centers, with a legend of toggles"
+      ></figure>
+
+      <p>Where this starts mattering is when you add pinch to zoom!</p>
+
+      <h2>Zoomies</h2>
+
+      <p>
+        If you own a smartphone (or maybe a reMarkable tablet?), chances are
+        zooming feels like the most natural thing in the world to you. There's a
+        little bit of math hiding behind it! When zooming happens, you might
+        have noticed that zooming always happens <em>around a point</em> between
+        your fingers, this point is called <strong>the anchor</strong>.
+      </p>
+
+      <p>
+        Zoom in? Everything moves away from the anchor. Zoom out? Everything
+        moves towards it. The anchor never moves.
+      </p>
+
+      <figure
+        class="interactive"
+        data-fig="anchor-zoom"
+        aria-label="Graph paper with shapes and scrybbles, a draggable zoom anchor with a chat-bubble hint, ghost outlines and stretch arrows, and a zoom slider"
+      ></figure>
+
+      <p>
+        Try dragging the anchor right on top of one of the scrybbles and
+        zooming. That scrybble sits perfectly still while everything else runs
+        away from it.
+      </p>
+
+      <h2>
+        Oh finally we can understand why the origin is in the horizontal center
+      </h2>
+
+      <p>
+        The reason reMarkable chose the centered coordinate has nothing to do
+        with <em>pinch</em> to zoom though, it has to do with another type of
+        zoom.
+      </p>
+
+      <p>
+        Consider what happens when a notebook is written on the smaller paper
+        move, and then you open it on the larger paper pro.
+      </p>
+
+      <p>
+        The paper pro has to make sure what you wrote on the smaller device fits
+        in a way that makes a lot of sense, and do so from the moment you open
+        the smaller device's notebook.
+      </p>
+
+      <p>
+        This actually involves a zoom as well, the paper move's content is
+        scaled to fit on the paper pro's larger display!
+      </p>
+
+      <p>
+        Look at what happens if you do this in the Screen Coordinate System.
+      </p>
+
+      <figure
+        class="interactive"
+        data-fig="zoom-scs"
+        aria-label="Three panels in the Screen Coordinate System: the drawing on the rM move, the same canvas opened on the paper pro, and the canvas scaled up; the margins are measured and stay unequal"
+      ></figure>
+
+      <p>
+        Versus what happens if you do it in the reMarkable Coordinate System
+      </p>
+
+      <figure
+        class="interactive"
+        data-fig="zoom-rcs"
+        aria-label="The same three panels in the reMarkable coordinate system, where the margins are equal in every panel"
+      ></figure>
+
+      <p>
+        The horizontally centered coordinate in the reMarkabe Coordinate System means that the scaling just falls
+        out automatically! Normally you'd have to move center the result by hand, but with the centred coordinate you don't have to bother.</p>
+
+      <h2>And the canvas can be extended!</h2>
+
+      <p>Let's zoom (ha!) back out a little bit again.</p>
+
+      <p>
+        A well known feature of the reMarkable tablets is that the canvas isn't
+        just a static view; it can be panned, zoomed and more importantly it can
+        be <em>extended</em> so you can make margin notes, larger diagrams and
+        sketches and whatever your creativity lets you come up with!
+      </p>
+
+      <p>
+        The virtual canvas system is actually very well suited for this, because
+        it exists just in "math" and its boundaries (size) can be changed at
+        will.
+      </p>
+
+      <figure
+        class="interactive"
+        data-fig="extendable"
+        aria-label="The virtual canvas with a chosen tablet's frame aligned on it, pan and zoom, and buttons on each edge that extend the canvas"
+      ></figure>
+
+      <p>
+        This coordinate system is now super cool, the tablet now acts as a sort
+        of "view" on this flexibly extensible, zoomable and pannable infinite
+        canvas.
+      </p>
+
+      <figure
+        class="interactive"
+        data-fig="viewport"
+        aria-label="The extendable canvas seen from outside, with the tablet as a movable, resizable view rectangle and an inset showing what the tablet displays"
+      ></figure>
+
+      <h2>Fin</h2>
+
+      <p>
+        There's a lot more to the reMarkable's system that we'll be exploring in future posts. Stay tuned!
+      </p>
+
+      <p>This article exists in large part due to RedTTG's time helping me understand the reMarkable coordinate system, her blog posts go into the gorier behind-the-scenes details of figuring out how the reMarkable annotation software works! See <a href="https://blog.redttg.com/everything-positions-remarkable/">her post on the reMarkable PDF coordinates</a>, and the <a href="https://blog.redttg.com/a-quick-look-at-text-remarkable/">preceding post on text rendering on the rM</a></p>
+
+      <p>Also check out her work on <a>librm_lines</a>, which is an open-source, performand and portable .rm file rendered written in C++. It will be powering Scrybble soon.</a>
+
+      <p class="sig">
+        ~Laura Brekelmas,<br />
+        Scrybble - Empowering curiosity
+      </p>
+
+      <noscript
+        ><p>
+          <em>The figures on this page are interactive and need JavaScript.</em>
+        </p></noscript
+      >
+    </main>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/simplex-noise/2.4.0/simplex-noise.min.js"></script>
+    <script>
+      (function () {
+        "use strict";
+        if (!window.d3) {
+          document.querySelectorAll("figure.interactive").forEach((el) => {
+            el.textContent = "(interactive figure: d3 failed to load)";
+          });
+          return;
+        }
+
+        /* ==================================================================
+   1. CONFIG — every tweakable number and color lives here
+   ================================================================== */
+        const CONFIG = {
+          colors: {
+            ink: "#262317" /* warm near-black (Baby Powder -87.5%) */,
+            aboveTint: "rgba(149,189,181,.10)" /* Envisage wash */,
+            topLine: "#416860" /* Envisage -50% */,
+            centerLine: "#619B90" /* Envisage -25% */,
+          },
+
+          /* the five tablets; groups merge devices that share a panel */
+          devices: [
+            {
+              id: "rm1",
+              name: "rM classic",
+              w: 1404,
+              h: 1872,
+              dpi: 226,
+              color: "#518178",
+            },
+            {
+              id: "rm2",
+              name: "rM 2",
+              w: 1404,
+              h: 1872,
+              dpi: 226,
+              color: "#619B90",
+            },
+            {
+              id: "pro",
+              name: "rM paper pro",
+              w: 1620,
+              h: 2160,
+              dpi: 229,
+              color: "#E86837",
+            },
+            {
+              id: "move",
+              name: "rM paper pro move",
+              w: 954,
+              h: 1696,
+              dpi: 264,
+              color: "#9BA041",
+            },
+            {
+              id: "pure",
+              name: "rM paper pure",
+              w: 1404,
+              h: 1872,
+              dpi: 226,
+              color: "#7AACA2",
+            },
+          ],
+          /* hatch: colorblind-safe fills. null = plain, '/' and '\\' = diagonals */
+          deviceGroups: [
+            {
+              label: "rM classic, 2 and paper pure",
+              w: 1404,
+              h: 1872,
+              color: "#619B90",
+              hatch: null,
+            },
+            {
+              label: "rM paper pro",
+              w: 1620,
+              h: 2160,
+              color: "#E86837",
+              hatch: "/",
+            },
+            {
+              label: "rM paper pro move",
+              w: 954,
+              h: 1696,
+              color: "#9BA041",
+              hatch: "\\",
+            },
+          ],
+
+          grid: { px: 80 } /* target spacing between grid lines, in pixels   */,
+          anim: {
+            fitMs: 280,
+          } /* duration of the animated re-fit after extending */,
+
+          /* the generative header: strokes drift right-to-left like slow water,
+     regaining full saturation while they pass through the tablet's view */
+          header: {
+            height: 480,
+            density: 9500 /* hero px² per stroke: ~80 at 1600×480 */,
+            countMin: 18,
+            countMax: 110,
+            colors: [
+              "#BEC36B",
+              "#E1ABA4",
+              "#E86837",
+              "#95BDB5",
+              "#619B90",
+              "#F0A740",
+            ],
+            flow: {
+              speed: [6, 14] /* base drift, px per second */,
+              scale: 0.0042 /* field zoom: smaller = broader swirls */,
+              time: 0.07 /* how fast the field itself evolves */,
+              swirl: 1.25 /* max steering away from straight-left, radians */,
+              spring: 0.8 /* pull toward each stroke's home row, per second */,
+              rotAmp: 7,
+            } /* degrees of noise-driven tilt */,
+            spin: 6 /* max steady rotation, degrees per second */,
+            speedJitter: 0.3 /* per-stroke speed ~ max(0.9, gaussian(1, sd)) */,
+            size: {
+              min: 0.5,
+              max: 1.7,
+              alpha: 3,
+            } /* Pareto sizes: many small, few big */,
+            respawn: {
+              mean: 8,
+              sd: 3,
+              min: 4,
+            } /* seconds between undraw/redraw: max(min, gaussian(mean, sd)) */,
+            desaturate: "saturate(15%)" /* strokes outside the tablet */,
+            tabletColor: "#619B90" /* the rM 2 */,
+            tablet: {
+              frac: 0.56,
+              yBias: 0.34,
+            } /* screen height as a share of the hero,
+                                          and how high it floats (0 = top) */,
+            /* paste shapes exported from scrybble-maker.html here; when present
+       they replace the generated squiggles */
+            customShapes: [{"strokes":[[[-50,-18.4],[-47,-22.5],[-46.3,-23.2],[-44.1,-25.7],[-43.3,-26.6],[-41.3,-28.5],[-39.4,-30.1],[-37.4,-31.4],[-36,-32.3],[-34.4,-32.8],[-32.3,-33],[-30.3,-32.6],[-28.5,-31.6],[-27.1,-30],[-25.7,-27.7],[-24.5,-25.4],[-23.2,-23.2],[-21.8,-21.5],[-20,-20],[-18.3,-18.8],[-16.3,-18.1],[-14,-17.6],[-11.3,-17.4],[-8.9,-17.7],[-6.4,-18.6],[-3.9,-19.7],[-1.6,-20.6],[0.4,-21.3],[1.6,-21.6],[3.4,-21.6],[4.4,-21.3],[5.9,-20.6],[6.4,-20],[8.9,-17.6],[10.6,-15.4],[12.2,-12.9],[13.7,-10.5],[15.8,-5.5],[16.8,-3.2],[17.9,-0.7],[19,1.2],[20,2.8],[20.4,3.5],[22,5.1],[23.6,5.9],[25.7,6.6],[28.5,7.4],[31,7.8],[32.8,8.2],[34,8.9],[35.1,9.9],[36.2,11.3],[37.2,13.1],[37.9,14.9],[38.7,16.7],[39.5,18.8],[40.2,20.7],[41,22.7],[42,24.5],[43.3,26.2],[45.2,28.5],[47.5,30.9],[49.5,32.6],[50,33]]]},{"strokes":[[[16.2,-43.3],[5.4,-48.1],[3.5,-48.5],[-0.6,-49.6],[-5,-50],[-9.1,-50],[-13.6,-49.3],[-19.6,-47.8],[-24.8,-45.9],[-28.5,-44],[-32.3,-41.4],[-36.8,-37.7],[-40.5,-32.8],[-43.8,-28],[-46.1,-23.1],[-48.3,-16.4],[-49.4,-9],[-48.7,-1.1],[-46.5,6.7],[-43.1,14.6],[-39.7,22],[-35.6,28.4],[-30.4,34.3],[-25.2,39.2],[-19.2,43.3],[-12.5,46.6],[-5.4,48.9],[1.3,50],[8.8,49.6],[16.2,48.1],[24.1,44.4],[31.5,38.8],[37.5,33.6],[41.6,28.7],[45,23.9],[47.6,19],[49.1,13.8],[49.4,8.6],[49.4,3.7],[48.7,-1.5],[47.2,-6.3],[45.7,-10.8],[43.5,-15.3],[40.1,-20.1],[35.3,-25.4],[31.2,-29.5],[24.4,-34.7],[20.7,-37.3],[17,-39.2],[14.7,-40.3]]]},{"strokes":[[[-16,-50],[-16.2,-43.1],[-16.2,-38.4],[-16.2,-36.2],[-15.7,-31],[-15.3,-27.7],[-14.8,-25.2],[-14.4,-23.7]],[[12.8,-47.3],[11.7,-39.3],[11.3,-36.4],[10.6,-29.9],[10.2,-24.1],[9.9,-20.1],[9.7,-17.4],[9.7,-15.4],[9.7,-14.3]],[[-39,-10.3],[-37.6,-3.8],[-37.4,-1.3],[-35.6,8.3],[-34.5,13.6],[-30.9,24.3],[-27.3,29.7],[-22.2,35.3],[-15.7,40.2],[-9.3,44.2],[-2.1,47.3],[5.5,49.3],[11.9,50],[17.7,49.6],[23.3,46.7],[30.2,40.4],[33.6,34.6],[36.5,26.3],[38.1,17.4],[38.7,10],[39,4.5],[38.7,2],[38.1,-5.8]]]},{"strokes":[[[-50,-0.4],[-45.6,2.4],[-44.5,2.9],[-41.8,3.6],[-38.5,3.9],[-34.8,3.7],[-30.9,2.9],[-26.8,2],[-22.5,0.6],[-18.2,-1.2],[-12.7,-4.5],[-9.4,-6.9],[-6.2,-9.9],[-4.8,-11.3],[-1.2,-15.6],[0.9,-19.4],[2.3,-23],[3.1,-26.3],[3.6,-29],[3.9,-31.4],[3.9,-33.9],[3.9,-35.9],[3.7,-37.5],[3.6,-38.6]],[[-35.2,8.9],[-34.4,13.7],[-34.4,15.6],[-34.5,19.8],[-35,24.9],[-36.6,32.1],[-37.2,35],[-37.5,36.9],[-37.7,38],[-37.4,38.6]],[[-13.5,10.3],[-10.2,14.1],[-7.3,16.8],[-4,19.7],[-0.9,22.4],[2,24.7],[4.8,26.9],[7.2,29.3],[9.2,31.7],[10.8,33.7],[12.2,35.6],[13.5,37],[14.3,37.8]],[[1,-2.3],[5.8,-0.9],[7.8,-0.4],[12.6,0.4],[17.1,1.3],[21.7,2.1],[26.1,3.1],[30.4,4.5],[34.7,6.1],[38.6,7.3],[41.6,8.1],[42.9,8.5],[43.7,8.8],[44.3,8.9]],[[15.2,-19.7],[19.7,-20],[24.4,-20.3],[29.8,-20.8],[35,-21.1],[39.4,-21.6],[43.2,-22],[45.9,-22.2],[48.1,-22.2],[49.4,-22.2],[50,-22.2]],[[3.7,9.9],[7.7,12.7],[10,14.5],[12.6,16],[14.9,17.1],[17,17.9],[17.6,18.1]],[[-17.8,15.6],[-15.1,19.2],[-13.5,22.7],[-12.1,26],[-11.1,28.7],[-10.5,30.7],[-10.2,31.8]],[[-45.1,12.2],[-44.9,17.3],[-45.1,20.3],[-45.1,22.7],[-44.9,24.1]],[[18.1,-7.5],[22.7,-7.5],[24.4,-7.5],[27.7,-7.8],[31.4,-8.3]]]},{"strokes":[[[-39.1,-29],[-41.2,-19],[-42.1,-16],[-43.8,-10.4],[-45,-6],[-46.2,-1.6],[-47.4,3.1],[-47.9,7.5],[-48.5,12.5],[-49.1,15.1],[-49.4,17.5],[-49.7,19.9],[-50,21.3],[-50,22.5]],[[-43.5,1.9],[-35.3,3.4],[-32.9,3.7],[-30.6,4.3],[-27.9,5.1],[-26.8,5.1],[-25.6,5.1]],[[-13.2,-19.9],[-14.7,-11],[-15.3,-8.7],[-16.5,-3.7],[-17.9,1.6],[-18.8,6.6],[-20,11.3],[-21.2,15.7],[-22.1,19.9],[-22.9,23.4],[-23.8,26],[-24.1,27.5],[-24.7,29]],[[13.5,-7.8],[11.2,0.1],[10.6,1.6],[9.1,5.7],[7.6,11],[6.8,13.7],[5,18.7],[4.4,20.7],[3.5,23.7],[2.9,25.1],[2.6,26.3]],[[18.5,-23.1],[17.6,-14.9],[20,-14.9],[20.9,-15.7],[21.5,-16.9],[21.5,-18.4],[20.9,-19.6],[20.3,-20.4]],[[50,-7.2],[47.6,0.7],[47.1,2.5],[46.2,5.7],[45.3,8.1],[44.4,10.1],[43.5,11.6],[42.9,12.8],[42.4,14.3],[41.8,15.1],[41.8,16.3],[40.9,17.5],[40,18.7]],[[38.5,24],[36.5,24.9],[35.9,26],[36.2,27.2],[37.1,27.8],[38.5,28.4],[39.7,28.1],[40,26.6],[39.4,25.1]]]},{"strokes":[[[-22.9,-5.7],[-18.6,0.7],[-17.9,2.8],[-14,10.6],[-12.6,13.5],[-9.4,19.9],[-6.6,25.2],[-4.1,30.1],[-2.3,34.4],[-0.5,37.6],[0.5,40.4],[1.6,43.3],[2.3,45.4],[3,46.8],[3.4,48.2],[3.4,50]],[[-33.2,37.9],[-25.7,33],[-21.5,29.8],[-16.8,25.9],[-11.9,21.6],[-7.3,17.7],[-4.4,14.5],[-2,12.4],[-0.2,11],[1.2,9.9],[3,9.2],[4.1,8.5],[5.9,8.2],[7.6,7.4],[8.7,6.7],[10.8,5],[12.2,3.9],[13.3,3.2]],[[-30.3,-37.9],[-22.2,-36.9],[-17.6,-36.2],[-12.2,-35.8],[-6.9,-35.5],[-1.2,-34.8],[4.1,-34.4],[8,-33.7],[11.2,-33.3],[14,-32.6],[15.8,-32.3],[17.6,-31.6],[18.6,-30.9],[20,-30.1]],[[9.8,-50],[16.1,-43.3],[20,-40.4],[23.2,-37.6],[26.1,-35.5],[27.8,-33.7],[29.6,-32.3],[30.7,-31.2],[32.1,-30.1],[33.2,-29.1],[32.4,-27.7],[31.7,-26.2],[30.3,-25.5],[28.2,-24.8],[25.7,-24.1],[22.5,-23],[20.7,-22.3],[18.6,-21.6],[16.8,-20.9],[15.1,-20.6],[14,-19.9],[12.2,-19.1],[10.1,-18.1],[8.3,-17.4],[6.9,-17.4]]]},{"strokes":[[[-50,5.7],[-43.3,5.7],[-35.2,5.3],[-25.8,4.4],[-4.1,2.6],[6.6,2.3],[17.6,1.9],[27,1.7],[34.1,1.9],[39.5,2.3],[43.3,3],[46.2,3.7],[48,4.1],[49.1,4.6],[50,5]],[[-3,-31.4],[-5.9,-24.7],[-6.6,-22.5],[-7.3,-18.9],[-7.9,-14.2],[-8.4,-8.6],[-8.6,-1.9],[-8.6,5.9],[-8.4,12.9],[-8.2,18.2],[-8.2,22.7],[-8.2,26.1],[-8.2,28.1],[-8.2,29.4],[-8.2,30.3],[-8.2,31.4]]]},{"strokes":[[[-50,-1.5],[-48.7,-4.2],[-47.7,-5.2],[-45.9,-7.3],[-43.9,-9.1],[-43.1,-9.6],[-41.8,-10.5],[-40.3,-11.4],[-38.6,-12.3],[-37.3,-12.8],[-36.2,-13.1],[-35.2,-13.3],[-34.3,-13.3],[-33.3,-13.1],[-32.5,-12.8],[-31.7,-12.3],[-31,-11.9],[-30.5,-11.2],[-29.9,-10.3],[-29.3,-9.2],[-28.8,-8.1],[-28.2,-7],[-27.9,-5.9],[-27.4,-4.5],[-26.8,-3.4],[-26.4,-2.4],[-26,-1.2],[-25.7,0.1],[-25.4,1.3],[-25.1,2.4],[-24.8,3.7],[-24.6,5.1],[-24.2,6.2],[-23.9,7.3],[-23.3,8.2],[-22.7,9.3],[-22,10.3],[-21.3,11.1],[-20.5,11.8],[-19.7,12.4],[-18.6,12.8],[-17,13.2],[-15.7,13.3],[-14.3,13.1],[-12.7,12.7],[-12,12.3],[-10.5,11.4],[-9.1,10.4],[-7.7,9.4],[-6.6,8.5],[-5.5,7.3],[-4.5,6.1],[-3.4,4.9],[-2.4,3.8],[-1.1,2.2],[-0.5,1.4],[0.2,0.4],[1.1,-0.5],[1.6,-1],[2.8,-2.5],[3.6,-3.4],[4.3,-4.3],[5.1,-5.1],[6,-6],[7,-6.8],[7.8,-7.6],[8.5,-8.1],[9.3,-8.5],[9.8,-8.8],[10.3,-9],[11.1,-9],[11.7,-9.1],[12.2,-9.1],[12.8,-8.9],[13.1,-8.7],[13.7,-8.4],[14.2,-8],[14.5,-7.7],[14.9,-7.4],[15.4,-6.8],[15.9,-6.4],[16.2,-6],[16.6,-5.4],[17,-5],[17.3,-4.3],[17.7,-3.7],[18,-3.2],[18.4,-2.6],[18.7,-2.2],[18.9,-1.5],[19.2,-0.8],[19.6,0.1],[19.9,1],[20.3,2],[20.5,3.1],[21.1,4.3],[21.6,5.3],[22.2,6.2],[22.8,7.1],[23.2,7.9],[23.7,8.6],[24.2,9.4],[24.9,10.1],[25.6,10.6],[26.5,11.1],[27.4,11.4],[28.4,11.6],[29.4,11.7],[30.7,11.5],[31.7,11.2],[33.4,10.2],[34.6,9.1],[35.7,7.8],[36.2,7.2],[37.6,5],[38.3,3.4],[39,1.9],[39.7,0.5],[40.3,-1],[41,-2.5],[41.7,-3.5],[42.3,-4.4],[42.8,-5.2],[43.4,-5.9],[44,-6.4],[44.6,-6.8],[45.3,-7],[45.9,-7.1],[46.6,-7.2],[47.5,-7.1],[48.2,-7],[48.9,-6.9],[49.5,-6.8],[50,-6.8]]]},{"strokes":[[[-36.1,4.2],[-39.6,6.6],[-42,9.7],[-43.2,12.3],[-43.7,15.5],[-43.4,19.1],[-42.6,22.5],[-41.5,25.2],[-40.2,27.3],[-38,29],[-34.5,30.1],[-30.4,30.2],[-25.2,29.2],[-20.2,27.3],[-16.3,25],[-13.5,23.1],[-11.8,22],[-11.2,21.5],[-10.8,21.7],[-10.5,22.8],[-9.7,24.3],[-8.4,26.2],[-6.4,28.2],[-3.7,30.1],[-0.7,31.4],[2.6,32.1],[6.1,32.2],[9.7,31.4],[13.1,29.8],[15.7,28.1],[18,26.2],[19.6,24.5],[20.7,23.1],[21.6,22],[22.1,21.2],[22.3,20.8],[22.6,20.5],[23.3,20.5],[24.6,20.8],[26.8,21.1],[29.8,21],[33.4,20.5],[37.2,19.5],[40.9,18.1],[44,16.2],[46.4,14.3],[48,12.7],[48.9,10.7],[49.1,8.8],[48.6,6.9],[47,5.1],[44.6,3.6],[41.6,2.7],[39.1,2.4],[37.6,2.6],[36.6,2.8],[36.1,2.9],[37,2.7],[39.5,1.4],[42.7,-0.4],[45.7,-2.7],[47.9,-5.1],[49.2,-7.2],[50,-9.3],[50,-11.7],[49.5,-14.5],[48,-17.2],[46,-19.8],[43.4,-22],[40.5,-23.7],[37.2,-24.8],[34,-25.3],[30.7,-25.1],[28,-24.5],[26,-23.3],[24.7,-22.2],[24.1,-21.5],[23.8,-21],[23.8,-20.5],[26.2,-20],[27.7,-20.3],[28.8,-21.7],[29.2,-23.6],[28.6,-26],[26.6,-28.6],[22.5,-30.5],[17.7,-31.6],[12.7,-32.1],[7.6,-32.2],[3.4,-32.1],[0.3,-32],[-2.2,-31.6],[-3.8,-31.2],[-4.9,-30.9],[-5.7,-30.4],[-6.2,-29.8],[-6.4,-29.3],[-6.6,-28.8],[-6.4,-28.3],[-6.3,-27.7],[-8.4,-28.6],[-11.8,-30],[-15.5,-31.1],[-22.6,-31.6],[-25.8,-31],[-31,-28.3],[-32.2,-27.2],[-33.9,-24.3],[-34.1,-22.3],[-34,-20.6],[-33.7,-19.2],[-33.4,-18.2],[-32.7,-17.3],[-32,-16.7],[-31.6,-16.3],[-33.6,-16.8],[-36.4,-17.3],[-40.2,-17.2],[-42.7,-16.6],[-44.9,-15.7],[-46.5,-14.5],[-47.2,-14],[-49,-11.8],[-49.7,-10.1],[-50,-7.9],[-50,-5.6],[-49.6,-3.1],[-48.9,-0.8],[-47.9,1.1],[-46.6,2.7],[-45.4,4.1],[-43.9,4.9],[-42.7,5.4],[-41.7,5.6],[-41,5.6],[-40.5,5.6],[-39.9,5.3],[-39.4,5.4],[-39.1,5.8],[-37.9,6.4],[-36,7.2],[-33.7,7.9],[-31.7,8.4],[-30.4,8.7],[-29.6,8.9]]]},{"strokes":[[[-37.7,12],[-38.6,16.2],[-39,17.4],[-39.3,18.5],[-40.4,21.8],[-41.4,24.4],[-42.1,26.2],[-42.6,28],[-43,29.3],[-43.2,30],[-42.7,30.3],[-41.6,30.1],[-39,29.6],[-36.1,28.7],[-33.5,27.8],[-31.2,26.6],[-29.5,25.8],[-28.4,25.2],[-27.7,24.8],[-27,24.5],[-26.6,24.3]],[[-39.3,13.1],[-42.9,10.3],[-44.1,9.3],[-45,8.5],[-46,7.7],[-46.8,6.8],[-47.6,5.4],[-48.6,3.6],[-49.3,1.5],[-49.9,-0.8],[-50,-3.2],[-49.7,-5.4],[-49.2,-7.7],[-48.3,-10],[-47.1,-12.6],[-45.1,-15.2],[-43.3,-17.6],[-41.4,-19.8],[-38.7,-21.8],[-36.2,-23.4],[-33.8,-24.7],[-30.9,-25.9],[-28.1,-26.9],[-25.2,-28],[-22.1,-28.9],[-18.9,-29.6],[-15.1,-30],[-9.7,-30.1],[-8,-30.1],[-4.4,-30.3],[-1,-30.1],[2.6,-29.7],[7.9,-29],[11.5,-28.5],[14.7,-27.6],[17.8,-27.1],[19.2,-26.8],[23.9,-25.7],[27,-25],[29.9,-24.3],[32.7,-23.6],[35.5,-22.7],[38.1,-21.6],[40.5,-20.5],[42.5,-19.4],[44.4,-18.3],[46.1,-17.2],[47.4,-16.2],[48.3,-15.1],[49,-13.8],[49.6,-12.7],[49.9,-11.6],[50,-10.6],[50,-9.2],[50,-7.7],[49.7,-6.4],[49.4,-5.3],[49.2,-4.2],[48.7,-3.2],[48,-2],[47.2,-0.4],[46.4,1.1],[45.4,2.4],[44.7,3.5],[43.7,4.9],[42.3,6],[41.1,7.3],[39.7,8.6],[38.3,9.9],[36.9,11],[35.1,12.1],[33.1,13.2],[30.9,14.6],[28.4,16],[25.6,17.7],[22.4,19.4],[18.6,21.1],[14.7,22.7],[11.1,24.3],[7.6,25.7],[4,26.8],[0.5,27.5],[-2.4,28],[-5.2,28.3],[-8,28.5],[-11.2,28.3],[-14.9,27.9],[-17.4,27.5],[-20,26.8],[-22.4,26.2],[-24.2,25.8],[-25,25.5],[-27.1,24.8],[-28,24.4],[-28.7,24],[-29.1,23.6],[-29.4,23.2]]]},{"strokes":[[[-39.3,-44.4],[-39.3,-35.3],[-40.4,-28.6],[-41.4,-21.9],[-42.8,-15.5],[-43.9,-9.4],[-44.9,-2.9],[-46,4.5],[-46.8,11.5],[-47.9,17.6],[-48.4,22.7],[-49.2,27.3],[-49.2,30.7],[-49.5,32.9],[-49.7,34.5],[-50,35.6],[-50,36.6],[-50,38],[-48.7,38.8],[-46.5,39.6],[-44.9,40.1],[-38.8,41.2],[-32.6,42.2],[-26.7,42.8],[-19.3,43.3],[-11.5,43.3],[-4,42.8],[2.9,42.5],[9.1,42.2],[14.2,42],[17.6,42.2],[20.6,42.5],[23.5,43.3],[25.9,44.1],[27.8,44.7],[29.1,45.2],[30.2,45.7],[31.3,46.3],[32.4,46.3],[34,45.5],[35.3,43.9],[36.9,41.2],[38.8,37.2],[40.9,32.6],[43,26.7],[44.9,20.9],[46.5,14.2],[47.6,6.7],[48.4,-1.9],[49.2,-9.9],[49.5,-17.9],[49.7,-24.6],[50,-29.7],[50,-34.8],[50,-38.8],[50,-41.2],[50,-42.8],[50,-43.9],[50,-45.2],[49.7,-46.3],[47.1,-46.3],[44.4,-46.3],[41.7,-46],[38,-45.7],[32.9,-45.5],[27.8,-45.2],[22.7,-45.2],[17.6,-45.2],[12,-44.9],[5.1,-44.7],[-3.2,-44.1],[-11.8,-43.6],[-19,-43],[-24.9,-42.5],[-29.7,-42.5],[-32.9,-42.5],[-35.3,-42.5],[-37.2,-42.8],[-38.5,-43],[-39.8,-43.3],[-40.9,-43.9]]]},{"strokes":[[[-39.3,41.5],[-34,33.9],[-31.4,29.8],[-21.1,15.7],[-14.4,5.7],[-7.9,-4.3],[-2.3,-13],[2.9,-21.3],[7.9,-28.6],[11.7,-34.2],[14.1,-38.3],[15.8,-42.1],[17,-44.7],[18.2,-46.5],[19.1,-47.7],[20.2,-49.1],[21.4,-49.7],[22.6,-50],[24.3,-48.2],[26.1,-45.6],[27.9,-41.8],[29,-36.5],[30.8,-27.4],[32,-20.4],[33.1,-11.9],[34,-4],[34.9,3.4],[35.5,10.1],[36.1,16],[36.7,21.6],[37.5,26.5],[37.8,28.6],[38.7,33.3],[39,35.6],[39.3,38],[39.3,39.7],[39.3,41.5],[39,42.7],[38.7,43.8],[38.1,45],[36.7,46.5],[34.3,47.4],[30.5,48.5],[25.5,49.4],[19.9,50],[13.5,49.7],[6.7,49.1],[0,48.2],[-6.7,47.4],[-11.7,46.2],[-16.7,45],[-21.4,43.8],[-25.2,42.7],[-28.4,41.8],[-31.7,40.9],[-34.6,40.3],[-37,40],[-38.1,39.7],[-39.3,39.1]]]},{"strokes":[[[-36.8,-14.1],[-39.2,-15.3],[-39.8,-15.5],[-41,-15.7],[-42.2,-15.7],[-43.3,-15.5],[-44.3,-15.3],[-45.1,-14.9],[-45.7,-14.5],[-46.5,-13.8],[-47.5,-12.9],[-48.4,-11.5],[-49,-10.2],[-49.4,-9.4],[-49.6,-8.7],[-49.9,-8.2],[-49.9,-7.6],[-50,-6.8],[-49.7,-6.2],[-49.2,-5.4],[-48.5,-4.5],[-47.6,-3.8],[-46.6,-3.2],[-45.3,-2.6],[-43.9,-2],[-42.8,-1.4],[-41.9,-0.9],[-40.9,-0.1],[-39.5,0.9],[-38.6,1.8],[-37.9,2.6],[-37.4,3.3],[-37.2,3.7],[-36.6,5],[-36.4,5.8],[-36.5,6.6],[-37,7.7],[-37.9,8.7],[-38.9,9.5],[-40.4,10],[-42,10.4],[-43.7,10.4],[-45.2,10.4],[-46.4,10.3],[-47.2,10.2],[-47.6,10.1]],[[-22.9,-1.9],[-25.8,-1.2],[-26.4,-1.1],[-27.3,-0.8],[-28,-0.3],[-28.6,0.3],[-29.1,1.3],[-29.5,2.8],[-29.7,4],[-29.7,5.1],[-29.3,6.2],[-28.5,7.2],[-27.1,8.1],[-25.8,8.8],[-24,9.1],[-22.4,9.2],[-21.2,9.1],[-20.7,9]],[[-15.3,-1.2],[-15.1,2.1],[-15.2,3.1],[-15.3,4.4],[-15.4,4.9],[-15.5,5.7],[-15.5,6.5],[-15.5,7],[-15.5,7.4],[-15.6,7.8],[-15.6,6.3],[-15.4,4.9],[-15.3,4.1],[-15.2,3.3],[-14.9,2.1],[-14.6,1.2],[-14.3,0.6],[-13.9,0.1],[-13.1,-0.2],[-12.6,-0.4],[-11.9,-0.4],[-11.3,-0.5],[-10.7,-0.6],[-10.1,-0.6]],[[-3.9,-0.6],[-5.7,1.8],[-6.1,2.8],[-6.3,3.6],[-6.3,4.4],[-5.9,5.2],[-5,6.1],[-3.9,6.5],[-0.7,6.2],[0.7,5.3],[2,4],[2.8,2.7],[3.2,1.5],[3.2,0.8],[3.2,0.4],[3.2,0.8],[3.3,1.6],[3.4,2.4],[3.4,3.2],[3.4,4],[3.2,5.1],[2.9,6.6],[1.9,8.6],[0.3,10.5],[-1.2,12.2],[-2.6,13.4],[-4.3,14.6],[-6.3,15.4],[-8.2,15.7],[-10.3,15.7],[-12.9,15.1],[-13.3,14.9]],[[12.2,-8],[10.8,-5.4],[10,-4.3],[9,-2.3],[8.2,-0.6],[7.6,0.8],[7.1,2.3],[6.9,3.6],[7,5.1],[7.9,7.1],[9.2,8.9],[10.5,9.6],[12.3,9.5],[13.8,8.8],[14.8,7.7],[15.3,6.5],[15.1,5.1],[14.4,3.9],[13.4,2.9],[12.3,2.1],[11.2,1.6],[10.5,1.3],[10.1,1.2]],[[23.6,-8.9],[21.8,-6.4],[21.3,-5.7],[19.9,-2.8],[19.5,-1.7],[19,0],[18.6,1.8],[18.4,3.2],[18.4,4.4],[18.8,6],[19.5,7.7],[20.7,9.2],[22.1,10],[23.7,10.3],[25.4,10.1],[26.5,9.4],[27.5,8.1],[28,6.6],[28.1,5.4],[27.4,3.6],[26.3,2.7],[25.2,1.8],[23.9,1.2],[22.7,0.9],[22.3,0.8],[21.5,0.7]],[[34,-10.1],[32.6,-6.4],[32.1,-5],[30.9,-2.6],[30.1,-0.6],[29.4,1.2],[29,3.2],[28.7,5.1],[28.7,7.2],[29,9.1],[30.1,10.5],[31.6,11.7],[32.4,12]],[[36.6,7.2],[39.5,7.3],[41.4,7],[43.5,6.5],[45.5,6.1],[47.6,5.5],[48.9,4.7],[49.7,3.9],[50,3.2],[49.7,2.2],[48.6,1.2],[47.1,0.5],[45.2,0.3],[43.5,0.5],[41.9,1.1],[40.3,2.8],[38.7,4.9],[38,7.3],[37.9,9.2],[42.3,11.9]]]},{"strokes":[[[-27.4,-14.2],[-32.1,-13.9],[-34.1,-13.7],[-36.6,-12.7],[-39,-11.3],[-41.1,-9.6],[-43.6,-7.6],[-46.1,-5.2],[-47.7,-3.1],[-48.7,-1.3],[-49.6,1.2],[-50,4],[-49.6,6.6],[-48.5,9.4],[-45.5,12.7],[-43,14.3],[-40,15.5],[-37.6,16.1],[-35.4,16.5],[-33.1,16.7],[-31.3,16.9],[-29.9,17.1]],[[-15.6,-4.2],[-19.5,-4],[-20.4,-3.2],[-21.4,-2.3],[-22.5,-1.3],[-23.3,-0.3],[-24,1.1],[-24.5,2.8],[-24.9,4.8],[-24.9,6.8],[-24.6,8.8],[-24.1,10.5],[-23.3,11.8],[-22.4,12.7],[-21.3,13.7],[-19.7,14.5],[-18,15],[-16.4,15.1],[-14.8,15],[-13.1,14.2],[-11,12.6],[-9.5,11],[-8.6,9.6],[-7.9,8],[-7.4,6.1],[-7.1,4.5],[-7.1,3.2],[-7.2,2],[-8.7,-0.1],[-9.9,-1.2],[-11.2,-2.3],[-12.7,-3.2],[-14.1,-4],[-15.5,-4.6],[-16.5,-5],[-17.1,-5.2]],[[1.9,14.2],[-0.2,17.8],[-1,18.6],[-1.7,19.3],[-2.1,19.5]],[[22.6,-4.9],[19.1,-6],[18,-5.3],[16.7,-4],[15.2,-2],[13.6,0.3],[12.3,2.7],[11.4,4.8],[11,6.5],[10.8,8.6],[11.6,10.9],[13.1,12.7],[14.8,14.6],[17.2,16.1],[19.9,16.6],[22.8,15.8],[26,14.3],[28.4,12.1],[30.2,9.7],[31.3,7.2],[31.8,5],[31.8,3.6],[31.4,2.1],[30.3,0.5],[28.8,-1.1],[26.8,-2.3],[25.2,-3.1],[23.8,-3.6],[22.9,-3.9]],[[36.2,-19.5],[39.2,-17.3],[40.2,-16.7],[42.2,-15.5],[43.9,-14.5],[46,-13.3],[47.7,-11.8],[49.2,-10],[50,-7.7],[50,-4.2],[49.1,0.1],[47.2,4.5],[45.4,7.4],[43.5,9.4],[41.8,11.2],[40.4,12.1],[39.4,12.7],[38.4,13.1],[37.1,13.4],[35.7,13.7],[34.7,13.9]]]},{"strokes":[[[0.3,-19.6],[-3.6,-23.5],[-4.6,-23.9],[-5.8,-24.3],[-7.5,-24.9],[-8.3,-24.9],[-9.6,-25],[-11,-25.2],[-11.8,-25.4],[-12.6,-25.4],[-13.5,-25.4],[-16.5,-25],[-18,-24.9],[-19.8,-24.5],[-21.3,-24.1],[-22.5,-23.3],[-23.7,-22.7],[-25,-21.9],[-26.4,-20.8],[-27.6,-19.8],[-28.9,-19],[-30.3,-18.2],[-31.5,-17.4],[-32.7,-16.7],[-33.4,-15.9],[-34.4,-15.1],[-35.2,-13.9],[-36,-12.8],[-36.9,-11.2],[-37.9,-9.8],[-38.7,-8.7],[-39.5,-7.7],[-40.3,-6.7],[-41,-5.8],[-41.8,-4.6],[-42.2,-3],[-43,-1.1],[-43.8,0.5],[-44.2,2],[-44.5,3.4],[-44.5,4.8],[-44.7,6.1],[-44.9,8.1],[-45.1,10],[-45.3,11.4],[-45.5,12.6],[-45.7,13.7],[-45.7,14.9],[-45.7,16.1],[-45.7,17.1],[-45.7,18.6],[-45.7,19.8],[-45.7,21],[-45.7,21.9],[-45.3,22.9],[-45.1,23.9],[-44.9,25.2],[-44.5,26.4],[-43.8,27.6],[-43.2,28.8],[-42.6,29.9],[-42,31.3],[-40.8,32.8],[-40.4,33.4],[-39.3,34.6],[-37.5,36.4],[-36.5,37.3],[-35.6,38.3],[-34.4,39.1],[-33,39.9],[-31.7,40.6],[-30.7,41.4],[-29.3,42.4],[-28.2,43.2],[-27,44],[-26,44.5],[-24.7,45.3],[-23.1,45.9],[-21.7,46.3],[-20.6,46.7],[-19.4,47.1],[-18.2,47.5],[-17.1,47.9],[-16.1,48.2],[-14.9,48.4],[-13.5,48.6],[-12.2,48.8],[-11,49],[-10.2,49.2],[-9.5,49.4],[-8.5,49.6],[-7.5,49.8],[-6.7,49.8],[-5.9,49.8],[-5,49.8],[-4,50],[-2.6,50],[-1.5,50],[-0.3,50],[0.5,50],[1.3,50],[2.2,50],[3,50],[3.8,50],[4.6,50],[5.4,49.8],[6.1,49.8],[7.3,49.6],[8.3,49.6],[9.5,49.4],[10.2,49.4],[11,49.2],[12.2,48.8],[13.5,48.4],[14.9,48.1],[16.1,47.7],[17.4,47.3],[18.2,47.1],[19,46.7],[20,46.3],[21,45.9],[21.9,45.3],[23.1,44.7],[24.5,44.2],[25.6,43.6],[26.8,43],[28,42.2],[28.9,41.6],[29.9,41],[31.1,40.3],[31.9,39.7],[32.7,39.1],[33.4,38.5],[34.2,37.9],[34.8,37.1],[35.6,36.4],[36.4,35.2],[37.1,33.8],[37.9,32.5],[38.7,30.9],[39.5,29.5],[40.1,28.2],[40.6,26.6],[41.2,25],[41.8,23.7],[42.2,22.7],[42.8,21.5],[43.2,20.2],[43.6,18.8],[44,17.4],[44.5,15.7],[44.9,14.1],[45.1,12.8],[45.3,11.6],[45.5,10.4],[45.7,9.3],[45.7,7.7],[45.7,5.6],[45.7,3.4],[45.7,2],[45.7,0.7],[45.7,-0.7],[45.3,-2],[44.9,-3.2],[44.5,-4.6],[44.2,-5.9],[43.8,-7.3],[43.2,-8.7],[42.6,-9.8],[42,-10.8],[41.4,-12.2],[41,-13],[40.6,-13.7],[40.3,-14.5],[39.9,-15.3],[39.5,-16.1],[38.9,-17.1],[38.3,-17.8],[37.9,-18.4],[36.9,-19.6],[36.2,-20.4],[35.6,-20.8],[34.8,-21.3],[34,-21.9],[33,-22.5],[32.1,-23.1],[31.3,-23.5],[30.5,-23.5],[29.1,-23.9],[28,-24.3],[27.2,-24.5],[26.4,-24.7],[25.4,-24.7],[24.7,-24.7],[23.9,-24.7],[23.1,-24.7],[22.3,-24.7],[21.3,-24.7],[20.2,-24.7],[19.2,-24.7],[18,-24.5],[17.1,-24.3],[16.5,-23.9],[15.3,-23.5],[14.7,-23.1],[13.9,-22.7],[13.2,-22.3],[12.6,-21.9],[12.2,-21.3],[11.8,-20.8],[11.4,-20.2],[10.6,-19.8],[10,-19],[9.1,-18.2],[8.5,-17.6],[7.9,-17.3],[7.1,-17.3],[6.3,-17.3],[5.4,-17.4],[4.4,-17.8],[3.8,-18.2],[3.2,-18.6],[2.2,-19],[1.7,-19.6],[1.1,-20],[0.3,-20.6],[-0.3,-21.2]],[[4.8,-16.9],[6.5,-22.1],[6.5,-22.9],[6.5,-23.7],[6.5,-24.5],[6.5,-25.2],[6.1,-27.6],[5.9,-28.9],[5.8,-30.3],[5.4,-31.5],[5,-32.8],[4.6,-34.2],[4.2,-35.6],[3.8,-36.9],[3.2,-38.1],[3,-39.1],[2.8,-40.3]],[[0.5,-38.5],[0.7,-36.5],[0.7,-35.6],[0.7,-34.2],[0.9,-33.4],[1.1,-32.7],[1.3,-31.7],[1.5,-30.9],[1.7,-29.9],[1.9,-28.9],[2,-28],[2.2,-27.2],[2.2,-26.4],[2.2,-25.4],[2.2,-24.7],[2.2,-23.9],[2.2,-23.1],[1.9,-22.3],[1.5,-21.5],[1.3,-20.8],[0.9,-20.2]],[[2,-37.9],[0.3,-36.7],[-0.5,-36.4],[-1.1,-35.8],[-2,-35.4],[-2.8,-35],[-3.6,-34.4],[-4.4,-34],[-5.2,-33.4],[-6.3,-32.8],[-7.3,-32.5],[-8.3,-32.1],[-9.8,-31.7],[-11,-31.5],[-12.4,-31.1],[-13.7,-30.9],[-15.1,-30.5],[-16.9,-30.3],[-18.6,-30.1],[-20,-29.9],[-21.5,-29.9],[-23.1,-29.9],[-24.7,-29.9],[-26.4,-30.1],[-27.8,-30.3],[-29.5,-30.7],[-31.1,-30.9],[-32.1,-31.3],[-33.4,-31.9],[-34.2,-32.3],[-34.8,-32.7],[-35.4,-33.2],[-35.8,-34.4],[-35.4,-35.6],[-35,-36.4],[-33.4,-38.9],[-31.5,-40.8],[-29.7,-42.4],[-27.8,-43.6],[-25.6,-44.7],[-23.7,-45.7],[-21.7,-46.1],[-20,-46.5],[-18,-46.7],[-16.1,-46.7],[-14.5,-46.5],[-13.2,-46.1],[-11.6,-45.7],[-10.4,-44.9],[-9.3,-44.3],[-8.7,-43.8],[-5.9,-41],[-5,-40.1],[-4.2,-39.1],[-3.4,-38.5],[-2.4,-37.5],[-1.9,-36.7],[-1.3,-36.2],[-0.5,-35.8],[0.1,-35.4]],[[2.8,-39.1],[4.4,-40.6],[5.2,-41.6],[5.9,-42.4],[6.7,-43.2],[7.9,-44.2],[8.9,-45.1],[9.8,-45.7],[10.8,-46.3],[11.8,-46.9],[13,-47.3],[13.7,-47.7],[14.7,-48.1],[15.5,-48.4],[16.5,-48.8],[17.1,-49.2],[17.8,-49.4],[18.6,-49.6],[19.4,-49.8],[20.4,-49.8],[21.3,-50],[22.1,-50],[23.3,-50],[24.5,-50],[25.6,-50],[26.6,-50],[27.8,-49.8],[28.9,-49.4],[30.1,-49.2],[31.3,-48.8],[32.3,-48.6],[33,-48.2],[34.2,-47.7],[35,-46.9],[35.6,-46.1],[35.8,-44.7],[35.6,-43.8],[35.4,-42.8],[35,-41.6],[34.4,-40.4],[33.6,-39.1],[32.7,-38.1],[31.9,-36.9],[30.7,-35.8],[29.5,-34.6],[28.4,-33.8],[27.2,-33],[25.8,-32.3],[24.3,-31.7],[22.7,-31.1],[21.3,-30.7],[19.8,-30.5],[18.4,-30.5],[17.1,-30.5],[15.7,-30.7],[14.3,-30.9],[13,-31.3],[11.8,-31.7],[10.8,-32.5],[9.6,-33.2],[8.7,-34],[7.9,-34.8],[7.3,-35.6],[6.5,-36.5],[5.8,-37.5],[5,-38.1],[4.4,-38.7],[3.8,-39.3]]]},{"strokes":[[[-44.6,-28.3],[-44.6,-14.7],[-45.5,-1.6],[-46.8,12.4],[-47.3,17],[-48.2,25.6],[-48.6,32.4],[-49.5,37.3],[-49.5,40],[-50,42.3]],[[-41,0.2],[-33.7,-12.4],[-31,-16.1],[-28.7,-18.3],[-26.9,-20.1],[-25.1,-21],[-23.8,-21.9],[-21.9,-22.9]],[[10.6,-48.6],[8.4,-34.2],[7.5,-25.1],[6.6,-20.1],[4.8,-9.7],[3.4,1.1],[2.5,11.1],[1.1,19.7],[0.7,26],[0.2,30.5],[0.2,33.7],[0.2,35.5],[0.2,37.3]],[[12.4,-45.9],[18.3,-34.6],[19.2,-31.4],[21,-26.5],[22.4,-22.9],[23.3,-19.7],[24.2,-17.4],[25.1,-14.7],[29.2,-16.5],[36,-24.2],[37.8,-26.9],[41.4,-31.4],[44.1,-36],[45.9,-40],[47.3,-43.2],[49.1,-45.9],[49.1,-47.7],[50,-45],[49.1,-30.1],[47.7,-16.1],[45.9,-2],[45,10.2],[44.1,21.9],[43.2,31.4],[43.2,39.1],[42.8,43.7],[42.3,46.4],[41.9,48.6]]]},{"strokes":[[[-32,-15.2],[-31.8,-8.7],[-32.5,-3],[-33.5,2.2],[-34.8,7.6],[-36.4,12.6],[-37.7,17.3],[-38.7,21.4],[-39.4,23.6],[-39.6,25.3],[-39.8,26.4],[-40,27.3]],[[-50,-20.8],[-43.1,-19.9],[-41.1,-19.7],[-36.8,-19],[-33.1,-18.6],[-29.7,-18],[-26.2,-17.5],[-23.4,-17.1],[-21.4,-16.5],[-19.9,-16],[-19,-15.6],[-18.2,-15.2]],[[-20.1,20.6],[-13.2,21.6],[-10.8,21.2],[-8.2,19.9],[-6.5,18.6],[-5.4,16.9],[-5.2,14.9],[-6.1,12.8],[-8.2,10.8],[-9.1,10.4],[-11,10],[-12.8,10.6],[-14.1,11.9],[-14.9,13],[-16,14.7],[-16.5,17.1],[-16.5,19.9],[-16,22.1],[-14.9,23.6],[-13.2,25.3],[-10.6,26.4],[-8.2,26.8]],[[19.7,14.3],[13,14.5],[12.3,14.9],[11,16],[10,17.3],[9.1,19.3],[8.7,21.2],[8.7,22.9],[8.9,24],[9.7,25.3],[11,26.4],[12.8,27.1],[14.1,27.3],[15.2,26.8],[16.2,26],[17.1,24.5],[17.7,23.2],[18.2,21.9],[18.6,20.3],[19,18.8],[19.5,17.7],[19.7,16.7],[19.7,18.2],[19.7,20.1],[19.7,21.9],[19.9,23.2],[20.1,24.5],[20.6,25.5],[22.3,26.8],[23.6,27.5]],[[50,-28.8],[47.8,-22.9],[46.5,-18.4],[44.6,-11],[43.1,-2.8],[42.4,-0.2],[41.8,3.5],[41.3,6.5],[41.1,8.7],[40.9,10.2],[40.9,11]],[[40.3,22.3],[35.7,26.6],[35.5,27.5],[36.1,28.4],[37,28.8],[38.3,28.6],[39.2,28.1],[39.8,27.5]]]},{"strokes":[[[-27.1,-39.6],[-31.5,-37],[-35.2,-34.5],[-38.9,-31.7],[-39.8,-31.1],[-41.2,-29.9],[-42.4,-28.9],[-43.3,-27.7],[-43.9,-26.3],[-44.1,-25.1],[-43.8,-23.9],[-43.3,-22.7],[-42.3,-21.7],[-40.9,-20.7],[-39.7,-19.9],[-38.3,-19.3],[-37.3,-18.4],[-36.4,-17.3],[-35.8,-16.3],[-35.3,-15.2],[-35,-13.9],[-35,-12.3],[-35.3,-10.4],[-35.9,-8.7],[-36.8,-7.2],[-38.2,-5.7],[-40.5,-3.6],[-41.5,-2.2],[-42.9,-0.8],[-43.5,-0.1],[-45.8,1.7],[-47,2.8],[-48,3.7],[-48.6,4.3],[-49.2,4.9],[-49.5,5.4],[-49.8,5.8],[-49.8,6.6],[-50,7.7],[-49.7,8.6],[-49.4,9],[-48,10.4],[-46.8,11.1],[-45.6,11.7],[-44.4,12.7],[-43.3,13.4],[-42.1,14.2],[-41.1,14.9],[-40.3,16.1],[-39.8,17.5],[-40,19],[-40.6,21.3],[-41.7,24.2],[-42.9,26.6],[-44.4,28.6],[-45.6,30.1],[-46.4,31],[-46.8,31.4]],[[30.6,19.3],[25.9,21],[23.5,21.4],[20.9,22],[17.9,22.7],[16.8,22.8],[15.8,23.1],[14.7,23.4],[13.9,23.7],[13.5,24],[12.9,24.3],[12.9,24.9],[13.3,25.7],[13.9,26.4],[14.7,27.3],[15.5,28.3],[16.1,29.2],[16.7,29.9],[17,30.7],[17,31.7],[16.7,33.3],[16.1,34.6],[15,36],[13.8,37.3],[12.4,38.3],[11.4,38.9],[10.6,39.2],[10.2,39.6]],[[50,-34.6],[44.7,-33],[41.8,-32],[38.8,-31.1],[36.4,-30.7],[35,-30.4],[34.1,-30.1],[33.3,-30.1],[33.9,-29.9],[34.5,-29.8],[35.2,-29.2],[34.8,-27.8],[33.9,-25.5],[32.1,-23],[29.7,-20.4],[27.3,-17.8],[26.1,-16.7]]]},{"strokes":[[[-50,0],[-43.7,-2.1],[-39.7,-4],[-34.7,-6.1],[-30.5,-8],[-26.5,-9.2],[-22.3,-10.1],[-19,-10.3],[-16,-9.6],[-12.9,-8.2],[-9.4,-5.9],[-6.1,-2.8],[-3.3,0],[-0.5,3.1],[2.8,5.6],[6.1,7.7],[9.2,9.2],[14.1,10.1],[19.7,10.3],[26.5,9.2],[34,6.8],[41.1,4],[50,0.7]]]},{"strokes":[[[-23.5,-15.5],[-30.4,-14.8],[-31.8,-14.5],[-35.3,-13.8],[-39.1,-12.4],[-43.4,-9.6],[-45.7,-6.5],[-47.6,-3.2],[-49.3,1.3],[-50,5.8],[-49.8,8.9],[-48.8,11.7],[-48.1,13.1],[-43.9,17.1],[-39.8,19],[-35.6,19.5],[-30.9,19.3],[-27.1,18.3],[-24,16.9],[-21.6,15],[-19.5,13.1],[-18.1,11.2],[-17.4,9.3],[-17.1,7.7],[-17.4,6],[-17.8,4.6],[-18.3,3.4],[-19,2.2],[-20.2,1.3],[-22.6,0.1],[-25.7,-0.6],[-28.3,-0.8],[-30.1,-0.8],[-31.6,-0.6],[-32.7,-0.4],[-33.7,-0.1],[-34.4,0.4],[-34.9,1.8],[-34.6,3.2],[-34.2,4.6],[-33.5,5.8]],[[34.2,-4.4],[27.5,-1.3],[26.4,-0.8],[23,0.4],[22.1,0.8],[19.5,2.2],[18.6,3.2],[16.9,5.1],[16,7.2],[15.7,9.1],[16,11.5],[18.3,14.8],[19.7,15.7],[24,17.4],[29.4,17.8],[37.5,15.5],[41.5,13.1],[45,10.3],[46.5,8.9],[49.3,5.3],[50,2.7],[50,-0.6],[49.3,-3.9],[48.1,-7],[46.5,-9.6],[43.6,-12.4],[39.8,-15.2],[35.6,-17.4],[30.6,-18.6],[28.3,-19],[22.8,-19.5],[21.2,-19.5]]]},{"strokes":[[[9.1,-6.7],[4.7,-3],[3.9,-2.2],[2.7,-0.2],[2,1.5],[2.2,3.2],[3,4.7],[4.5,6],[6.7,7],[9.7,7.2],[12.8,6.7],[14.9,5.5],[16.8,3.7],[18.3,1.3],[19.1,-0.7],[19.5,-3],[19.3,-5.9],[18.6,-8.6],[17.8,-10.7],[15.9,-13.3],[13.4,-15.6],[8.1,-17.3],[3.9,-16.9],[-0.3,-15.4],[-2.3,-14.4],[-7.2,-9.7],[-9.2,-6.2],[-10.4,-2.2],[-11.1,1.7],[-11.1,5],[-10.1,8.6],[-7.9,11.6],[-5,13.9],[-0.8,15.8],[4.9,16.6],[10.6,16.3],[15.9,14.9],[21.1,12.2],[26,8.6],[29.7,4],[32.2,-1],[33.4,-6.2],[33.4,-10.9],[31.9,-15.8],[29.4,-20.1],[25.8,-24],[21.6,-27.2],[16.8,-29.2],[10.7,-30.2],[3.9,-29.9],[-2.7,-28.5],[-8.1,-26.2],[-13.1,-24],[-16.9,-21.3],[-20.3,-17.1],[-23.3,-11.4],[-25.3,-4.9],[-26.5,2.5],[-26.5,9.9],[-25.7,16.3],[-23.8,21.6],[-21.5,26.5],[-18,30.9],[-12.9,34.6],[-5.9,37.8],[2.3,39.3],[10.9,38.6],[19.8,36.1],[28,31.9],[34.9,26.3],[40.8,20.5],[46.6,11.6],[49.3,4.9],[50,-1.8],[48.8,-8.2],[46.3,-14.3],[43.1,-19.6],[38.4,-24.5],[32.7,-28.7],[29.4,-30.5],[17.8,-35.7],[9.6,-38.3],[0.8,-39.3],[-8.1,-39.1],[-18,-36.4],[-27.3,-31.9],[-35.1,-26],[-41.8,-19.1],[-46.6,-11.1],[-50,-3.9]]]},{"strokes":[[[-50,27],[-46.9,24.8],[-44.4,22.7],[-42.9,21.8],[-40.1,20.1],[-36.8,18.5],[-32.9,16.4],[-28.8,14.6],[-25.6,12.9],[-22.9,11.3],[-21.1,9.7],[-20.1,8.6],[-19.9,7.8],[-20.5,6.7],[-22.3,5.4],[-25.8,4.1],[-29.9,2.8],[-33.4,1.8],[-36.3,0.6],[-38.8,-0.7],[-40.5,-2.4],[-41.4,-5],[-41.4,-8.8],[-39.7,-13.4],[-37.2,-17.6],[-34.2,-20.7],[-30.8,-23.3],[-27.3,-25],[-23.9,-26.3],[-21,-27],[-18.5,-26.9],[-16.5,-25.9],[-14.2,-24.6],[-11.3,-22.7],[-7.5,-20.3],[-2.2,-18.5],[4,-17.1],[9.5,-15.9],[14.1,-14.8],[17.1,-13.8],[19,-11.6],[20.1,-8],[20.3,-3.1],[20.1,2.2],[19.9,6.6],[20.3,9.5],[21.6,11.6],[23.6,13.5],[25.8,15.1],[29.9,16.1],[32.6,16.5],[35.5,16.8],[38,16.9],[39.5,17.1],[40.6,17.2],[41.2,17.3],[41.5,17.8],[41.2,19.2],[40.5,21],[40.2,21.8],[39.9,23.5],[41.8,23.9],[45,23.5],[50,22.3]]]},{"strokes":[[[-50,-22.4],[-47.2,-24.2],[-44,-26.2],[-39.5,-28.1],[-36.5,-29],[-34,-29.5],[-31.9,-29.8],[-29.5,-29.8],[-27.3,-29.6],[-25.2,-29.1],[-23.3,-28],[-21.4,-26.2],[-20.2,-24],[-19.5,-21.3],[-19.1,-18.5],[-19.1,-15.4],[-19.2,-12.2],[-19.5,-8.9],[-19.8,-6.1],[-20.1,-3.5],[-20.1,-1.1],[-19.9,1],[-19.8,3.3],[-19.4,5.1],[-19.1,6.7],[-18.4,8.7],[-17.8,10.4],[-16.7,11.7],[-15.3,13.4],[-13.2,14.9],[-10.4,16.2],[-6.6,16.6],[-2.4,16.3],[1.9,15.6],[5.4,15.1],[8.1,14.9],[10,15.1],[11.6,15.6],[13,16.6],[14.2,18.1],[15,20.7],[15.9,23.6],[17.3,26.7],[19.5,28.3],[23.3,29.3],[28.8,29.5],[34.7,29.2],[39.8,29],[42.4,29.1],[50,29.8]]]},{"strokes":[[[-50,21.8],[-48.1,18.9],[-46.7,16.5],[-45.2,13.3],[-43.6,10.4],[-42.1,8],[-40.7,5.9],[-38.9,4.1],[-37,2.5],[-34.8,0.8],[-32.2,-0.9],[-29.7,-2.1],[-27,-2.9],[-24.9,-3.5],[-23.2,-3.5],[-21.1,-3.2],[-19.3,-2.3],[-17.6,-1],[-15.5,0.4],[-13.4,1.6],[-11,2.3],[-8.5,2.7],[-6.3,2.5],[-4.1,1.9],[-2.2,0.6],[-0.6,-1.2],[2.3,-4.6],[4.3,-7.1],[5.2,-8.4],[8.3,-12.1],[10.7,-14.4],[13.3,-16.9],[15.5,-18.8],[17.7,-20],[19.7,-21],[21.3,-21.6],[22.8,-21.8],[24.2,-21.4],[26.2,-20],[29.7,-17.3],[34.5,-14.6],[41,-13.1],[47.9,-12.4],[50,-12.3]]]},{"strokes":[[[-34,-18.9],[-37.3,-18.9],[-38.4,-18.9],[-40.1,-18.8],[-41.9,-18.5],[-43.6,-17.9],[-45.2,-17],[-46.8,-16.1],[-48,-15.2],[-49,-14.2],[-49.6,-13],[-50,-11.9],[-50,-11.1],[-49.7,-10.3],[-49.1,-9.2],[-48.1,-8.3],[-46.8,-7.5],[-44.9,-7],[-43.2,-6.7],[-41.2,-6.6],[-39.3,-6.6],[-37.5,-6.6],[-35.8,-6.7],[-34,-6.8],[-32.5,-6.7],[-30.8,-6.4],[-29.3,-6],[-28,-5.7],[-26.9,-5.2],[-25.6,-4.7],[-24.6,-4.1],[-23.6,-3],[-22.6,-1.5],[-22.2,-0.2],[-21.8,1.7],[-21.5,4],[-21.4,6.3],[-21.3,8.5],[-21.2,10],[-20.9,11.7],[-20.6,13.3],[-19.9,14.4],[-18.9,15.5],[-17.4,16.7],[-15.5,17.8],[-13.5,18.6],[-11.1,18.9],[-8.4,18.6],[-5.2,17.9],[-2.3,16.7],[0.5,14.9],[3.4,12.8],[6.1,10.2],[8.7,7.5],[11,4.7],[13.3,2.1],[15.1,-0.5],[17.2,-3.3],[19.2,-6],[21.2,-8.9],[23.8,-11.6],[26.5,-13.7],[28.8,-15.3],[31.2,-16.5],[33.6,-17.3],[35.9,-17.5],[38.4,-17],[40.8,-16.1],[43.1,-14.9],[45.2,-13.5],[47.3,-11.9],[50,-9.4]]]},{"strokes":[[[10.7,-0.3],[6.4,-9.2],[5.8,-10.2],[4.8,-11.9],[4.1,-13.2],[3.5,-14.9],[2.1,-16.2],[0.2,-18.2],[-2.5,-19.8],[-4.8,-21.1],[-6.8,-22.1],[-8.7,-23.1],[-10.7,-24.4],[-12.4,-25.4],[-14.4,-26.1],[-16.7,-27.1],[-19,-28.1],[-21.3,-28.4],[-23.6,-28.7],[-25.6,-28.4],[-27.2,-28.1],[-28.9,-27.7],[-30.9,-27.1],[-33.2,-26.1],[-35.8,-24.8],[-38.4,-23.1],[-40.8,-21.1],[-43.1,-18.5],[-45,-14.9],[-46.7,-11.2],[-47.7,-8.6],[-48.7,-6.3],[-49.3,-3.6],[-49.7,-0.3],[-50,3],[-49.7,5.9],[-49.3,7.9],[-48.7,9.9],[-47.7,11.6],[-46,13.2],[-44.1,14.9],[-41.7,16.2],[-39.4,17.2],[-36.8,17.8],[-32.2,18.5],[-28.2,18.5],[-24.9,18.5],[-22.6,17.8],[-20,17.2],[-17.7,16.5],[-14.4,15.5],[-10.7,13.9],[-6.8,11.9],[-3.8,9.6],[-2.5,8.3],[0.5,5.3],[3.1,3.6],[5.4,1.7],[8.1,0.3],[10.4,-1.3],[12.4,-2.3],[13.7,-3.6],[15,-4.6],[16.3,-6.3],[18.3,-8.3],[20.3,-10.2],[21.9,-12.5],[24.6,-14.5],[26.6,-16.5],[28.9,-18.8],[31.2,-20.1],[33.2,-21.5],[35.1,-23.1],[36.8,-24.4],[38.4,-26.1],[40.1,-27.7],[41.4,-28.4],[43.1,-29.4],[44.4,-30.4],[45.7,-31],[46.7,-32],[48,-32.3],[49.3,-32.3],[50,-30.7],[50,-29],[49,-25.4],[48.3,-21.5],[47.4,-16.5],[46.4,-11.6],[45.4,-6.9],[44.4,-1],[43.1,4.6],[42.1,8.6],[41.4,12.2],[40.8,16.2],[40.4,18.2],[39.1,23.8],[38.8,26.4],[38.4,28.4],[38.1,29.7],[38.1,31.4],[37.5,32.3],[35.5,32],[33.5,31.4],[31.2,30],[28.5,27.7],[26.2,25.1],[24.3,22.4],[22.3,19.8],[20,16.8],[17.7,13.5],[15.3,10.6],[13,7.6],[11.1,5.3],[9.4,3],[8.4,1.3],[7.4,0.3],[6.8,-1]],[[-47,1],[-45,3.3],[-44.1,4],[-42.1,5],[-40.1,5.3],[-38.8,5],[-36.8,4.3],[-35.5,3.6],[-34.2,3],[-32.8,2],[-32.2,1]],[[-32.8,-15.5],[-34.8,-12.5],[-35.5,-10.9],[-34.5,-8.9],[-33.2,-8.6],[-31.8,-8.6],[-29.9,-9.6],[-29.2,-10.6],[-28.9,-11.9],[-29.2,-13.5],[-30.2,-14.5],[-31.5,-14.9]]]}],
+          },
+
+          /* the sample "handwriting" scrybble, centered on (0,0), ~460 units wide */
+          scrib: {
+            span: 6.4,
+            step: 0.045,
+            fn: (t) => [
+              t * 72 - 230,
+              Math.sin(t * 2.6) * 58 + Math.cos(t * 1.15) * 26,
+            ],
+          },
+
+          figs: {
+            cartesian: { height: 300, pxPerUnit: 46, scaleExtent: [6, 400] },
+
+            paper: { height: 250 },
+
+            rcsOrigin: {
+              height: 300,
+              unitsAcross: 1750,
+              originAt: 0.3,
+              scaleExtent: [0.05, 40],
+            },
+
+            /* the shared world boxes for the device figures (SCS / RCS) */
+            layout: {
+              height: 340,
+              box: {
+                scs: [-120, -170, 2140, 2320],
+                rcs: [-1010, -170, 1010, 2320],
+              },
+            },
+
+            anchorDemo: {
+              height: 360,
+              box: [-1.5, -1.5, 17, 11],
+              anchor: [5, 4],
+              zoom: { min: 0.4, max: 2.5, step: 0.01 },
+              shapes: [
+                { type: "circle", c: [2.1, 7.2], r: 1.05 },
+                {
+                  type: "poly",
+                  pts: [
+                    [9.3, 7.0],
+                    [11.9, 7.0],
+                    [11.9, 8.6],
+                    [9.3, 8.6],
+                  ],
+                },
+                {
+                  type: "poly",
+                  pts: [
+                    [12.2, 1.6],
+                    [14.4, 1.6],
+                    [13.3, 3.5],
+                  ],
+                },
+                { type: "scrib", c: [3.6, 1.8], k: 0.0085 },
+                { type: "scrib", c: [9.4, 4.6], k: 0.0065 },
+              ],
+            },
+
+            crossDevice: {
+              height: 340,
+              from: "move",
+              to: "pro",
+              captions: ["rM move", "same canvas on rmpp", "scaled up!"],
+              /* the move's drawing, in RCS coords: a wide scrybble on the center
+         line, strokes near both edges, and a center-mark at the bottom —
+         composed so any off-center drift is impossible to miss */
+              content: [
+                { type: "scrib", c: [0, 330], k: 0.85 },
+                { type: "scrib", c: [-300, 900], k: 0.42 },
+                { type: "scrib", c: [300, 1420], k: 0.42 },
+                {
+                  type: "poly",
+                  pts: [
+                    [-70, 1680],
+                    [70, 1680],
+                    [0, 1560],
+                  ],
+                },
+              ],
+            },
+
+            extendable: {
+              height: 400,
+              defaultDevice: "rm2",
+              pad: 0.14,
+              stepFrac: 4,
+              scaleExtent: [0.02, 30],
+            },
+
+            viewport: {
+              height: 420,
+              device: "rm2",
+              pad: 0.1,
+              stepFrac: 4,
+              zoom: { min: 0.5, max: 3, step: 0.01 },
+              inset: {
+                margin: 10,
+                height: 150,
+              } /* width follows the device aspect */,
+              content: [
+                { type: "scrib", c: [0, 650], k: 1 },
+                { type: "scrib", c: [-380, 1250], k: 0.55 },
+                { type: "circle", c: [420, 330], r: 120 },
+                {
+                  type: "poly",
+                  pts: [
+                    [260, 1480],
+                    [560, 1480],
+                    [410, 1210],
+                  ],
+                },
+              ],
+            },
+          },
+        };
+
+        const REDUCED_MOTION =
+          window.matchMedia &&
+          matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+        /* ==================================================================
+   2. UTILITIES
+   ================================================================== */
+        const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+
+        /* number formatting for labels and readouts */
+        function fmt(v, dec = 2) {
+          const f = Math.pow(10, dec);
+          const r = Math.round(v * f) / f;
+          return String(Object.is(r, -0) ? 0 : r);
+        }
+
+        /* THE formula of the article:  new = anchor + zoom × (old − anchor) */
+        function zoomAbout(p, s, a) {
+          return [a[0] + s * (p[0] - a[0]), a[1] + s * (p[1] - a[1])];
+        }
+
+        /* the scrybble's base points, cached */
+        let _scribPts = null;
+        function scribPts() {
+          if (_scribPts) return _scribPts;
+          _scribPts = [];
+          for (let t = 0; t <= CONFIG.scrib.span; t += CONFIG.scrib.step)
+            _scribPts.push(CONFIG.scrib.fn(t));
+          return _scribPts;
+        }
+
+        /* path helpers — every draw function works through a projection
+   proj = { pt: worldPoint => [screenX, screenY],  k: pixelsPerWorldUnit } */
+        function pathOf(proj, pts, close) {
+          let d = "M";
+          for (let i = 0; i < pts.length; i++) {
+            const q = proj.pt(pts[i]);
+            d += (i ? "L" : "") + q[0].toFixed(1) + "," + q[1].toFixed(1);
+          }
+          return close ? d + "Z" : d;
+        }
+        function circleD(x, y, r) {
+          return (
+            "M" +
+            (x - r).toFixed(1) +
+            "," +
+            y.toFixed(1) +
+            "a" +
+            r.toFixed(1) +
+            "," +
+            r.toFixed(1) +
+            " 0 1 0 " +
+            (2 * r).toFixed(1) +
+            ",0" +
+            "a" +
+            r.toFixed(1) +
+            "," +
+            r.toFixed(1) +
+            " 0 1 0 " +
+            (-2 * r).toFixed(1) +
+            ",0"
+          );
+        }
+
+        /* a shape (circle / poly / scrib), zoomed by s about anchor a, as a path */
+        function shapePath(sh, s, a, proj) {
+          if (sh.type === "circle") {
+            const c = proj.pt(zoomAbout(sh.c, s, a));
+            return circleD(c[0], c[1], sh.r * s * proj.k);
+          }
+          if (sh.type === "poly") {
+            return pathOf(
+              proj,
+              sh.pts.map((p) => zoomAbout(p, s, a)),
+              true,
+            );
+          }
+          /* scrib: the generated scrybble, or a hand-drawn sample (multi-stroke) */
+          const strokesArr = sh.sample || [scribPts()];
+          let d = "";
+          strokesArr.forEach((st) => {
+            const pts = st.map((bp) =>
+              zoomAbout([sh.c[0] + bp[0] * sh.k, sh.c[1] + bp[1] * sh.k], s, a),
+            );
+            d += pathOf(proj, pts, false);
+          });
+          return d;
+        }
+        function shapeCenter(sh) {
+          if (sh.type !== "poly") return sh.c;
+          let x = 0,
+            y = 0;
+          sh.pts.forEach((p) => {
+            x += p[0];
+            y += p[1];
+          });
+          return [x / sh.pts.length, y / sh.pts.length];
+        }
+
+        /* ---- hand-drawn sample scrybbles for the figures -------------------
+   When CONFIG.header.customShapes holds drawings from scrybble-maker,
+   every 'scrib' in the figures gets a random one on page load — black
+   ink only, and re-rolled until no bounding boxes overlap.            */
+        function samplePool() {
+          const cs = CONFIG.header.customShapes;
+          return cs && cs.length ? cs : null;
+        }
+        /* one random drawn shape, scaled to the default scrybble's footprint
+   (~460 units wide); flipY for math-style (y-up) figures */
+        function pickSamplePts(flipY) {
+          const pool = samplePool();
+          if (!pool) return null;
+          const sh = pool[Math.floor(Math.random() * pool.length)];
+          const fy = flipY ? -4.6 : 4.6;
+          return sh.strokes.map((st) => st.map((p) => [p[0] * 4.6, p[1] * fy]));
+        }
+        function shapeBox(sh) {
+          if (sh.type === "circle")
+            return [
+              sh.c[0] - sh.r,
+              sh.c[1] - sh.r,
+              sh.c[0] + sh.r,
+              sh.c[1] + sh.r,
+            ];
+          let pts;
+          if (sh.type === "poly") pts = sh.pts;
+          else {
+            const base = sh.sample
+              ? [].concat.apply([], sh.sample)
+              : scribPts();
+            pts = base.map((p) => [
+              sh.c[0] + p[0] * sh.k,
+              sh.c[1] + p[1] * sh.k,
+            ]);
+          }
+          let x0 = 1e9,
+            y0 = 1e9,
+            x1 = -1e9,
+            y1 = -1e9;
+          pts.forEach((p) => {
+            if (p[0] < x0) x0 = p[0];
+            if (p[0] > x1) x1 = p[0];
+            if (p[1] < y0) y0 = p[1];
+            if (p[1] > y1) y1 = p[1];
+          });
+          return [x0, y0, x1, y1];
+        }
+        function boxesOverlap(a, b) {
+          return a[0] < b[2] && b[0] < a[2] && a[1] < b[3] && b[1] < a[3];
+        }
+        function assignSamples(shapes, flipY) {
+          if (!samplePool()) return;
+          const scribs = shapes.filter((s) => s.type === "scrib");
+          for (let tries = 0; tries < 30; tries++) {
+            scribs.forEach((s) => {
+              s.sample = pickSamplePts(flipY);
+            });
+            const boxes = shapes.map(shapeBox);
+            let ok = true;
+            for (let i = 0; i < boxes.length && ok; i++)
+              for (let j = i + 1; j < boxes.length; j++)
+                if (boxesOverlap(boxes[i], boxes[j])) {
+                  ok = false;
+                  break;
+                }
+            if (ok) return;
+          }
+        }
+        function prepareSamples() {
+          assignSamples(CONFIG.figs.anchorDemo.shapes, true);
+          assignSamples(CONFIG.figs.crossDevice.content, false);
+          assignSamples(CONFIG.figs.viewport.content, false);
+        }
+
+        /* ==================================================================
+   3. CORE — Fig (figure shell + controls) and View (world <-> screen)
+   ================================================================== */
+        let _uid = 0;
+
+        /** The world<->screen mapping of one figure, built on a d3.zoom transform.
+         *  yDown=true  : world y grows downward (Screen / reMarkable style)
+         *  yDown=false : world y grows upward   (math style)
+         *  interactive : whether the user can pan and zoom the view itself   */
+        class View {
+          constructor(
+            fig,
+            {
+              yDown = true,
+              interactive = false,
+              scaleExtent = [0.01, 600],
+            } = {},
+          ) {
+            this.fig = fig;
+            this.ySign = yDown ? 1 : -1;
+            this.t = d3.zoomIdentity;
+            if (interactive) {
+              this.zoom = d3
+                .zoom()
+                .scaleExtent(scaleExtent)
+                .on("zoom", (ev) => {
+                  this.t = ev.transform;
+                  if (ev.sourceEvent && fig.onUserZoom) fig.onUserZoom(ev);
+                  fig.render();
+                });
+              fig.svg.call(this.zoom).on("dblclick.zoom", null);
+              fig.svg.classed("pz", true);
+            }
+          }
+          x(wx) {
+            return this.t.applyX(wx);
+          }
+          y(wy) {
+            return this.t.applyY(this.ySign * wy);
+          }
+          pt(p) {
+            return [this.x(p[0]), this.y(p[1])];
+          }
+          invert(sx, sy) {
+            return [this.t.invertX(sx), this.ySign * this.t.invertY(sy)];
+          }
+          asProj() {
+            return { pt: (p) => this.pt(p), k: this.t.k };
+          }
+          /* d3 scales spanning the current viewport, for nice grid ticks */
+          xScale() {
+            return d3
+              .scaleLinear()
+              .domain([this.invert(0, 0)[0], this.invert(this.fig.w, 0)[0]])
+              .range([0, this.fig.w]);
+          }
+          yScale() {
+            return d3
+              .scaleLinear()
+              .domain([this.invert(0, 0)[1], this.invert(0, this.fig.h)[1]])
+              .range([0, this.fig.h]);
+          }
+          /* a transform that fits the world box (uniform scale, centered) */
+          fitTransform(box, pad = 0.08) {
+            const [x0, y0, x1, y1] = box,
+              { w, h } = this.fig;
+            const ix0 = Math.min(x0, x1),
+              ix1 = Math.max(x0, x1);
+            const iy = [this.ySign * y0, this.ySign * y1];
+            const iy0 = Math.min(iy[0], iy[1]),
+              iy1 = Math.max(iy[0], iy[1]);
+            const k = Math.min(
+              (w * (1 - 2 * pad)) / (ix1 - ix0),
+              (h * (1 - 2 * pad)) / (iy1 - iy0),
+            );
+            return d3.zoomIdentity
+              .translate(
+                w / 2 - (k * (ix0 + ix1)) / 2,
+                h / 2 - (k * (iy0 + iy1)) / 2,
+              )
+              .scale(k);
+          }
+          setTransform(t) {
+            if (this.zoom) this.fig.svg.call(this.zoom.transform, t);
+            else {
+              this.t = t;
+              this.fig.render();
+            }
+          }
+          animateTo(t, ms = CONFIG.anim.fitMs) {
+            if (REDUCED_MOTION || !this.zoom) return this.setTransform(t);
+            this.fig.svg.transition().duration(ms).call(this.zoom.transform, t);
+          }
+          fit(box, pad) {
+            this.setTransform(this.fitTransform(box, pad));
+          }
+        }
+
+        /** Base class of every interactive figure: builds the svg, the control
+         *  bars, the layers, the cursor tip, and re-renders on resize.        */
+        class Fig {
+          constructor(el, { height = 320 } = {}) {
+            this.uid = ++_uid;
+            this.el = d3.select(el);
+            this.wrap = this.el.append("div").attr("class", "svg-wrap");
+            this.svg = this.wrap.append("svg").attr("height", height);
+            this.defs = this.svg.append("defs");
+            this.h = height;
+            this.w = 0;
+            this.layers = {};
+            this.barsEls = [];
+            new ResizeObserver(() => this.resize()).observe(this.wrap.node());
+          }
+          /* layers are named <g>s; creation order is paint order */
+          layer(name) {
+            if (!this.layers[name])
+              this.layers[name] = this.svg
+                .append("g")
+                .attr("class", "layer-" + name);
+            return this.layers[name];
+          }
+          bar(i = 0) {
+            while (this.barsEls.length <= i)
+              this.barsEls.push(this.el.append("div").attr("class", "bar"));
+            return this.barsEls[i];
+          }
+          /* ---- control builders ------------------------------------------ */
+          addReadout(bar, text) {
+            return this.bar(bar)
+              .append("span")
+              .attr("class", "ro")
+              .text(text || "");
+          }
+          addSlider(bar, label, { min, max, step, value }, format, cb) {
+            const l = this.bar(bar).append("label").attr("class", "ctl");
+            l.append("span").text(label);
+            const input = l
+              .append("input")
+              .attr("type", "range")
+              .attr("min", min)
+              .attr("max", max)
+              .attr("step", step)
+              .attr("value", value);
+            const val = l.append("span").text(format(value));
+            input.on("input", () => {
+              const v = +input.node().value;
+              val.text(format(v));
+              cb(v);
+            });
+            return {
+              set(v) {
+                input.node().value = v;
+                val.text(format(v));
+              },
+            };
+          }
+          addChips(bar, groups, vis, cb) {
+            const host = this.bar(bar).append("span");
+            groups.forEach((g, i) => {
+              const b = host
+                .append("button")
+                .attr("class", "chip")
+                .attr("type", "button");
+              b.append("span")
+                .attr("class", "sw")
+                .style("border", "1px solid " + g.color)
+                .style(
+                  "background",
+                  g.hatch
+                    ? "repeating-linear-gradient(" +
+                        (g.hatch === "/" ? 135 : 45) +
+                        "deg, transparent 0 4px, " +
+                        g.color +
+                        " 4px 5.5px)"
+                    : g.color + "55",
+                );
+              b.append("span").text(g.label);
+              b.on("click", () => {
+                vis[i] = !vis[i];
+                b.classed("off", !vis[i]);
+                cb();
+              });
+            });
+          }
+          addSelect(bar, label, options, value, cb) {
+            const l = this.bar(bar).append("label").attr("class", "ctl");
+            l.append("span").text(label);
+            const sel = l.append("select");
+            options.forEach((o) =>
+              sel.append("option").attr("value", o.value).text(o.label),
+            );
+            sel.node().value = value;
+            sel.on("change", () => cb(sel.node().value));
+            return sel;
+          }
+          addButton(bar, label, cb) {
+            this.bar(bar)
+              .append("button")
+              .attr("class", "plain")
+              .attr("type", "button")
+              .text(label)
+              .on("click", cb);
+          }
+          /* a passive legend row (swatch + text), for explaining shaded regions */
+          addLegend(bar, items) {
+            const host = this.bar(bar).append("span").attr("class", "legend");
+            items.forEach((it) => {
+              const s = host.append("span").attr("class", "lg");
+              s.append("span")
+                .attr("class", "sw")
+                .style("background", it.color);
+              s.append("span").text(it.label);
+            });
+          }
+          /* a right-aligned row of small self-contained badges; returns a setter */
+          addBadges(bar) {
+            const host = this.bar(bar).append("span").attr("class", "badges");
+            return (vals) => {
+              host
+                .selectAll("span.badge")
+                .data(vals)
+                .join("span")
+                .attr("class", "badge")
+                .text((d) => d);
+            };
+          }
+          /* ---- cursor readout + optional crosshair tip -------------------- */
+          enablePointer({ dec = 2 } = {}) {
+            this.pointerDec = dec;
+            const g = this.layer("tip").style("display", "none");
+            this.tipEls = {
+              v: g.append("line").attr("class", "tip-line"),
+              h: g.append("line").attr("class", "tip-line"),
+              dot: g.append("circle").attr("r", 2.5).attr("fill", "#416860"),
+              box: g
+                .append("rect")
+                .attr("class", "tip-box")
+                .attr("rx", 4)
+                .attr("height", 20),
+              txt: g.append("text").attr("class", "tip-text"),
+            };
+            this.svg
+              .on("pointermove.cursor", (ev) => {
+                const [sx, sy] = d3.pointer(ev, this.svg.node());
+                this.cursorS = [sx, sy];
+                this.cursorW = this.view.invert(sx, sy);
+                this.updateTip();
+              })
+              .on("pointerleave.cursor", () => {
+                this.cursorS = this.cursorW = null;
+                this.updateTip();
+              });
+          }
+          updateTip() {
+            if (!this.tipEls) return;
+            const g = this.layers.tip;
+            if (!this.cursorS) {
+              g.style("display", "none");
+              return;
+            }
+            g.style("display", null);
+            const [sx, sy] = this.cursorS,
+              e = this.tipEls;
+            e.v.attr("x1", sx).attr("x2", sx).attr("y1", 0).attr("y2", this.h);
+            e.h.attr("y1", sy).attr("y2", sy).attr("x1", 0).attr("x2", this.w);
+            e.dot.attr("cx", sx).attr("cy", sy);
+            const t =
+              "(" +
+              fmt(this.cursorW[0], this.pointerDec) +
+              ", " +
+              fmt(this.cursorW[1], this.pointerDec) +
+              ")";
+            e.txt.text(t);
+            const tw = e.txt.node().getComputedTextLength() + 12;
+            let bx = sx + 10,
+              by = sy - 26;
+            if (bx + tw > this.w - 4) bx = sx - tw - 10;
+            if (by < 4) by = sy + 10;
+            e.box.attr("x", bx).attr("y", by).attr("width", tw);
+            e.txt.attr("x", bx + 6).attr("y", by + 14);
+          }
+          /* ---- lifecycle -------------------------------------------------- */
+          resize() {
+            const w = this.wrap.node().clientWidth;
+            if (!w || w === this.w) return;
+            this.w = w;
+            this.svg.attr("width", w).attr("viewBox", null);
+            if (this.onResize) this.onResize();
+            this.render();
+          }
+          render() {
+            /* override */
+          }
+        }
+
+        /* ==================================================================
+   4. SHARED DRAWING — grid, axes, devices, extend buttons
+   ================================================================== */
+
+        /* grid + coordinate labels from a pair of d3 scales */
+        function drawGridScales(fig, g, xs, ys, { labels = true } = {}) {
+          const xt = xs.ticks(Math.max(2, Math.round(fig.w / CONFIG.grid.px)));
+          const yt = ys.ticks(Math.max(2, Math.round(fig.h / CONFIG.grid.px)));
+          g.selectAll("line.gx")
+            .data(xt, (d) => d)
+            .join("line")
+            .attr("class", "gx grid")
+            .attr("x1", (d) => xs(d))
+            .attr("x2", (d) => xs(d))
+            .attr("y1", 0)
+            .attr("y2", fig.h);
+          g.selectAll("line.gy")
+            .data(yt, (d) => d)
+            .join("line")
+            .attr("class", "gy grid")
+            .attr("y1", (d) => ys(d))
+            .attr("y2", (d) => ys(d))
+            .attr("x1", 0)
+            .attr("x2", fig.w);
+          /* x labels sit below the axis line, clear of annotations above it */
+          const axY = clamp(ys(0), 4, fig.h - 18),
+            axX = clamp(xs(0), 4, fig.w - 46);
+          g.selectAll("text.glx")
+            .data(labels ? xt.filter((d) => d !== 0) : [], (d) => d)
+            .join("text")
+            .attr("class", "glx grid-label")
+            .attr("x", (d) => xs(d) + 3)
+            .attr("y", axY + 13)
+            .text((d) => fmt(d));
+          g.selectAll("text.gly")
+            .data(labels ? yt.filter((d) => d !== 0) : [], (d) => d)
+            .join("text")
+            .attr("class", "gly grid-label")
+            .attr("x", axX + 5)
+            .attr("y", (d) => ys(d) - 4)
+            .text((d) => fmt(d));
+        }
+        function drawGrid(fig, view, g, opts) {
+          drawGridScales(fig, g, view.xScale(), view.yScale(), opts);
+        }
+
+        /* a text label on a small panel-colored chip, so it never fights the
+   grid's coordinate numbers underneath it */
+        function chipLabel(
+          g,
+          x,
+          y,
+          str,
+          { anchor = "start", cls = "small-label", h = 15, up = 11 } = {},
+        ) {
+          const t = g
+            .append("text")
+            .attr("class", cls)
+            .attr("x", x)
+            .attr("y", y)
+            .attr("text-anchor", anchor)
+            .text(str);
+          let w = str.length * 6.2;
+          try {
+            w = t.node().getComputedTextLength();
+          } catch (e) {}
+          const bx =
+            anchor === "end"
+              ? x - w - 4
+              : anchor === "middle"
+                ? x - w / 2 - 4
+                : x - 4;
+          g.insert("rect", () => t.node())
+            .attr("class", "chip-bg")
+            .attr("x", bx)
+            .attr("y", y - up)
+            .attr("width", w + 8)
+            .attr("height", h)
+            .attr("rx", 3);
+          return t;
+        }
+
+        /* a small dark chat bubble with a tail pointing at a spot */
+        function speechBubble(parent, str) {
+          const grp = parent.append("g").attr("class", "bubble");
+          const tail = grp.append("path").attr("class", "bubble-tail");
+          const box = grp
+            .append("rect")
+            .attr("class", "bubble-box")
+            .attr("rx", 7);
+          const t = grp.append("text").attr("class", "bubble-text").text(str);
+          return {
+            at(x, y) {
+              let w = str.length * 6.5;
+              try {
+                w = t.node().getComputedTextLength();
+              } catch (e) {}
+              const bw = w + 16,
+                bh = 22,
+                bx = x + 11;
+              let by = y - 36,
+                below = false;
+              if (by < 4) {
+                by = y + 16;
+                below = true;
+              }
+              box
+                .attr("x", bx)
+                .attr("y", by)
+                .attr("width", bw)
+                .attr("height", bh);
+              t.attr("x", bx + 8).attr("y", by + 15);
+              tail.attr(
+                "d",
+                below
+                  ? "M" +
+                      (bx + 5) +
+                      "," +
+                      (by + 2) +
+                      " L" +
+                      (x + 2) +
+                      "," +
+                      (y + 7) +
+                      " L" +
+                      (bx + 17) +
+                      "," +
+                      (by + 2) +
+                      "Z"
+                  : "M" +
+                      (bx + 5) +
+                      "," +
+                      (by + bh - 2) +
+                      " L" +
+                      (x + 2) +
+                      "," +
+                      (y - 5) +
+                      " L" +
+                      (bx + 17) +
+                      "," +
+                      (by + bh - 2) +
+                      "Z",
+              );
+            },
+            hide() {
+              grp.style("display", "none");
+            },
+          };
+        }
+
+        /* math-style axes with arrowheads and italic x / y letters */
+        function drawMathAxes(fig, g, xs, ys) {
+          g.selectAll("*").remove();
+          const ox = xs(0),
+            oy = ys(0),
+            w = fig.w,
+            h = fig.h;
+          if (oy >= 0 && oy <= h) {
+            g.append("line")
+              .attr("class", "axis")
+              .attr("x1", 0)
+              .attr("x2", w)
+              .attr("y1", oy)
+              .attr("y2", oy);
+            g.append("path")
+              .attr("class", "axis-arrow")
+              .attr(
+                "d",
+                "M" +
+                  (w - 2) +
+                  "," +
+                  oy +
+                  " L" +
+                  (w - 10) +
+                  "," +
+                  (oy - 4) +
+                  " L" +
+                  (w - 10) +
+                  "," +
+                  (oy + 4) +
+                  "Z",
+              );
+            g.append("text")
+              .attr("class", "axis-letter")
+              .attr("x", w - 16)
+              .attr("y", oy - 8)
+              .text("x");
+          }
+          if (ox >= 0 && ox <= w) {
+            g.append("line")
+              .attr("class", "axis")
+              .attr("x1", ox)
+              .attr("x2", ox)
+              .attr("y1", h)
+              .attr("y2", 0);
+            g.append("path")
+              .attr("class", "axis-arrow")
+              .attr(
+                "d",
+                "M" + ox + ",2 L" + (ox - 4) + ",10 L" + (ox + 4) + ",10Z",
+              );
+            g.append("text")
+              .attr("class", "axis-letter")
+              .attr("x", ox + 8)
+              .attr("y", 16)
+              .text("y");
+          }
+        }
+
+        /* a fat origin marker: solid dot inside a ring, plus a label */
+        function drawOrigin(g, proj, label) {
+          const o = proj.pt([0, 0]);
+          g.append("circle")
+            .attr("class", "origin-ring")
+            .attr("cx", o[0])
+            .attr("cy", o[1])
+            .attr("r", 7);
+          g.append("circle")
+            .attr("class", "origin-dot")
+            .attr("cx", o[0])
+            .attr("cy", o[1])
+            .attr("r", 3);
+          if (label)
+            chipLabel(g, o[0] + 11, o[1] - 9, label, { cls: "mono-label" });
+        }
+
+        /* the device screens on a shared coordinate system.
+   mode 'scs': rects share the top-left corner at (0,0)
+   mode 'rcs': rects share the top-center at x=0                    */
+        /* an SVG diagonal-line pattern per group, built lazily in the fig's defs */
+        function hatchFill(fig, i, d) {
+          if (!d.hatch) {
+            if (!fig._hatch) fig._hatch = {};
+            if (!fig._hatch[i]) {
+              const id = "solid-" + fig.uid + "-" + i;
+              const p = fig.defs
+                .append("pattern")
+                .attr("id", id)
+                .attr("patternUnits", "userSpaceOnUse")
+                .attr("width", 8)
+                .attr("height", 8);
+              p.append("rect")
+                .attr("width", 8)
+                .attr("height", 8)
+                .attr("fill", "var(--paper)");
+              p.append("rect")
+                .attr("width", 8)
+                .attr("height", 8)
+                .attr("fill", d.color)
+                .attr("fill-opacity", 0.1);
+              fig._hatch[i] = "url(#" + id + ")";
+            }
+            return fig._hatch[i];
+          }
+          if (!fig._hatch) fig._hatch = {};
+          if (!fig._hatch[i]) {
+            const id = "hatch-" + fig.uid + "-" + i;
+            const p = fig.defs
+              .append("pattern")
+              .attr("id", id)
+              .attr("patternUnits", "userSpaceOnUse")
+              .attr("width", 8)
+              .attr("height", 8);
+            p.append("rect")
+              .attr("width", 8)
+              .attr("height", 8)
+              .attr("fill", "var(--paper)");
+            p.append("rect")
+              .attr("width", 8)
+              .attr("height", 8)
+              .attr("fill", d.color)
+              .attr("fill-opacity", 0.06);
+            p.append("path")
+              .attr(
+                "d",
+                d.hatch === "/"
+                  ? "M0,8L8,0 M-2,2L2,-2 M6,10L10,6"
+                  : "M0,0L8,8 M6,-2L10,2 M-2,6L2,10",
+              )
+              .attr("stroke", d.color)
+              .attr("stroke-width", 1.1)
+              .attr("stroke-opacity", 0.55);
+            fig._hatch[i] = "url(#" + id + ")";
+          }
+          return fig._hatch[i];
+        }
+
+        function drawDevices(fig, view, g, vis, mode) {
+          g.selectAll("*").remove();
+          /* largest area first, so nested smaller screens paint over them and no
+     hatching shows through from behind */
+          CONFIG.deviceGroups
+            .map((d, i) => ({ d, i }))
+            .filter((o) => vis[o.i])
+            .sort((a, b) => b.d.w * b.d.h - a.d.w * a.d.h)
+            .forEach(({ d, i }) => {
+              const x0 = mode === "scs" ? 0 : -d.w / 2;
+              const p0 = view.pt([x0, 0]),
+                p1 = view.pt([x0 + d.w, d.h]);
+              g.append("rect")
+                .attr("class", "device-rect")
+                .attr("x", p0[0])
+                .attr("y", p0[1])
+                .attr("width", p1[0] - p0[0])
+                .attr("height", p1[1] - p0[1])
+                .attr("stroke", d.color)
+                .attr("fill", hatchFill(fig, i, d))
+                .style("fill-opacity", 1);
+            });
+          /* the shared y = 0 top line */
+          const top = view.y(0);
+          g.append("line")
+            .attr("class", "soft-line")
+            .attr("x1", 0)
+            .attr("x2", fig.w)
+            .attr("y1", top)
+            .attr("y2", top);
+        }
+
+        /* four "+" buttons at the midpoints of the bounds' edges */
+        function drawExtendButtons(fig, view, g, b, onDir) {
+          const mids = [
+            { d: "t", p: [(b.l + b.r) / 2, b.t] },
+            { d: "b", p: [(b.l + b.r) / 2, b.b] },
+            { d: "l", p: [b.l, (b.t + b.b) / 2] },
+            { d: "r", p: [b.r, (b.t + b.b) / 2] },
+          ];
+          g.selectAll("g.xg")
+            .data(mids, (d) => d.d)
+            .join((enter) => {
+              const gg = enter.append("g").attr("class", "xg");
+              gg.append("circle").attr("r", 13);
+              gg.append("path").attr("d", "M-5,0H5M0,-5V5");
+              gg.on("pointerdown", (ev) => ev.stopPropagation());
+              gg.on("click", (ev, d) => {
+                ev.stopPropagation();
+                onDir(d.d);
+              });
+              return gg;
+            })
+            .attr("transform", (d) => {
+              const s = view.pt(d.p);
+              return (
+                "translate(" +
+                clamp(s[0], 20, fig.w - 20) +
+                "," +
+                clamp(s[1], 20, fig.h - 20) +
+                ")"
+              );
+            });
+        }
+
+        /* an arrowhead marker usable by any figure (one per fig, in its defs) */
+        function arrowMarker(fig) {
+          const id = "arrow-" + fig.uid;
+          fig.defs
+            .append("marker")
+            .attr("id", id)
+            .attr("viewBox", "0 0 10 10")
+            .attr("refX", 9)
+            .attr("refY", 5)
+            .attr("markerWidth", 7)
+            .attr("markerHeight", 7)
+            .attr("orient", "auto-start-reverse")
+            .append("path")
+            .attr("d", "M0,0L10,5L0,10Z")
+            .attr("fill", "#D3847A");
+          return "url(#" + id + ")";
+        }
+
+        /* ==================================================================
+   5. FIGURE CLASSES — one per interactive, top to bottom of the page
+   ================================================================== */
+
+        /* --- the pannable / zoomable cartesian plane (intro + recap) ------- */
+        class CartesianFig extends Fig {
+          constructor(el, { origin = false, tutorial = false } = {}) {
+            const cfg = CONFIG.figs.cartesian;
+            super(el, { height: cfg.height });
+            this.cfg = cfg;
+            this.showOrigin = origin;
+            this.view = new View(this, {
+              yDown: false,
+              interactive: true,
+              scaleExtent: cfg.scaleExtent,
+            });
+            this.gGrid = this.layer("grid");
+            this.gAxes = this.layer("axes");
+            this.gMain = this.layer("main");
+            this.enablePointer();
+            if (tutorial) this.setupTutorial();
+          }
+          /* a 3-step overlay; steps check off as the user performs them,
+     then the whole card fades away */
+          setupTutorial() {
+            this.tutState = { pan: false, zoom: false };
+            this.tut = this.wrap.append("div").attr("class", "tut");
+            const step = (n, txt) => {
+              const d = this.tut.append("div").attr("class", "tstep");
+              d.append("span").attr("class", "tnum").text(n);
+              d.append("span").text(txt);
+              return d;
+            };
+            this.tutSteps = [
+              step(1, "drag to pan around"),
+              step(2, "scroll or pinch to zoom"),
+              step(3, "that's all there is to it!"),
+            ];
+          }
+          markTut(key) {
+            if (!this.tut || this.tutState[key]) return;
+            this.tutState[key] = true;
+            this.tutSteps[key === "pan" ? 0 : 1].classed("done", true);
+            if (this.tutState.pan && this.tutState.zoom) {
+              this.tutSteps[2].classed("done", true);
+              const tut = this.tut;
+              this.tut = null;
+              setTimeout(() => tut.classed("gone", true), 900);
+              setTimeout(() => tut.remove(), 1600);
+            }
+          }
+          onUserZoom(ev) {
+            if (!this.tut || !this.tutPrevT) {
+              this.tutPrevT = ev.transform;
+              return;
+            }
+            const p = this.tutPrevT,
+              t = ev.transform;
+            if (Math.abs(t.k / p.k - 1) > 0.02) this.markTut("zoom");
+            else if (Math.abs(t.x - p.x) + Math.abs(t.y - p.y) > 4)
+              this.markTut("pan");
+            this.tutPrevT = t;
+          }
+          onResize() {
+            this.view.setTransform(
+              d3.zoomIdentity
+                .translate(this.w / 2, this.h / 2)
+                .scale(this.cfg.pxPerUnit),
+            );
+            this.tutPrevT = this.view.t;
+          }
+          render() {
+            if (!this.w || !this.view) return;
+            drawGrid(this, this.view, this.gGrid);
+            drawMathAxes(
+              this,
+              this.gAxes,
+              this.view.xScale(),
+              this.view.yScale(),
+            );
+            this.gMain.selectAll("*").remove();
+            if (this.showOrigin)
+              drawOrigin(this.gMain, this.view.asProj(), "(0, 0)");
+            this.updateTip();
+          }
+        }
+
+        /* --- the two static "on paper" graphs ------------------------------ */
+        class PaperGraphFig extends Fig {
+          constructor(el, { variant }) {
+            super(el, { height: CONFIG.figs.paper.height });
+            this.variant = variant;
+            this.gGrid = this.layer("grid");
+            this.gAxes = this.layer("axes");
+            this.gPlot = this.layer("plot");
+            this.gMain = this.layer("main");
+          }
+          render() {
+            if (!this.w) return;
+            const pad = 34;
+            let xs, ys;
+            if (this.variant === "centered") {
+              xs = d3
+                .scaleLinear()
+                .domain([-6.3, 6.3])
+                .range([pad, this.w - pad]);
+              ys = d3
+                .scaleLinear()
+                .domain([-3.2, 3.2])
+                .range([this.h - pad, pad]);
+            } else {
+              xs = d3
+                .scaleLinear()
+                .domain([-0.7, 9.7])
+                .range([pad, this.w - pad]);
+              ys = d3
+                .scaleLinear()
+                .domain([-6, 58])
+                .range([this.h - pad, pad]);
+            }
+            drawGridScales(this, this.gGrid, xs, ys);
+            drawMathAxes(this, this.gAxes, xs, ys);
+            this.gPlot.selectAll("*").remove();
+            if (this.variant === "centered") {
+              const pts = d3
+                .range(-6, 6.001, 0.05)
+                .map((x) => [xs(x), ys(2 * Math.sin(1.1 * x))]);
+              this.gPlot
+                .append("path")
+                .attr("class", "ink")
+                .attr("fill", "none")
+                .attr(
+                  "d",
+                  "M" +
+                    pts
+                      .map((p) => p[0].toFixed(1) + "," + p[1].toFixed(1))
+                      .join("L"),
+                );
+            } else {
+              const data = [
+                [0, 12],
+                [1, 18],
+                [2, 15],
+                [3, 26],
+                [4, 31],
+                [5, 28],
+                [6, 40],
+                [7, 44],
+                [8, 41],
+                [9, 52],
+              ];
+              this.gPlot
+                .append("path")
+                .attr("class", "ink")
+                .attr("fill", "none")
+                .attr(
+                  "d",
+                  "M" +
+                    data
+                      .map(
+                        (p) => xs(p[0]).toFixed(1) + "," + ys(p[1]).toFixed(1),
+                      )
+                      .join("L"),
+                );
+              data.forEach((p) =>
+                this.gPlot
+                  .append("circle")
+                  .attr("cx", xs(p[0]))
+                  .attr("cy", ys(p[1]))
+                  .attr("r", 3)
+                  .attr("fill", "#262317"),
+              );
+            }
+            this.gMain.selectAll("*").remove();
+            drawOrigin(
+              this.gMain,
+              { pt: (p) => [xs(p[0]), ys(p[1])], k: 1 },
+              "(0, 0)",
+            );
+          }
+        }
+
+        /* --- the reMarkable coordinate system, emphasis on the origin ------ */
+        class RcsOriginFig extends Fig {
+          constructor(el) {
+            const cfg = CONFIG.figs.rcsOrigin;
+            super(el, { height: cfg.height });
+            this.cfg = cfg;
+            this.view = new View(this, {
+              yDown: true,
+              interactive: true,
+              scaleExtent: cfg.scaleExtent,
+            });
+            this.gTint = this.layer("tint");
+            this.gGrid = this.layer("grid");
+            this.gLines = this.layer("lines");
+            this.gMain = this.layer("main");
+            this.enablePointer({ dec: 0 });
+            this.addLegend(0, [
+              { color: "#E4EEEC", label: "above the top of the page" },
+            ]);
+          }
+          onResize() {
+            this.view.setTransform(
+              d3.zoomIdentity
+                .translate(this.w / 2, this.h * this.cfg.originAt)
+                .scale(this.w / this.cfg.unitsAcross),
+            );
+          }
+          render() {
+            if (!this.w || !this.view) return;
+            const oy = this.view.y(0),
+              ox = this.view.x(0);
+            /* the "above the page" strip */
+            this.gTint.selectAll("*").remove();
+            if (oy > 0) {
+              this.gTint
+                .append("rect")
+                .attr("x", 0)
+                .attr("y", 0)
+                .attr("width", this.w)
+                .attr("height", Math.min(oy, this.h))
+                .attr("fill", CONFIG.colors.aboveTint);
+            }
+            drawGrid(this, this.view, this.gGrid);
+            this.gLines.selectAll("*").remove();
+            if (oy >= -2 && oy <= this.h + 2) {
+              this.gLines
+                .append("line")
+                .attr("x1", 0)
+                .attr("x2", this.w)
+                .attr("y1", oy)
+                .attr("y2", oy)
+                .attr("stroke", CONFIG.colors.topLine)
+                .attr("stroke-width", 2);
+            }
+            if (ox >= -2 && ox <= this.w + 2) {
+              this.gLines
+                .append("line")
+                .attr("x1", ox)
+                .attr("x2", ox)
+                .attr("y1", 0)
+                .attr("y2", this.h)
+                .attr("stroke", CONFIG.colors.centerLine)
+                .attr("stroke-width", 1.5)
+                .attr("stroke-dasharray", "5 4");
+            }
+            this.gMain.selectAll("*").remove();
+            drawOrigin(this.gMain, this.view.asProj());
+            this.updateTip();
+          }
+        }
+
+        /* --- the tablets laid onto SCS / RCS, with a legend of toggles ----- */
+        class DeviceLayoutFig extends Fig {
+          constructor(el, { mode }) {
+            const cfg = CONFIG.figs.layout;
+            super(el, { height: cfg.height });
+            this.mode = mode;
+            this.cfg = cfg;
+            this.view = new View(this, { yDown: true, interactive: false });
+            this.gGrid = this.layer("grid");
+            this.gDev = this.layer("devices");
+            this.gMain = this.layer("main");
+            this.vis = CONFIG.deviceGroups.map(() => true);
+            this.addChips(0, CONFIG.deviceGroups, this.vis, () =>
+              this.render(),
+            );
+            this.enablePointer({ dec: 0 });
+          }
+          onResize() {
+            this.view.fit(this.cfg.box[this.mode], 0.02);
+          }
+          render() {
+            if (!this.w || !this.view) return;
+            drawGrid(this, this.view, this.gGrid);
+            drawDevices(this, this.view, this.gDev, this.vis, this.mode);
+            this.gMain.selectAll("*").remove();
+            drawOrigin(this.gMain, this.view.asProj());
+          }
+        }
+
+        /* --- the anchor playground: shapes, ghosts, arrows, draggable anchor */
+        class AnchorZoomFig extends Fig {
+          constructor(el) {
+            const cfg = CONFIG.figs.anchorDemo;
+            super(el, { height: cfg.height });
+            this.cfg = cfg;
+            this.view = new View(this, { yDown: false, interactive: false });
+            this.gGrid = this.layer("grid");
+            this.gGhost = this.layer("ghost");
+            this.gArrow = this.layer("arrows");
+            this.gShapes = this.layer("shapes");
+            this.gAnchor = this.layer("anchor");
+            this.marker = arrowMarker(this);
+
+            this.anchor = cfg.anchor.slice();
+            this.s = 1;
+            this.dragged = false;
+
+            this.zoomCtl = this.addSlider(
+              0,
+              "zoom",
+              {
+                min: cfg.zoom.min,
+                max: cfg.zoom.max,
+                step: cfg.zoom.step,
+                value: 1,
+              },
+              (v) => "×" + v.toFixed(2),
+              (v) => {
+                this.s = v;
+                this.render();
+              },
+            );
+            const [bx0, by0, bx1, by1] = cfg.box;
+            this.axCtl = this.addSlider(
+              1,
+              "anchor x",
+              { min: bx0, max: bx1, step: 0.1, value: this.anchor[0] },
+              (v) => fmt(v, 1),
+              (v) => {
+                this.markDragged();
+                this.anchor[0] = v;
+                this.render();
+              },
+            );
+            this.ayCtl = this.addSlider(
+              1,
+              "anchor y",
+              { min: by0, max: by1, step: 0.1, value: this.anchor[1] },
+              (v) => fmt(v, 1),
+              (v) => {
+                this.markDragged();
+                this.anchor[1] = v;
+                this.render();
+              },
+            );
+
+            /* the anchor is draggable; sliders are the fallback */
+            this.dotG = this.gAnchor.append("g");
+            this.dot = this.dotG
+              .append("circle")
+              .attr("class", "anchor-dot")
+              .attr("r", 7);
+            this.bubble = speechBubble(this.dotG, "drag me");
+            this.lensG = this.gAnchor.append("g");
+            this.dot.call(
+              d3
+                .drag()
+                .container(() => this.svg.node())
+                .on("start", (ev) => {
+                  this.markDragged();
+                  this.touch = !!(
+                    ev.sourceEvent && ev.sourceEvent.pointerType === "touch"
+                  );
+                  this.touchOff = 0;
+                })
+                .on("drag", (ev) => {
+                  /* on touch, the grab point lifts above the finger; the offset
+           ramps in over the first events, so pickup never jumps */
+                  if (this.touch)
+                    this.touchOff = Math.min(48, this.touchOff + 8);
+                  const w = this.view.invert(ev.x, ev.y - (this.touchOff || 0));
+                  this.anchor = [clamp(w[0], bx0, bx1), clamp(w[1], by0, by1)];
+                  this.axCtl.set(this.anchor[0]);
+                  this.ayCtl.set(this.anchor[1]);
+                  this.render();
+                })
+                .on("end", () => {
+                  this.touch = false;
+                  this.render();
+                }),
+            );
+          }
+          /* two states: fresh (bubble only) and touched (coordinate popup only) */
+          markDragged() {
+            if (this.dragged) return;
+            this.dragged = true;
+            this.bubble.hide();
+            this.render();
+          }
+          onResize() {
+            this.view.fit(this.cfg.box, 0.02);
+          }
+          render() {
+            if (!this.w || !this.view) return;
+            const proj = this.view.asProj(),
+              a = this.anchor,
+              s = this.s;
+            drawGrid(this, this.view, this.gGrid);
+
+            const key = (d, i) => i;
+            this.gGhost
+              .selectAll("path")
+              .data(this.cfg.shapes, key)
+              .join("path")
+              .attr("class", "ghost")
+              .attr("d", (sh) => shapePath(sh, 1, a, proj));
+            this.gShapes
+              .selectAll("path")
+              .data(this.cfg.shapes, key)
+              .join("path")
+              .attr("class", "ink")
+              .attr("d", (sh) => shapePath(sh, s, a, proj));
+            this.gArrow
+              .selectAll("line")
+              .data(this.cfg.shapes, key)
+              .join("line")
+              .attr("class", "arrow-line")
+              .attr("marker-end", this.marker)
+              .attr("x1", proj.pt(a)[0])
+              .attr("y1", proj.pt(a)[1])
+              .attr("x2", (sh) => proj.pt(zoomAbout(shapeCenter(sh), s, a))[0])
+              .attr("y2", (sh) => proj.pt(zoomAbout(shapeCenter(sh), s, a))[1]);
+
+            const ap = proj.pt(a);
+            this.dot.attr("cx", ap[0]).attr("cy", ap[1]);
+            if (!this.dragged) this.bubble.at(ap[0], ap[1]);
+            /* the anchor's coordinate popup replaces the bubble once dragged */
+            this.lensG.selectAll("*").remove();
+            if (this.dragged) {
+              const label = "(" + fmt(a[0], 1) + ", " + fmt(a[1], 1) + ")";
+              const tx = this.lensG
+                .append("text")
+                .attr("class", "tip-text")
+                .text(label);
+              let tw = label.length * 7;
+              try {
+                tw = tx.node().getComputedTextLength();
+              } catch (e) {}
+              let bx = ap[0] + 10,
+                by = ap[1] - 30;
+              if (bx + tw + 12 > this.w - 4) bx = ap[0] - tw - 22;
+              if (by < 4) by = ap[1] + 12;
+              this.lensG
+                .insert("rect", () => tx.node())
+                .attr("class", "tip-box")
+                .attr("rx", 4)
+                .attr("x", bx)
+                .attr("y", by)
+                .attr("width", tw + 12)
+                .attr("height", 20);
+              tx.attr("x", bx + 6).attr("y", by + 14);
+            }
+          }
+        }
+
+        /* --- opening a move notebook on the pro: three static small multiples.
+       The story is the margins: horizontally centered coordinates keep
+       them equal automatically; the SCS never does. ------------------- */
+        class CrossDeviceFig extends Fig {
+          constructor(el, { mode }) {
+            const cfg = CONFIG.figs.crossDevice;
+            super(el, { height: cfg.height });
+            this.mode = mode;
+            this.cfg = cfg;
+            this.from = CONFIG.devices.find((d) => d.id === cfg.from);
+            this.to = CONFIG.devices.find((d) => d.id === cfg.to);
+            this.fitS = this.to.h / this.from.h; /* fit-to-height zoom factor */
+            this.gPanels = this.layer("panels");
+
+            /* content is authored in RCS coords; SCS shifts by the move's center */
+            const dx = mode === "scs" ? this.from.w / 2 : 0;
+            this.content = cfg.content.map((sh) =>
+              sh.type === "poly"
+                ? { ...sh, pts: sh.pts.map((p) => [p[0] + dx, p[1]]) }
+                : { ...sh, c: [sh.c[0] + dx, sh.c[1]] },
+            );
+
+            const caps = this.el.append("div").attr("class", "panel-caps");
+            cfg.captions.forEach((c) => caps.append("div").text(c));
+          }
+          render() {
+            if (!this.w) return;
+            const g = this.gPanels;
+            g.selectAll("*").remove();
+            const pw = this.w / 3;
+            /* one shared scale across all panels, so the devices' real size
+       difference stays honest; tops share the y = 0 line */
+            const k = Math.min(
+              (pw * 0.84) / this.to.w,
+              (this.h * 0.86) / this.to.h,
+            );
+            const py0 =
+              (this.h - this.to.h * k) *
+              0.35; /* extra room below for the numbers */
+            const cxFrom = this.mode === "scs" ? this.from.w / 2 : 0;
+            const cxTo = this.mode === "scs" ? this.to.w / 2 : 0;
+            const proj = (i, cx) => ({
+              pt: (p) => [pw * i + pw / 2 + (p[0] - cx) * k, py0 + p[1] * k],
+              k,
+            });
+
+            [1, 2].forEach((i) =>
+              g
+                .append("line")
+                .attr("x1", pw * i)
+                .attr("x2", pw * i)
+                .attr("y1", 8)
+                .attr("y2", this.h - 8)
+                .attr("stroke", "#e6ece9"),
+            );
+
+            this.panel(g, proj(0, cxFrom), 1, false, 0, pw);
+            this.panel(g, proj(1, cxTo), 1, true, pw, pw);
+            this.panel(g, proj(2, cxTo), this.fitS, true, pw * 2, pw);
+          }
+          /* one small multiple: the move's page under zoom s, optionally inside
+     the pro with its margins measured and tinted */
+          panel(g, proj, s, withPro, px0, pw) {
+            const x0 = this.mode === "scs" ? 0 : -this.from.w / 2;
+            const w0 = zoomAbout([x0, 0], s, [0, 0]);
+            const w1 = zoomAbout([x0 + this.from.w, this.from.h], s, [0, 0]);
+
+            if (withPro) {
+              const tx0 = this.mode === "scs" ? 0 : -this.to.w / 2;
+              const l = w0[0] - tx0,
+                r = tx0 + this.to.w - w1[0]; /* margin widths */
+              const equal = Math.abs(l - r) < 1;
+              const fill = equal
+                ? "rgba(149,189,181,.22)"
+                : "rgba(211,132,122,.24)";
+              [
+                [tx0, w0[0], l],
+                [w1[0], tx0 + this.to.w, r],
+              ].forEach((b) => {
+                const q0 = proj.pt([b[0], 0]),
+                  q1 = proj.pt([b[1], this.to.h]);
+                if (q1[0] - q0[0] > 0.5)
+                  g.append("rect")
+                    .attr("fill", fill)
+                    .attr("x", q0[0])
+                    .attr("y", q0[1])
+                    .attr("width", q1[0] - q0[0])
+                    .attr("height", q1[1] - q0[1]);
+                /* the number sits below the frame, under its band's center */
+                chipLabel(
+                  g,
+                  clamp((q0[0] + q1[0]) / 2, px0 + 16, px0 + pw - 16),
+                  q1[1] + 16,
+                  Math.round(b[2]) + " px",
+                  { anchor: "middle" },
+                );
+              });
+              const p0 = proj.pt([tx0, 0]),
+                p1 = proj.pt([tx0 + this.to.w, this.to.h]);
+              g.append("rect")
+                .attr("class", "frame-rect")
+                .attr("rx", 4)
+                .attr("x", p0[0])
+                .attr("y", p0[1])
+                .attr("width", p1[0] - p0[0])
+                .attr("height", p1[1] - p0[1])
+                .attr("stroke", this.to.color);
+            }
+
+            const s0 = proj.pt(w0),
+              s1 = proj.pt(w1);
+            g.append("rect")
+              .attr("class", "page-rect")
+              .attr("rx", 4)
+              .attr("stroke", this.from.color)
+              .attr("x", s0[0])
+              .attr("y", s0[1])
+              .attr("width", s1[0] - s0[0])
+              .attr("height", s1[1] - s0[1]);
+            this.content.forEach((sh) =>
+              g
+                .append("path")
+                .attr("class", "ink")
+                .style("stroke-width", 1.6)
+                .attr("d", shapePath(sh, s, [0, 0], proj)),
+            );
+          }
+        }
+
+        /* --- the extendable virtual canvas with a device frame on it ------- */
+        class ExtendableFig extends Fig {
+          constructor(el) {
+            const cfg = CONFIG.figs.extendable;
+            super(el, { height: cfg.height });
+            this.cfg = cfg;
+            this.view = new View(this, {
+              yDown: true,
+              interactive: true,
+              scaleExtent: cfg.scaleExtent,
+            });
+            this.gGrid = this.layer("grid");
+            this.gPage = this.layer("page");
+            this.gLines = this.layer("lines");
+            this.gFrame = this.layer("frame");
+            this.gInk = this.layer("ink");
+            this.gBtns = this.layer("buttons");
+
+            this.dev = CONFIG.devices.find((d) => d.id === cfg.defaultDevice);
+            this.inkSample = pickSamplePts(false);
+            this.b = { l: 0, t: 0, r: 0, b: 0 };
+            this.resetBounds();
+
+            this.addSelect(
+              0,
+              "device",
+              CONFIG.devices.map((d) => ({ value: d.id, label: d.name })),
+              this.dev.id,
+              (id) => {
+                this.dev = CONFIG.devices.find((d) => d.id === id);
+                this.hardReset();
+              },
+            );
+            this.addButton(0, "reset", () => this.hardReset());
+            this.enablePointer({ dec: 0 });
+            this.setBounds = this.addBadges(0);
+          }
+          resetBounds() {
+            const d = this.dev;
+            this.b = { l: -d.w / 2, t: 0, r: d.w / 2, b: d.h };
+          }
+          hardReset() {
+            this.resetBounds();
+            this.view.setTransform(
+              this.view.fitTransform(this.boundsBox(), this.cfg.pad),
+            );
+          }
+          boundsBox() {
+            return [this.b.l, this.b.t, this.b.r, this.b.b];
+          }
+          extend(dir) {
+            const dx = Math.round(this.dev.w / this.cfg.stepFrac);
+            const dy = Math.round(this.dev.h / this.cfg.stepFrac);
+            if (dir === "l") this.b.l -= dx;
+            if (dir === "r") this.b.r += dx;
+            if (dir === "t") this.b.t -= dy;
+            if (dir === "b") this.b.b += dy;
+            this.view.animateTo(
+              this.view.fitTransform(this.boundsBox(), this.cfg.pad),
+            );
+          }
+          onResize() {
+            this.view.fit(this.boundsBox(), this.cfg.pad);
+          }
+          render() {
+            if (!this.w || !this.view) return;
+            const v = this.view,
+              b = this.b,
+              dev = this.dev;
+            drawGrid(this, v, this.gGrid);
+
+            /* the canvas (the page) */
+            const p0 = v.pt([b.l, b.t]),
+              p1 = v.pt([b.r, b.b]);
+            this.gPage.selectAll("*").remove();
+            this.gPage
+              .append("rect")
+              .attr("class", "page-rect")
+              .attr("x", p0[0])
+              .attr("y", p0[1])
+              .attr("width", p1[0] - p0[0])
+              .attr("height", p1[1] - p0[1]);
+
+            /* subtle x = 0 and y = 0 lines */
+            this.gLines.selectAll("*").remove();
+            const oy = v.y(0),
+              ox = v.x(0);
+            if (oy >= 0 && oy <= this.h) {
+              this.gLines
+                .append("line")
+                .attr("class", "soft-line")
+                .attr("x1", 0)
+                .attr("x2", this.w)
+                .attr("y1", oy)
+                .attr("y2", oy);
+              chipLabel(this.gLines, this.w - 6, oy - 5, "y = 0", {
+                anchor: "end",
+              });
+            }
+            if (ox >= 0 && ox <= this.w) {
+              this.gLines
+                .append("line")
+                .attr("x1", ox)
+                .attr("x2", ox)
+                .attr("y1", 0)
+                .attr("y2", this.h)
+                .attr("stroke", "#619B90")
+                .attr("stroke-width", 1.2)
+                .attr("stroke-dasharray", "5 4");
+              chipLabel(this.gLines, ox + 5, 14, "x = 0");
+            }
+
+            /* the device screen frame, always centered on x = 0, top at y = 0 */
+            const f0 = v.pt([-dev.w / 2, 0]),
+              f1 = v.pt([dev.w / 2, dev.h]);
+            this.gFrame.selectAll("*").remove();
+            this.gFrame
+              .append("rect")
+              .attr("class", "frame-rect")
+              .attr("rx", 6)
+              .attr("x", f0[0])
+              .attr("y", f0[1])
+              .attr("width", f1[0] - f0[0])
+              .attr("height", f1[1] - f0[1])
+              .attr("stroke", dev.color);
+
+            /* the ink that never moves */
+            this.gInk.selectAll("*").remove();
+            this.gInk
+              .append("path")
+              .attr("class", "ink")
+              .attr(
+                "d",
+                shapePath(
+                  {
+                    type: "scrib",
+                    c: [0, dev.h * 0.34],
+                    k: (dev.w / 1404) * 0.85,
+                    sample: this.inkSample,
+                  },
+                  1,
+                  [0, 0],
+                  v.asProj(),
+                ),
+              );
+
+            drawExtendButtons(this, v, this.gBtns, b, (dir) =>
+              this.extend(dir),
+            );
+            this.setBounds([
+              "canvas " + (b.r - b.l) + " × " + (b.b - b.t),
+              "x [" + b.l + ", " + b.r + "]",
+              "y [" + b.t + ", " + b.b + "]",
+            ]);
+          }
+        }
+
+        /* --- the tablet as a movable, resizable view on the canvas --------- */
+        class ViewportFig extends Fig {
+          constructor(el) {
+            const cfg = CONFIG.figs.viewport;
+            super(el, { height: cfg.height });
+            this.cfg = cfg;
+            this.dev = CONFIG.devices.find((d) => d.id === cfg.device);
+            this.view = new View(this, { yDown: true, interactive: false });
+            this.gGrid = this.layer("grid");
+            this.gPage = this.layer("page");
+            this.gInk = this.layer("ink");
+            this.gWin = this.layer("window");
+            this.gInset = this.layer("inset");
+            this.gBtns = this.layer("buttons");
+
+            this.b = { l: 0, t: 0, r: 0, b: 0 };
+            this.zoomF = 1;
+            this.cam = [0, this.dev.h / 2];
+            this.resetBounds();
+
+            /* clip for the inset preview */
+            this.clipId = "clip-" + this.uid;
+            this.clipRect = this.defs
+              .append("clipPath")
+              .attr("id", this.clipId)
+              .append("rect");
+
+            this.setInfo = this.addBadges(0);
+            this.zoomCtl = this.addSlider(
+              0,
+              "tablet zoom",
+              {
+                min: cfg.zoom.min,
+                max: cfg.zoom.max,
+                step: cfg.zoom.step,
+                value: 1,
+              },
+              (v) => "×" + v.toFixed(2),
+              (v) => {
+                this.zoomF = v;
+                this.clampCam();
+                this.render();
+              },
+            );
+            this.addButton(0, "reset", () => this.hardReset());
+
+            /* the window rectangle is draggable */
+            this.winRect = this.gWin.append("rect").attr("class", "view-rect");
+            this.winLabel = this.gWin
+              .append("text")
+              .attr("class", "device-label");
+            this.winRect.call(
+              d3
+                .drag()
+                .container(() => this.svg.node())
+                .on("drag", (ev) => {
+                  const k = this.view.t.k;
+                  this.cam[0] += ev.dx / k;
+                  this.cam[1] += ev.dy / k;
+                  this.clampCam();
+                  this.render();
+                }),
+            );
+          }
+          resetBounds() {
+            const d = this.dev;
+            this.b = { l: -d.w / 2, t: 0, r: d.w / 2, b: d.h };
+          }
+          hardReset() {
+            this.resetBounds();
+            this.zoomF = 1;
+            this.zoomCtl.set(1);
+            this.cam = [0, this.dev.h / 2];
+            this.view.setTransform(
+              this.view.fitTransform(this.boundsBox(), this.cfg.pad),
+            );
+          }
+          boundsBox() {
+            return [this.b.l, this.b.t, this.b.r, this.b.b];
+          }
+          winSize() {
+            return [this.dev.w / this.zoomF, this.dev.h / this.zoomF];
+          }
+          clampCam() {
+            const [ww, wh] = this.winSize(),
+              b = this.b;
+            this.cam[0] =
+              ww >= b.r - b.l
+                ? (b.l + b.r) / 2
+                : clamp(this.cam[0], b.l + ww / 2, b.r - ww / 2);
+            this.cam[1] =
+              wh >= b.b - b.t
+                ? (b.t + b.b) / 2
+                : clamp(this.cam[1], b.t + wh / 2, b.b - wh / 2);
+          }
+          extend(dir) {
+            const dx = Math.round(this.dev.w / this.cfg.stepFrac);
+            const dy = Math.round(this.dev.h / this.cfg.stepFrac);
+            if (dir === "l") this.b.l -= dx;
+            if (dir === "r") this.b.r += dx;
+            if (dir === "t") this.b.t -= dy;
+            if (dir === "b") this.b.b += dy;
+            this.clampCam();
+            this.view.setTransform(
+              this.view.fitTransform(this.boundsBox(), this.cfg.pad),
+            );
+          }
+          onResize() {
+            this.view.fit(this.boundsBox(), this.cfg.pad);
+          }
+          render() {
+            if (!this.w || !this.view) return;
+            const v = this.view,
+              b = this.b,
+              dev = this.dev,
+              proj = v.asProj();
+            drawGrid(this, v, this.gGrid);
+
+            /* the canvas */
+            const p0 = v.pt([b.l, b.t]),
+              p1 = v.pt([b.r, b.b]);
+            this.gPage.selectAll("*").remove();
+            this.gPage
+              .append("rect")
+              .attr("class", "page-rect")
+              .attr("x", p0[0])
+              .attr("y", p0[1])
+              .attr("width", p1[0] - p0[0])
+              .attr("height", p1[1] - p0[1]);
+
+            /* the document's ink, fixed on the canvas */
+            this.gInk
+              .selectAll("path")
+              .data(this.cfg.content, (d, i) => i)
+              .join("path")
+              .attr("class", "ink")
+              .attr("d", (sh) => shapePath(sh, 1, [0, 0], proj));
+
+            /* the tablet's view window */
+            const [ww, wh] = this.winSize();
+            const wl = this.cam[0] - ww / 2,
+              wt = this.cam[1] - wh / 2;
+            const w0 = v.pt([wl, wt]),
+              w1 = v.pt([wl + ww, wt + wh]);
+            this.winRect
+              .attr("x", w0[0])
+              .attr("y", w0[1])
+              .attr("width", w1[0] - w0[0])
+              .attr("height", w1[1] - w0[1])
+              .attr("stroke", dev.color)
+              .attr("fill", dev.color)
+              .attr("fill-opacity", 0.06);
+            this.winLabel
+              .attr("fill", dev.color)
+              .attr("x", w0[0] + 8)
+              .attr("y", w0[1] - 6)
+              .text(dev.name + " view");
+
+            /* inset: what the tablet actually displays */
+            const ins = this.cfg.inset;
+            const ih = ins.height,
+              iw = (ih * dev.w) / dev.h;
+            const ix = this.w - iw - ins.margin,
+              iy = ins.margin;
+            this.clipRect
+              .attr("x", ix)
+              .attr("y", iy)
+              .attr("width", iw)
+              .attr("height", ih);
+            const is = iw / ww;
+            const proj2 = {
+              pt: (p) => [(p[0] - wl) * is + ix, (p[1] - wt) * is + iy],
+              k: is,
+            };
+            this.gInset.selectAll("*").remove();
+            this.gInset
+              .append("rect")
+              .attr("x", ix)
+              .attr("y", iy)
+              .attr("width", iw)
+              .attr("height", ih)
+              .attr("fill", "#fff");
+            const clipped = this.gInset
+              .append("g")
+              .attr("clip-path", "url(#" + this.clipId + ")");
+            this.cfg.content.forEach((sh) =>
+              clipped
+                .append("path")
+                .attr("class", "ink")
+                .attr("d", shapePath(sh, 1, [0, 0], proj2)),
+            );
+            this.gInset
+              .append("rect")
+              .attr("x", ix)
+              .attr("y", iy)
+              .attr("width", iw)
+              .attr("height", ih)
+              .attr("fill", "none")
+              .attr("stroke", dev.color)
+              .attr("stroke-width", 2);
+            chipLabel(this.gInset, ix + iw, iy + ih + 13, "on the tablet", {
+              anchor: "end",
+            });
+
+            drawExtendButtons(this, v, this.gBtns, b, (dir) =>
+              this.extend(dir),
+            );
+            this.setInfo([
+              "view x [" + fmt(wl, 0) + ", " + fmt(wl + ww, 0) + "]",
+              "view y [" + fmt(wt, 0) + ", " + fmt(wt + wh, 0) + "]",
+              "canvas " + (b.r - b.l) + " × " + (b.b - b.t),
+              "x [" + b.l + ", " + b.r + "]",
+              "y [" + b.t + ", " + b.b + "]",
+            ]);
+          }
+        }
+
+        /* --- the generative header: draw-on strokes adrift ----------------- */
+        /* standard-normal sample (Box–Muller) */
+        function randn() {
+          let u = 0,
+            v = 0;
+          while (u === 0) u = Math.random();
+          while (v === 0) v = Math.random();
+          return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+        }
+        /* Pareto-distributed size factor, capped: many small strokes, a few big */
+        function paretoSize(c) {
+          return Math.min(
+            c.max,
+            c.min * Math.pow(1 - Math.random(), -1 / c.alpha),
+          );
+        }
+
+        function squigglePath(rnd) {
+          const f1 = 1.5 + rnd() * 2.5,
+            f2 = 3 + rnd() * 3;
+          const a1 = 8 + rnd() * 12,
+            a2 = 3 + rnd() * 6;
+          const len = 60 + rnd() * 70,
+            ph = rnd() * 6.28;
+          const pts = [];
+          for (let i = 0; i <= 60; i++) {
+            const t = i / 60;
+            pts.push([
+              t * len - len / 2,
+              Math.sin(t * f1 * 6.28 + ph) * a1 + Math.cos(t * f2 * 6.28) * a2,
+            ]);
+          }
+          return pathOf({ pt: (p) => p, k: 1 }, pts, false);
+        }
+
+        class HeaderArt {
+          constructor(el) {
+            const C = CONFIG.header;
+            this.el = d3.select(el);
+            this.svg = this.el.append("svg").attr("height", C.height);
+            this.H = C.height;
+            this.W = 0;
+            this.placed = false;
+
+            /* three layers: muted strokes, the tablet, and a saturated copy of
+       every stroke clipped to the tablet's screen — the tablet is a
+       "view" on the drifting canvas, just like in the article */
+            const defs = this.svg.append("defs");
+            this.clipRect = defs
+              .append("clipPath")
+              .attr("id", "header-clip")
+              .append("rect");
+            this.base = this.svg.append("g").style("filter", C.desaturate);
+            this.tablet = this.svg
+              .append("rect")
+              .attr("rx", 8)
+              .style("fill", "var(--paper)")
+              .style("stroke", C.tabletColor)
+              .attr("stroke-width", 2.5);
+            this.sat = this.svg
+              .append("g")
+              .attr("clip-path", "url(#header-clip)");
+
+            this.items = [];
+
+            /* the (invisible) flow field: simplex noise when the library loaded,
+       a cheap sin-field fallback otherwise */
+            this.noise = window.SimplexNoise
+              ? (function () {
+                  var s = new SimplexNoise();
+                  return function (x, y, z) {
+                    return s.noise3D(x, y, z);
+                  };
+                })()
+              : function (x, y, z) {
+                  return (
+                    (Math.sin(x * 2.3 + z * 1.7) +
+                      Math.sin(y * 2.9 + z * 1.3)) *
+                    0.5
+                  );
+                };
+
+            new ResizeObserver(() => this.size()).observe(el);
+            if (!REDUCED_MOTION)
+              requestAnimationFrame((t) => {
+                this.last = t;
+                this.tick(t);
+              });
+          }
+          buildItems(n) {
+            const C = CONFIG.header,
+              rnd = Math.random;
+            const custom =
+              C.customShapes && C.customShapes.length ? C.customShapes : null;
+            const colors = d3.shuffle(C.colors.slice());
+            for (let i = 0; i < n; i++) {
+              let ds;
+              if (custom) {
+                const sh =
+                  custom[i % custom.length]; /* cycle to fill the density */
+                ds = sh.strokes.map((st) =>
+                  pathOf(
+                    { pt: (p) => [p[0] * 0.55, p[1] * 0.55], k: 0.55 },
+                    st,
+                    false,
+                  ),
+                );
+              } else {
+                const r = rnd();
+                let d;
+                if (r < 0.56) d = squigglePath(rnd);
+                else if (r < 0.78) d = circleD(0, 0, 5 + rnd() * 6);
+                else if (r < 0.89)
+                  d = pathOf(
+                    { pt: (p) => p, k: 1 },
+                    [
+                      [-9, 7],
+                      [9, 7],
+                      [0, -9],
+                    ],
+                    true,
+                  );
+                else
+                  d = pathOf(
+                    { pt: (p) => p, k: 1 },
+                    scribPts().map((p) => [p[0] * 0.16, p[1] * 0.16]),
+                    false,
+                  );
+                ds = [d];
+              }
+              const color = colors[i % colors.length];
+              /* draw-in order is 100% random, not top-to-bottom */
+              const delay = (rnd() * 2.5).toFixed(2) + "s";
+              const mk = (parent) => {
+                const g = parent.append("g");
+                ds.forEach((d) =>
+                  g
+                    .append("path")
+                    .attr("d", d)
+                    .attr("fill", "none")
+                    .attr("stroke", color)
+                    .attr("stroke-width", 2.2)
+                    .attr("stroke-linecap", "round")
+                    .attr("stroke-linejoin", "round")
+                    .attr("pathLength", 1)
+                    .attr("class", "h-draw")
+                    .style("animation-delay", delay),
+                );
+                return g;
+              };
+              this.items.push({
+                gB: mk(this.base),
+                gS: mk(this.sat),
+                sp:
+                  (C.flow.speed[0] +
+                    rnd() * (C.flow.speed[1] - C.flow.speed[0])) *
+                  Math.max(0.9, 1 + C.speedJitter * randn()),
+                s: paretoSize(C.size),
+                w:
+                  (rnd() * 2 - 1) *
+                  C.spin /* steady spin, degrees per second */,
+                x: 0,
+                y: 0,
+                y0: 0,
+                tilt: 0,
+                ang: rnd() * 360,
+                i,
+                n,
+              });
+            }
+          }
+          size() {
+            this.W = this.el.node().clientWidth;
+            this.svg.attr("width", this.W);
+            /* the tablet's screen — rM 2 aspect ratio, floating above the title */
+            const T = CONFIG.header.tablet;
+            const th = this.H * T.frac,
+              tw = (th * 1404) / 1872;
+            const tx = (this.W - tw) / 2,
+              ty = (this.H - th) * T.yBias;
+            this.tablet
+              .attr("x", tx)
+              .attr("y", ty)
+              .attr("width", tw)
+              .attr("height", th);
+            this.clipRect
+              .attr("x", tx)
+              .attr("y", ty)
+              .attr("width", tw)
+              .attr("height", th);
+            if (!this.placed && this.W) {
+              this.placed = true;
+              /* stroke count scales with the hero's area */
+              const C = CONFIG.header;
+              this.buildItems(
+                clamp(
+                  Math.round((this.W * this.H) / C.density),
+                  C.countMin,
+                  C.countMax,
+                ),
+              );
+              this.place();
+            }
+          }
+          place() {
+            const rnd = Math.random;
+            this.items.forEach((it) => {
+              it.x = rnd() * this.W;
+              it.y0 =
+                ((it.i + 0.5) / it.n) * (this.H - 24) + 12 + (rnd() * 14 - 7);
+              it.y = it.y0;
+              this.move(it, it.x, it.y, it.ang);
+            });
+          }
+          move(it, x, y, r) {
+            const tf =
+              "translate(" +
+              x.toFixed(1) +
+              "," +
+              y.toFixed(1) +
+              ") rotate(" +
+              r.toFixed(2) +
+              ") scale(" +
+              it.s.toFixed(3) +
+              ")";
+            it.gB.attr("transform", tf);
+            it.gS.attr("transform", tf);
+          }
+          tick(now) {
+            const dt = Math.min((now - this.last) / 1000, 0.05);
+            this.last = now;
+            const t = now / 1000;
+            const F = CONFIG.header.flow;
+            this.items.forEach((it) => {
+              /* sample the field at the stroke's own position */
+              const n1 = this.noise(it.x * F.scale, it.y * F.scale, t * F.time);
+              const n2 = this.noise(
+                it.x * F.scale + 37.7,
+                it.y * F.scale + 91.3,
+                t * F.time,
+              );
+              const th =
+                Math.PI + n1 * F.swirl; /* heading wanders around "left" */
+              const sp = it.sp * (0.75 + 0.25 * n2);
+              it.x += Math.cos(th) * sp * dt;
+              it.y +=
+                Math.sin(th) * sp * dt +
+                (it.y0 - it.y) * Math.min(1, F.spring * dt);
+              if (it.x < -60)
+                it.x = this.W + 60; /* drifted off left: wrap right */
+              else if (it.x > this.W + 240)
+                it.x = -140; /* stranded right (resize): wrap */
+              it.tilt += (n1 * F.rotAmp - it.tilt) * Math.min(1, 3 * dt);
+              it.ang += it.w * dt;
+              this.move(it, it.x, it.y, it.ang + it.tilt);
+            });
+            /* every so often, one stroke undraws itself and reappears elsewhere */
+            if (this.nextRespawn === undefined)
+              this.nextRespawn = t + this.respawnDelay();
+            if (t >= this.nextRespawn) {
+              this.respawn(
+                this.items[Math.floor(Math.random() * this.items.length)],
+              );
+              this.nextRespawn = t + this.respawnDelay();
+            }
+            requestAnimationFrame((n2) => this.tick(n2));
+          }
+          respawnDelay() {
+            const R = CONFIG.header.respawn;
+            return Math.max(R.min, R.mean + R.sd * randn());
+          }
+          respawn(it) {
+            if (!it || it.busy) return;
+            it.busy = true;
+            const nodes = [].slice
+              .call(it.gB.node().children)
+              .concat([].slice.call(it.gS.node().children));
+            const paths = d3.selectAll(nodes);
+            /* take over from the CSS draw-on animation, then reverse it */
+            paths
+              .style("animation", "none")
+              .style("stroke-dasharray", 1)
+              .style("stroke-dashoffset", 0)
+              .style("transition", "stroke-dashoffset .6s ease-in");
+            requestAnimationFrame(() => paths.style("stroke-dashoffset", 1));
+            setTimeout(() => {
+              it.x = Math.random() * this.W;
+              it.y0 = 12 + Math.random() * (this.H - 24);
+              it.y = it.y0;
+              it.ang = Math.random() * 360;
+              this.move(it, it.x, it.y, it.ang);
+              paths.style("transition", "stroke-dashoffset .9s ease-out");
+              requestAnimationFrame(() => paths.style("stroke-dashoffset", 0));
+              setTimeout(() => {
+                paths.style("transition", null);
+                it.busy = false;
+              }, 950);
+            }, 650);
+          }
+        }
+
+        /* ==================================================================
+   6. BOOT — one line per figure on the page
+   ================================================================== */
+        const FIGURES = {
+          "cartesian-intro": (el) => new CartesianFig(el, { tutorial: true }),
+          "cartesian-origin": (el) => new CartesianFig(el, { origin: true }),
+          "paper-centered": (el) =>
+            new PaperGraphFig(el, { variant: "centered" }),
+          "paper-chart": (el) => new PaperGraphFig(el, { variant: "chart" }),
+          "rcs-origin": (el) => new RcsOriginFig(el),
+          "devices-scs": (el) => new DeviceLayoutFig(el, { mode: "scs" }),
+          "devices-rcs": (el) => new DeviceLayoutFig(el, { mode: "rcs" }),
+          "anchor-zoom": (el) => new AnchorZoomFig(el),
+          "zoom-scs": (el) => new CrossDeviceFig(el, { mode: "scs" }),
+          "zoom-rcs": (el) => new CrossDeviceFig(el, { mode: "rcs" }),
+          extendable: (el) => new ExtendableFig(el),
+          viewport: (el) => new ViewportFig(el),
+        };
+        prepareSamples();
+        document.querySelectorAll("figure[data-fig]").forEach((el) => {
+          const make = FIGURES[el.dataset.fig];
+          if (make) make(el);
+        });
+        const headerEl = document.querySelector(".header-art");
+        if (headerEl) new HeaderArt(headerEl);
+      })();
+    </script>
+  </body>
+</html>
