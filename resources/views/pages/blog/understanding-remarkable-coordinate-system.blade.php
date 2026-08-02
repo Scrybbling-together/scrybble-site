@@ -139,11 +139,10 @@
         margin-left: auto;
         flex-wrap: wrap;
       }
-      .badge {
+      .bar .badge {
         background: var(--page);
         border: 1px solid #e7e5dc;
         border-radius: 5px;
-        padding: 1px 8px;
         font-family: ui-monospace, Menlo, Consolas, monospace;
         font-size: 0.72rem;
         color: var(--faint);
@@ -514,6 +513,11 @@
       }
       .view-rect:active {
         cursor: grabbing;
+      }
+      .layer-tip {
+        /* purely a visual readout; never intercept clicks on things drawn
+           beneath it (e.g. the extend buttons the cursor is hovering) */
+        pointer-events: none;
       }
       .tip-line {
         stroke: rgba(65, 104, 96, 0.16);
@@ -950,8 +954,7 @@
 
       <p>
         This coordinate system is now super cool, the tablet now acts as a sort
-        of "view" on this flexibly extensible, zoomable and pannable infinite
-        canvas.
+        of "view" on this flexibly extensible, zoomable and pannable canvas.
       </p>
 
       <figure
@@ -2102,8 +2105,6 @@
             this.enablePointer();
             if (tutorial) this.setupTutorial();
           }
-          /* a 3-step overlay; steps check off as the user performs them,
-     then the whole card fades away */
           setupTutorial() {
             this.tutState = { pan: false, zoom: false };
             this.tut = this.wrap.append("div").attr("class", "tut");
