@@ -12,9 +12,7 @@ use App\Http\Controllers\ReMarkableDocumentFeedbackController;
 use App\Http\Controllers\ResetReMarkableConnectionController;
 use App\Http\Controllers\RMFiletreeController;
 use App\Http\Controllers\SyncController;
-use App\Models\Sync;
-use App\Services\GumroadService;
-use App\Services\OnboardingStateService;
+use App\Http\Controllers\SyncUserController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -59,14 +57,5 @@ Route::group(['middleware' => ["auth:api", "throttle:180,1"]], routes: static fu
     Route::post('sync/onetimecode', [OnetimecodeController::class, 'create']);
     Route::delete('sync/remarkable-connection', [ResetReMarkableConnectionController::class, 'destroy']);
 
-    Route::get('/sync/user', function (Request $request, GumroadService $gumroadService, OnboardingStateService $onboardingStateService) {
-        $user = $request->user();
-        return [
-            'user' => $user,
-            'subscription_status' => $gumroadService->licenseInfo(),
-            'total_syncs' => Sync::forUser($user)->count(),
-            'onboarding_state' => $onboardingStateService->getState(),
-            'rmapi_host' => config('scrybble.rmapi.host')
-        ];
-    });
+    Route::get('/sync/user', SyncUserController::class);
 });

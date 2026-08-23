@@ -3,18 +3,14 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
+use App\Http\Controllers\SyncUserController;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\CoversClass;
 use Tests\Support\RmApiHostConfig;
 use Tests\TestCase;
 
-/**
- * Covers the rmapi_host field on GET /api/sync/user, which tells the
- * frontend where to send the user to retrieve their one-time code:
- * null (official reMarkable cloud) or the resolved RMFAKECLOUD_HOST.
- */
-#[CoversClass()]
+#[CoversClass(SyncUserController::class)]
 final class SyncUserRmapiHostTest extends TestCase
 {
     use RefreshDatabase;
