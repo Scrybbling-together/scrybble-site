@@ -5,6 +5,7 @@ namespace Tests\Unit\Services;
 
 use App\Services\RMapiProcessRunner;
 use PHPUnit\Framework\Attributes\DataProvider;
+use Tests\Support\RmApiHostConfig;
 use Tests\TestCase;
 
 /**
@@ -13,21 +14,6 @@ use Tests\TestCase;
  */
 final class RMapiHostTest extends TestCase
 {
-    /**
-     * Point the scrybble config at a given RMFAKECLOUD_HOST value by
-     * (re)loading the config file, which re-reads the env var.
-     */
-    private function loadScrybbleConfigFromEnv(?string $host): void
-    {
-        if ($host === null) {
-            unset($_ENV['RMFAKECLOUD_HOST'], $_SERVER['RMFAKECLOUD_HOST']);
-        } else {
-            $_ENV['RMFAKECLOUD_HOST'] = $host;
-            $_SERVER['RMFAKECLOUD_HOST'] = $host;
-        }
-
-        $this->app['config']->set('scrybble', require base_path('config/scrybble.php'));
-    }
 
     private function aRunnerWithApiHost(?string $apiHost): RMapiProcessRunner
     {
@@ -43,7 +29,7 @@ final class RMapiHostTest extends TestCase
     #[DataProvider('provideHostValues')]
     public function test_host_is_normalized_when_read_from_config(?string $envValue, ?string $expected): void
     {
-        $this->loadScrybbleConfigFromEnv($envValue);
+        RmApiHostConfig::set($this->app['config'], $envValue);
 
         $this->assertSame($expected, config('scrybble.rmapi.host'));
     }

@@ -65,7 +65,8 @@ Route::group(['middleware' => ["auth:api", "throttle:180,1"]], routes: static fu
             'user' => $user,
             'subscription_status' => $gumroadService->licenseInfo(),
             'total_syncs' => Sync::forUser($user)->count(),
-            'onboarding_state' => $onboardingStateService->getState()
+            'onboarding_state' => $onboardingStateService->getState(),
+            'rmapi_host' => config('scrybble.rmapi.host')
         ];
     });
 });
