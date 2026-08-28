@@ -1,5 +1,9 @@
 <?php
 
+use Illuminate\Support\Str;
+
+$rmapiHost = env('RMFAKECLOUD_HOST');
+
 return [
 
     /*
@@ -56,5 +60,20 @@ return [
         */
         'site_key' => env("CLOUDFLARE_SITE_KEY"),
         'secret_key' => env("CLOUDFLARE_TURNSTILE_SECRET_KEY")
+    ],
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | reMarkable cloud (rmapi) host
+    |--------------------------------------------------------------------------
+    |
+    | Optional override of the reMarkable cloud host for self-hosted
+    | deployments (e.g. an rmfakecloud instance). Maps to RMAPI_HOST for the
+    | bundled rmapi binary. A trailing slash is stripped. When empty/unset the
+    | binary uses the official cloud.
+     */
+    'rmapi' => [
+        'host' => blank($rmapiHost) ? null : Str::rtrim($rmapiHost, '/'),
     ]
 ];

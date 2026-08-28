@@ -17,6 +17,7 @@ readonly class RMapiProcessRunner
         private string $configPath,
         private string $cacheHome,
         private string $workingDir,
+        private ?string $apiHost = null,
     ) {}
 
     public static function forUser(User $user): self
@@ -28,7 +29,22 @@ readonly class RMapiProcessRunner
             configPath: $storage->path('.rmapi-auth'),
             cacheHome:  $storage->path(''),
             workingDir: $storage->path(''),
+            apiHost:    config('scrybble.rmapi.host'),
         );
+    }
+
+    public function buildProcessEnv(): array
+    {
+        $env = [
+            'RMAPI_CONFIG'   => $this->configPath,
+            'XDG_CACHE_HOME' => $this->cacheHome,
+        ];
+
+        if ($this->apiHost !== null) {
+            $env['RMAPI_HOST'] = $this->apiHost;
+        }
+
+        return $env;
     }
 
     /**
@@ -41,10 +57,7 @@ readonly class RMapiProcessRunner
     public function run(array $argv, ?string $stdin = null, int $timeoutSeconds = 60): RMapiProcessOutput
     {
         $process = new Process([$this->binaryPath, ...$argv]);
-        $process->setEnv([
-            'RMAPI_CONFIG'   => $this->configPath,
-            'XDG_CACHE_HOME' => $this->cacheHome,
-        ]);
+        $process->setEnv($this->buildProcessEnv());
         $process->setWorkingDirectory($this->workingDir);
         $process->setTimeout($timeoutSeconds);
 
