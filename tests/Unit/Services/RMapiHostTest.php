@@ -4,14 +4,12 @@ declare(strict_types=1);
 namespace Tests\Unit\Services;
 
 use App\Services\RMapiProcessRunner;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\Support\RmApiHostConfig;
 use Tests\TestCase;
 
-/**
- * Covers the optional self-hosted reMarkable cloud host (RMFAKECLOUD_HOST) —
- * its config normalization and how it is injected into the rmapi process env.
- */
+#[CoversClass(RMapiProcessRunner::class)]
 final class RMapiHostTest extends TestCase
 {
 
