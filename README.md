@@ -232,6 +232,30 @@ The folder structure is shown below.
 
 Visit `http://{YOUR DOMAIN}/admin`, log-in with the admin account and select the "log viewer"
 
+### Can I use rmfakecloud?
+
+Yes! You can.
+
+If you have rmfakecloud configured, you can set the `RMFAKECLOUD_HOST` environment variable to your rmfakecloud url.
+
+For example:
+
+```env
+RMFAKECLOUD_HOST=https://your-rmfakecloud.example.com # you have your rmfakecloud hosted somewhere
+# or
+RMFAKECLOUD_HOST=localhost # your rmfakecloud is on your computer
+```
+
+Note that hosts with ports have not been explicitly tested to work, but should work.
+
+So if you have rmfakecloud running locally at an arbitrary port, say 8085, this _should_ work.
+
+```dotenv
+RMFAKECLOUD_HOST=localhost:8085
+```
+
+If this doesn't work, please open an issue.
+
 ## External resources
 
 - [Official Laravel documentation](https://laravel.com/docs/12.x/installation)
