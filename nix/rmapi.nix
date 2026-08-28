@@ -1,23 +1,36 @@
 { pkgs ? import <nixpkgs> {} }:
 
 let
+  rev = "aa60dac8a8dbb1b4eb6a25f2caf2f3daea573373";
+
+  src = pkgs.fetchgit {
+    url = "https://github.com/ddvk/rmapi";
+    inherit rev;
+    deepClone = true;
+    leaveDotGit = true;
+    hash = "sha256-8LlFTxm/RO5bgzpUItBafHwocIkslXFyq3JjSHxuSNc=";
+  };
+
   rmapi = pkgs.buildGoModule rec {
     pname = "rmapi";
-    version = "unstable-${builtins.substring 0 8 src.rev}";
+    # Placeholder: Only used for the derivation name, any stable string works.
+    version = "unstable";
 
-    src = pkgs.fetchFromGitHub {
-      owner = "ddvk";
-      repo = "rmapi";
-      rev = "aa60dac8a8dbb1b4eb6a25f2caf2f3daea573373";
-      sha256 = "sha256-AP6ba2lUZAAowtmX52zC97HI8U9nvbd8HyUqMqdxA2o=";
-    };
+    inherit src;
 
     vendorHash = "sha256-Qisfw+lCFZns13jRe9NskCaCKVj5bV1CV8WPpGBhKFc=";
 
-    CGO_ENABLED = 0;
+    env = { CGO_ENABLED = 0; };
 
-    GOOS = "linux";
-    GOARCH = "amd64";
+    # Needed for `git describe` in postPatch
+    nativeBuildInputs = [ pkgs.git ];
+
+    postPatch = ''
+      # sets version for `rmapi version`
+      VER="$(git describe --tags 2>/dev/null || echo unknown)"
+      printf 'package version\n\nvar Version = "%s"\n' "$VER" > version/version.go
+      echo "rmapi version: $VER"
+    '';
 
     # Create a static binary
     ldflags = [
@@ -26,9 +39,6 @@ let
     ];
 
     postInstall = ''
-      # Rename the binary if building for Windows
-      ${if (GOOS == "windows") then "mv $out/bin/rmapi $out/bin/rmapi.exe" else ""}
-
       # Create a directory with just the binary for easy extraction
       mkdir -p $out/portable
       cp $out/bin/rmapi* $out/portable/
