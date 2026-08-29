@@ -9,6 +9,7 @@ class ProfileController extends Controller
     public function __invoke(GumroadService $gumroadService)
     {
         $licenseInfo = $gumroadService->licenseInfo();
-        return view('userProfile', ["licenseData" => $licenseInfo]);
+
+        return view('userProfile', ['licenseData' => $licenseInfo]);
     }
 }

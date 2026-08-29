@@ -11,13 +11,13 @@ class NewsController extends Controller
     {
         $query = Post::with(['author', 'category'])
             ->published()
-            ->whereHas('category', fn($q) => $q->where('name', 'News'))
+            ->whereHas('category', fn ($q) => $q->where('name', 'News'))
             ->orderBy('published_at', 'desc');
 
         $posts = $query->paginate(8);
 
         return view('pages.news.index', [
-            'posts' => $posts
+            'posts' => $posts,
         ]);
     }
 
@@ -39,7 +39,7 @@ class NewsController extends Controller
 
         return view('pages.news.show', [
             'post' => $post,
-            'relatedPosts' => $relatedPosts
+            'relatedPosts' => $relatedPosts,
         ]);
     }
 }

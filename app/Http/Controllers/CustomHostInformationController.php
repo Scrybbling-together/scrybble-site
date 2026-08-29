@@ -11,15 +11,13 @@ class CustomHostInformationController extends Controller
 {
     public function show()
     {
-        $obsidianClient = Passport
-            ::clientModel()
-            ::query()
+        $obsidianClient = Passport::clientModel()::query()
             ->where('name', 'scrybble-device-flow')
             ->first(['secret', 'id']);
 
         return view('selfHostInformation', [
             'secret' => $obsidianClient->secret,
-            'id' => $obsidianClient->id
+            'id' => $obsidianClient->id,
         ]);
     }
 }

@@ -1,10 +1,9 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Exceptions\RMApi;
 
 use RuntimeException;
 
-class RMApiZipMoveFailedException extends RuntimeException
-{
-}
+class RMApiZipMoveFailedException extends RuntimeException {}

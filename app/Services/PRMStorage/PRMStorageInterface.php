@@ -8,5 +8,6 @@ namespace App\Services\PRMStorage;
 interface PRMStorageInterface
 {
     public function store(string $path, string $zipFileContents);
+
     public function getDownloadURL(string $path);
 }

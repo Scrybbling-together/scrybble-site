@@ -7,13 +7,10 @@ use Illuminate\Support\Str;
 
 class RmAuthenticationFile
 {
-    public function __construct(private FilesystemAdapter $filesystem)
-    {
-    }
+    public function __construct(private FilesystemAdapter $filesystem) {}
 
     /**
      * Does the authentication file exist?
-     * @return bool
      */
     public function exists(): bool
     {
@@ -21,13 +18,11 @@ class RmAuthenticationFile
     }
 
     /**
-     *
      * ```
      *  $ cat .rmapi-auth
      *  devicetoken: "...token"
      *  usertoken: "...token"
      * ```
-     * @return bool
      */
     public function hasValidAuthenticationValues(): bool
     {
@@ -35,12 +30,12 @@ class RmAuthenticationFile
             $contents = $this->filesystem->get('.rmapi-auth');
             $contents = trim($contents);
             // turn content into valid ini
-            $contents = Str::replace(":", "=", $contents);
+            $contents = Str::replace(':', '=', $contents);
 
             $data = parse_ini_string($contents);
 
-            $device_token = $data['devicetoken'] ?? "";
-            $user_token = $data["usertoken"] ?? "";
+            $device_token = $data['devicetoken'] ?? '';
+            $user_token = $data['usertoken'] ?? '';
 
             return strlen($device_token) > 0 && strlen($user_token) > 0;
         }

@@ -23,7 +23,7 @@ class ProfilePageTest extends TestCase
 
         $response->assertSee($user->name);
         $response->assertSee($user->email);
-        $response->assertSee("No license");
+        $response->assertSee('No license');
     }
 
     public function test_unauthenticated_user_cannot_access_profile_page()

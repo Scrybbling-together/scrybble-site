@@ -24,18 +24,16 @@ class GenerateSitemap extends Command
 
     /**
      * Execute the console command.
-     *
-     * @return void
      */
     public function handle(): void
     {
         SitemapGenerator::create(config('app.url'))
             ->hasCrawled(function (Url $url) {
-               if ($url->segment(0) === "dashboard") {
-                   return null;
-               }
+                if ($url->segment(0) === 'dashboard') {
+                    return null;
+                }
 
-               return $url;
+                return $url;
             })
             ->writeToFile(public_path('sitemap.xml'));
     }

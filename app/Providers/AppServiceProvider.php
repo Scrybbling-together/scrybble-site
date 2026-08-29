@@ -25,8 +25,6 @@ class AppServiceProvider extends ServiceProvider
 {
     /**
      * Register any application services.
-     *
-     * @return void
      */
     public function register(): void
     {
@@ -34,22 +32,20 @@ class AppServiceProvider extends ServiceProvider
             return new RMapi(Auth::user());
         });
 
-        $this->app->bind(RemarksService::class, fn() => match (config('scrybble.host_runner')) {
-            'docker' => new RemarksHTTPServer(),
-            'bare-metal' => new RemarksRunDockerContainer()
+        $this->app->bind(RemarksService::class, fn () => match (config('scrybble.host_runner')) {
+            'docker' => new RemarksHTTPServer,
+            'bare-metal' => new RemarksRunDockerContainer
         });
 
-        $this->app->bind(PRMStorageInterface::class, fn() => match (config('scrybble.storage_platform')) {
+        $this->app->bind(PRMStorageInterface::class, fn () => match (config('scrybble.storage_platform')) {
             // TODO: Implement disk storage instead of stubbing
-            'disk' => new DiskPRMStorage(),
-            "s3" => new S3PRMStorage(),
+            'disk' => new DiskPRMStorage,
+            's3' => new S3PRMStorage,
         });
     }
 
     /**
      * Bootstrap any application services.
-     *
-     * @return void
      */
     public function boot(): void
     {
@@ -58,14 +54,14 @@ class AppServiceProvider extends ServiceProvider
         Blade::if('cloudflareTurnstile', function () {
             $configuredCorrectly = config('scrybble.cloudflare.secret_key') && config('scrybble.cloudflare.site_key');
 
-            if ((config('app.env') === 'production') && !$configuredCorrectly) {
-                Log::warning("The site is live, but Cloudflare turnstile is not configured correctly. Check the `site_key` and `secret_key`, see config/scrybble.php");
+            if ((config('app.env') === 'production') && ! $configuredCorrectly) {
+                Log::warning('The site is live, but Cloudflare turnstile is not configured correctly. Check the `site_key` and `secret_key`, see config/scrybble.php');
             }
 
             return $configuredCorrectly;
         });
 
-        Passport::deviceUserCodeView("auth.device.user-code");
+        Passport::deviceUserCodeView('auth.device.user-code');
         Passport::deviceAuthorizationView('auth.device.authorize');
 
         if ($this->app->environment('production')) {
@@ -75,7 +71,7 @@ class AppServiceProvider extends ServiceProvider
                 /** @var User $user */
                 $user = $event->user;
 
-                Integration::configureScope(fn($scope) => $scope->setUser(['id' => $user->id]));
+                Integration::configureScope(fn ($scope) => $scope->setUser(['id' => $user->id]));
             });
         }
     }

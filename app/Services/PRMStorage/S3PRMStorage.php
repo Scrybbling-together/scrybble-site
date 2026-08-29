@@ -16,15 +16,10 @@ class S3PRMStorage implements PRMStorageInterface
         $this->disk = Storage::disk('s3');
     }
 
-    /**
-     * @param string $path
-     * @param string $prmFileContents
-     * @return void
-     */
     public function store(string $path, string $prmFileContents): void
     {
         $success = $this->disk->put($path, $prmFileContents);
-        if (!$success) {
+        if (! $success) {
             throw new RuntimeException('Failed to upload PRM to S3');
         }
     }

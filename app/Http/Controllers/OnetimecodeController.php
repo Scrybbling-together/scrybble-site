@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Http\Controllers;
@@ -10,17 +11,8 @@ use Exception;
 use Illuminate\Http\JsonResponse;
 use InvalidArgumentException;
 
-/**
- *
- */
 class OnetimecodeController extends Controller
 {
-    /**
-     * @param CreateOnetimecodeRequest $request
-     * @param RMapi $RMapi
-     * @param OnboardingStateService $onboarding_state_service
-     * @return JsonResponse
-     */
     public function create(CreateOnetimecodeRequest $request, RMapi $RMapi, OnboardingStateService $onboarding_state_service): JsonResponse
     {
         try {

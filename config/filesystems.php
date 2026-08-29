@@ -39,7 +39,7 @@ return [
         'efs' => [
             'driver' => 'local',
             'root' => storage_path('efs'),
-            'throw' => false
+            'throw' => false,
         ],
 
         'public' => [

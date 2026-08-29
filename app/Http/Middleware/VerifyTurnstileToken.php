@@ -2,10 +2,10 @@
 
 namespace App\Http\Middleware;
 
+use App\Services\CloudflareTurnstileService;
 use Closure;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Http\Request;
-use App\Services\CloudflareTurnstileService;
 use Symfony\Component\HttpFoundation\Response;
 
 class VerifyTurnstileToken implements ValidationRule
@@ -20,9 +20,7 @@ class VerifyTurnstileToken implements ValidationRule
     /**
      * Handle an incoming request.
      *
-     * @param Request $request
-     * @param Closure(Request): (Response) $next
-     * @return Response
+     * @param  Closure(Request): (Response)  $next
      */
     public function handle(Request $request, Closure $next): Response
     {
@@ -37,8 +35,8 @@ class VerifyTurnstileToken implements ValidationRule
 
         $result = $this->turnstileService->verifyTurnstileToken($token);
 
-        if (!$result['success']) {
-            $fail($result['error-codes'][0] ?? "Failed to validate cloudflare turnstile token");
+        if (! $result['success']) {
+            $fail($result['error-codes'][0] ?? 'Failed to validate cloudflare turnstile token');
         }
     }
 }

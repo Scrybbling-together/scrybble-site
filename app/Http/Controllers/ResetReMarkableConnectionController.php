@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Http\Controllers;
@@ -34,11 +35,11 @@ class ResetReMarkableConnectionController extends Controller
             $storage->delete($file);
         }
 
-        Log::info("Reset reMarkable connection for user", ['user_id' => $user->id]);
+        Log::info('Reset reMarkable connection for user', ['user_id' => $user->id]);
 
         return response()->json([
             'success' => true,
-            'newState' => $onboardingStateService->getState()
+            'newState' => $onboardingStateService->getState(),
         ]);
     }
 }

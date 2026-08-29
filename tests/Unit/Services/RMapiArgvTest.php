@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace Tests\Unit\Services;
@@ -16,6 +17,7 @@ use App\Models\User;
 use App\Services\RMapi;
 use App\Services\RMapiProcessOutput;
 use App\Services\RMapiProcessRunner;
+use Eloquent\Pathogen\Exception\NonAbsolutePathException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Storage;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -32,15 +34,16 @@ final class RMapiArgvTest extends TestCase
     private function makeRMapi(RMapiProcessRunner $runner): RMapi
     {
         Storage::fake('efs');
+
         return new RMapi(User::factory()->create(), $runner);
     }
 
     private function processOutput(string $stdout = '', string $stderr = '', int $exitCode = 0): RMapiProcessOutput
     {
         return new RMapiProcessOutput(
-            combined: $stdout . $stderr,
-            stdout:   $stdout,
-            stderr:   $stderr,
+            combined: $stdout.$stderr,
+            stdout: $stdout,
+            stderr: $stderr,
             exitCode: $exitCode,
         );
     }
@@ -63,7 +66,7 @@ final class RMapiArgvTest extends TestCase
         $runner = $this->createMock(RMapiProcessRunner::class);
         $runner->expects($this->never())->method('run');
 
-        $this->expectException(\Eloquent\Pathogen\Exception\NonAbsolutePathException::class);
+        $this->expectException(NonAbsolutePathException::class);
         $this->makeRMapi($runner)->list('--help');
     }
 
@@ -82,7 +85,7 @@ final class RMapiArgvTest extends TestCase
         $this->assertSame('Notes', $items->first()['name']);
     }
 
-    public function test_list_throws_RMApiJsonParseException_on_invalid_json(): void
+    public function test_list_throws_rm_api_json_parse_exception_on_invalid_json(): void
     {
         $runner = $this->createMock(RMapiProcessRunner::class);
         $runner->method('run')
@@ -92,7 +95,7 @@ final class RMapiArgvTest extends TestCase
         $this->makeRMapi($runner)->list('/');
     }
 
-    public function test_find_throws_RMApiJsonParseException_on_invalid_json(): void
+    public function test_find_throws_rm_api_json_parse_exception_on_invalid_json(): void
     {
         $runner = $this->createMock(RMapiProcessRunner::class);
         $runner->method('run')
@@ -102,7 +105,7 @@ final class RMapiArgvTest extends TestCase
         $this->makeRMapi($runner)->find();
     }
 
-    public function test_list_throws_RMApiListFailedException_on_non_zero_exit(): void
+    public function test_list_throws_rm_api_list_failed_exception_on_non_zero_exit(): void
     {
         $runner = $this->createMock(RMapiProcessRunner::class);
         $runner->method('run')
@@ -138,7 +141,7 @@ final class RMapiArgvTest extends TestCase
         $this->assertSame('Notes', $items->first()['name']);
     }
 
-    public function test_find_throws_RMApiFindFailedException_on_non_zero_exit(): void
+    public function test_find_throws_rm_api_find_failed_exception_on_non_zero_exit(): void
     {
         $runner = $this->createMock(RMapiProcessRunner::class);
         $runner->method('run')
@@ -148,7 +151,7 @@ final class RMapiArgvTest extends TestCase
         $this->makeRMapi($runner)->find();
     }
 
-    public function test_getById_passes_id_as_separate_argv_element(): void
+    public function test_get_by_id_passes_id_as_separate_argv_element(): void
     {
         $runner = $this->createMock(RMapiProcessRunner::class);
         $runner->expects($this->once())
@@ -161,7 +164,7 @@ final class RMapiArgvTest extends TestCase
         $this->makeRMapi($runner)->getById('abc-123', 'Carol');
     }
 
-    public function test_getById_error_message_includes_rmapi_output(): void
+    public function test_get_by_id_error_message_includes_rmapi_output(): void
     {
         $runner = $this->createMock(RMapiProcessRunner::class);
         $runner->method('run')
@@ -178,7 +181,7 @@ final class RMapiArgvTest extends TestCase
         $runner = $this->createMock(RMapiProcessRunner::class);
         $runner->expects($this->once())
             ->method('run')
-            ->with(['--json', '-ni', 'get', "/Work/Carol"])
+            ->with(['--json', '-ni', 'get', '/Work/Carol'])
             ->willReturn($this->processOutput(stderr: 'boom', exitCode: 1));
 
         $this->expectException(RMApiGetFailedException::class);
@@ -197,7 +200,7 @@ final class RMapiArgvTest extends TestCase
         $this->makeRMapi($runner)->get('/Work/Carol');
     }
 
-    public function test_get_throws_RMApiZipMoveFailedException_when_storage_move_fails(): void
+    public function test_get_throws_rm_api_zip_move_failed_exception_when_storage_move_fails(): void
     {
         $runner = $this->createMock(RMapiProcessRunner::class);
         $runner->method('run')
@@ -207,7 +210,7 @@ final class RMapiArgvTest extends TestCase
         $this->makeRMapi($runner)->get('/Work/Carol');
     }
 
-    public function test_refresh_throws_RMApiRefreshFailedException_on_failure(): void
+    public function test_refresh_throws_rm_api_refresh_failed_exception_on_failure(): void
     {
         $runner = $this->createMock(RMapiProcessRunner::class);
         $runner->method('run')
@@ -231,7 +234,7 @@ final class RMapiArgvTest extends TestCase
         $this->makeRMapi($runner)->authenticate('one-time-code');
     }
 
-    public function test_authenticate_throws_RMApiInvalidCodeException_when_output_says_incorrect(): void
+    public function test_authenticate_throws_rm_api_invalid_code_exception_when_output_says_incorrect(): void
     {
         $runner = $this->createMock(RMapiProcessRunner::class);
         $runner->method('run')
@@ -241,7 +244,7 @@ final class RMapiArgvTest extends TestCase
         $this->makeRMapi($runner)->authenticate('bad-code');
     }
 
-    public function test_authenticate_throws_RMApiTokenCreationFailedException_when_output_says_device_token_failure(): void
+    public function test_authenticate_throws_rm_api_token_creation_failed_exception_when_output_says_device_token_failure(): void
     {
         $runner = $this->createMock(RMapiProcessRunner::class);
         $runner->method('run')
@@ -251,7 +254,7 @@ final class RMapiArgvTest extends TestCase
         $this->makeRMapi($runner)->authenticate('one-time-code');
     }
 
-    public function test_authenticate_throws_RMApiUnknownAuthOutputException_when_output_is_unrecognized(): void
+    public function test_authenticate_throws_rm_api_unknown_auth_output_exception_when_output_is_unrecognized(): void
     {
         $runner = $this->createMock(RMapiProcessRunner::class);
         $runner->method('run')
@@ -260,5 +263,4 @@ final class RMapiArgvTest extends TestCase
         $this->expectException(RMApiUnknownAuthOutputException::class);
         $this->makeRMapi($runner)->authenticate('one-time-code');
     }
-
 }

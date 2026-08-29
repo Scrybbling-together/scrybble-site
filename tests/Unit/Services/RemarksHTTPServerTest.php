@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace Tests\Unit\Services;
@@ -27,7 +28,7 @@ final class RemarksHTTPServerTest extends TestCase
         $source = $efsRoot->joinAtoms('user-1', 'jobs', 'sync-123');
         $target = $efsRoot->joinAtoms('user-1', 'processed', 'sync-123');
 
-        (new RemarksHTTPServer())->extractNotesAndHighlights($source, $target);
+        (new RemarksHTTPServer)->extractNotesAndHighlights($source, $target);
 
         Http::assertSent(fn ($request) => Str::contains($request->url(), 'renderer.internal:8080/process'));
     }

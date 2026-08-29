@@ -25,7 +25,7 @@ class UserRegistrationTest extends TestCase
         $response->assertStatus(302);
         $response->assertSessionDoesntHaveErrors();
         $this->assertDatabaseHas('users', [
-            'email' => 'test@example.com'
+            'email' => 'test@example.com',
         ]);
     }
 
@@ -42,24 +42,24 @@ class UserRegistrationTest extends TestCase
         $response->assertSessionHasErrors();
         $response->assertStatus(302);
         $this->assertDatabaseMissing('users', [
-            'email' => 'test@example.com'
+            'email' => 'test@example.com',
         ]);
     }
 
     public function test_user_registration_fails_when_missing_cloudflare_token_when_turnstile_is_enabled()
     {
-        Config::set("scrybble.cloudflare.secret_key", 'test-secret-key');
-        Config::set("scrybble.cloudflare.site_key", 'test-site-key');
+        Config::set('scrybble.cloudflare.secret_key', 'test-secret-key');
+        Config::set('scrybble.cloudflare.site_key', 'test-site-key');
         $response = $this->post('/register', [
             'name' => 'Test User',
             'email' => 'test@example.com',
             'password' => 'a_valid_password',
             'password_confirmation' => 'a_valid_password',
         ]);
-        $response->assertSessionHasErrorsIn("cf-turnstile-response");
+        $response->assertSessionHasErrorsIn('cf-turnstile-response');
         $response->assertStatus(302);
         $this->assertDatabaseMissing('users', [
-            'email' => 'test@example.com'
+            'email' => 'test@example.com',
         ]);
     }
 
@@ -71,7 +71,7 @@ class UserRegistrationTest extends TestCase
         Http::fake([
             CloudflareTurnstileService::CLOUDFLARE_CHALLENGE_URL => Http::response([
                 'success' => false,
-                'error-codes' => ['invalid-turnstile-token']
+                'error-codes' => ['invalid-turnstile-token'],
             ])]
         );
 
@@ -80,7 +80,7 @@ class UserRegistrationTest extends TestCase
             'email' => 'test@example.com',
             'password' => 'a_valid_password',
             'password_confirmation' => 'a_valid_password',
-            'cf-turnstile-response' => 'abc'
+            'cf-turnstile-response' => 'abc',
         ];
 
         $response = $this->post('/register', $userData);
@@ -89,7 +89,7 @@ class UserRegistrationTest extends TestCase
         $response->assertSessionHasErrorsIn('cf-turnstile-response');
 
         $this->assertDatabaseMissing('users', [
-            'email' => 'test@example.com'
+            'email' => 'test@example.com',
         ]);
     }
 }

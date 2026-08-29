@@ -15,7 +15,7 @@ class InspectSyncController extends Controller
 
         $query = Sync::select(['filename', 'created_at', 'completed', 'id'])
             ->forUser(Auth::user())
-            ->orderByDesc("created_at");
+            ->orderByDesc('created_at');
 
         if ($paginated) {
             $result = $query->paginate($perPage);
@@ -25,7 +25,7 @@ class InspectSyncController extends Controller
                 'current_page' => $result->currentPage(),
                 'last_page' => $result->lastPage(),
                 'per_page' => $result->perPage(),
-                'total' => $result->total()
+                'total' => $result->total(),
             ]);
         } else {
             $collection = $query->limit(10)

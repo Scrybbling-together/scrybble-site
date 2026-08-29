@@ -4,10 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Models\Post;
 
-class PostController extends Controller {
+class PostController extends Controller
+{
     public function list()
     {
-        return response()->json(Post::select(["title", "slug"])->get());
+        return response()->json(Post::select(['title', 'slug'])->get());
     }
 
     public function show(string $slug)

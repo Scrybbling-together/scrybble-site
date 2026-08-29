@@ -9,8 +9,8 @@ class isAdminMiddleware
 {
     public function handle(Request $request, Closure $next)
     {
-        if (!auth()->check()) {
-            abort(403, "Unauthorized action");
+        if (! auth()->check()) {
+            abort(403, 'Unauthorized action');
         }
 
         $isAdmin = auth()->user()->id === 1;
@@ -20,6 +20,6 @@ class isAdminMiddleware
             return $next($request);
         }
 
-        abort(403, "Unauthorized action");
+        abort(403, 'Unauthorized action');
     }
 }

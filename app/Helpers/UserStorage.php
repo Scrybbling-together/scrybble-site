@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Helpers;
@@ -13,19 +14,15 @@ use Illuminate\Support\Facades\URL;
  */
 class UserStorage
 {
-    /**
-     * @param User $user
-     * @return Filesystem
-     */
     public static function get(User $user): Filesystem
     {
         $efs = Storage::disk('efs');
         $user_dir = "user-{$user->id}/";
         $storage = Storage::build($efs->path($user_dir));
         $storage->buildTemporaryUrlsUsing(
-            fn($path, $expiration, $options) => URL::temporarySignedRoute("prmdownload", $expiration, array_merge($options, ['path' => $path]))
+            fn ($path, $expiration, $options) => URL::temporarySignedRoute('prmdownload', $expiration, array_merge($options, ['path' => $path]))
         );
-        if (!$storage->exists('')) {
+        if (! $storage->exists('')) {
             $storage->makeDirectory('');
         }
 

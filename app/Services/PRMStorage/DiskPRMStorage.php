@@ -7,22 +7,19 @@ use Illuminate\Filesystem\FilesystemAdapter;
 use Illuminate\Support\Facades\Storage;
 use RuntimeException;
 
-class DiskPRMStorage implements PRMStorageInterface {
+class DiskPRMStorage implements PRMStorageInterface
+{
     private FilesystemAdapter|Filesystem $disk;
 
-    function __construct() {
+    public function __construct()
+    {
         $this->disk = Storage::disk('efs');
     }
 
-    /**
-     * @param string $path
-     * @param string $prmFileContents
-     * @return void
-     */
     public function store(string $path, string $prmFileContents): void
     {
         $success = $this->disk->put($path, $prmFileContents);
-        if (!$success) {
+        if (! $success) {
             throw new RuntimeException('Failed to store PRM on disk');
         }
     }

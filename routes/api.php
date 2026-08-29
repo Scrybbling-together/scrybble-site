@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 use App\Http\Controllers\ConnectedGumroadLicenseController;
@@ -36,8 +37,8 @@ Route::prefix('debug-bundle')->middleware(['web'])->group(function () {
     Route::get('{sync:sync_id}/full', [DebugBundleController::class, 'full']);
 });
 
-Route::group(['middleware' => ["auth:api", "throttle:180,1"]], routes: static function () {
-    Route::get('prmdownload/{path}', [DownloadController::class, "download"])
+Route::group(['middleware' => ['auth:api', 'throttle:180,1']], routes: static function () {
+    Route::get('prmdownload/{path}', [DownloadController::class, 'download'])
         ->middleware('auth:api')
         ->where('path', '.*')
         ->name('prmdownload');
@@ -53,7 +54,7 @@ Route::group(['middleware' => ["auth:api", "throttle:180,1"]], routes: static fu
     Route::post('sync/search', [RMFiletreeController::class, 'search']);
     Route::get('sync/inspect-sync', [InspectSyncController::class, 'index']);
 
-    Route::post('sync/gumroadLicense', [ConnectedGumroadLicenseController::class, "store"]);
+    Route::post('sync/gumroadLicense', [ConnectedGumroadLicenseController::class, 'store']);
     Route::post('sync/onetimecode', [OnetimecodeController::class, 'create']);
     Route::delete('sync/remarkable-connection', [ResetReMarkableConnectionController::class, 'destroy']);
 

@@ -25,7 +25,7 @@ enum DeploymentEnvironment: string
 
         return self::tryFrom($value) ?? throw new RuntimeException(
             "Invalid SCRYBBLE_DEPLOYMENT_ENVIRONMENT value: '{$value}'. "
-            . "Expected 'self-hosted' or 'commercial'. Check your .env file."
+            ."Expected 'self-hosted' or 'commercial'. Check your .env file."
         );
     }
 }

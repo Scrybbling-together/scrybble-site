@@ -28,14 +28,16 @@ class SetupAdminAccount extends Command
      */
     public function handle(): int
     {
-        if (!DeploymentEnvironment::current()->isSelfHosted()) {
+        if (! DeploymentEnvironment::current()->isSelfHosted()) {
             $this->error('This command can only be run in a self-hosted environment.');
+
             return 1;
         }
 
         // Check if user with id=1 already exists
         if (User::find(1)) {
             $this->error('An admin account with ID 1 already exists.');
+
             return 1;
         }
 
@@ -45,6 +47,7 @@ class SetupAdminAccount extends Command
         // Check if username already exists
         if (User::where('name', $username)->exists()) {
             $this->error("A user with the username '{$username}' already exists.");
+
             return 1;
         }
 
@@ -58,11 +61,12 @@ class SetupAdminAccount extends Command
         // Validate password
         if ($password !== $passwordConfirmation) {
             $this->error('Passwords do not match.');
+
             return 1;
         }
 
         // Create the admin user
-        $user = new User();
+        $user = new User;
         $user->id = 1;
         $user->name = $username;
         $user->password = Hash::make($password);
@@ -70,6 +74,7 @@ class SetupAdminAccount extends Command
         $user->save();
 
         $this->info('Admin account created successfully!');
+
         return 0;
     }
 }

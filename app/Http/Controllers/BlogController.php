@@ -17,7 +17,7 @@ class BlogController extends Controller
             'understanding-remarkable-coordinate-system' => 'pages.blog.understanding-remarkable-coordinate-system',
         ];
 
-        abort_if(!array_key_exists($slug, $posts), 404);
+        abort_if(! array_key_exists($slug, $posts), 404);
 
         return view($posts[$slug]);
     }

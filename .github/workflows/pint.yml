@@ -36,4 +36,4 @@ jobs:
         run: |
           docker run --rm \
             ${{ needs.build.outputs.image-ref }} \
-            vendor/bin/pint --test --verbose
+            vendor/bin/pint --test --parallel --verbose

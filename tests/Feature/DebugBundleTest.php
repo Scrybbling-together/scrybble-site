@@ -187,7 +187,7 @@ class DebugBundleTest extends TestCase
         // For BinaryFileResponse, get the file path directly
         $filePath = $response->baseResponse->getFile()->getPathname();
 
-        $zip = new ZipArchive();
+        $zip = new ZipArchive;
         $this->assertTrue($zip->open($filePath) === true, 'Failed to open zip file');
 
         // Verify sync.json exists
@@ -229,7 +229,7 @@ class DebugBundleTest extends TestCase
 
         $filePath = $response->baseResponse->getFile()->getPathname();
 
-        $zip = new ZipArchive();
+        $zip = new ZipArchive;
         $zip->open($filePath);
 
         // Verify logs.json exists
@@ -271,7 +271,7 @@ class DebugBundleTest extends TestCase
 
         $filePath = $response->baseResponse->getFile()->getPathname();
 
-        $zip = new ZipArchive();
+        $zip = new ZipArchive;
         $zip->open($filePath);
 
         // Verify extractedFiles are included
@@ -320,7 +320,7 @@ class DebugBundleTest extends TestCase
 
         $filePath = $response->baseResponse->getFile()->getPathname();
 
-        $zip = new ZipArchive();
+        $zip = new ZipArchive;
         $zip->open($filePath);
 
         // sync.json and logs.json should always be present
