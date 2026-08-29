@@ -64,4 +64,4 @@ jobs:
             --network host \
             -v "$PWD/.env.ci:/var/www/html/.env.testing" \
             ${{ needs.build.outputs.image-ref }} \
-            vendor/bin/paratest
+            php artisan test --parallel
