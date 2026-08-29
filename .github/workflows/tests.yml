@@ -14,7 +14,7 @@ jobs:
       contents: read
       packages: write
 
-  phpunit:
+  paratest:
     needs: build
     runs-on: ubuntu-latest
     permissions:
@@ -58,10 +58,10 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Run PHPUnit
+      - name: Run Paratest
         run: |
           docker run --rm \
             --network host \
             -v "$PWD/.env.ci:/var/www/html/.env.testing" \
             ${{ needs.build.outputs.image-ref }} \
-            vendor/bin/phpunit
+            php artisan test --parallel
