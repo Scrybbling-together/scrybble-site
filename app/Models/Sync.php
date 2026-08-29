@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Models;
@@ -21,26 +22,18 @@ class Sync extends Model
         'user_id',
         'filename',
         'completed',
-        'sync_id'
+        'sync_id',
     ];
 
     protected $casts = [
-        'completed' => 'bool'
+        'completed' => 'bool',
     ];
 
-    /**
-     * @return BelongsTo
-     */
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
-    /**
-     * @param Builder $query
-     * @param User $user
-     * @return Builder
-     */
     public function scopeForUser(Builder $query, User $user): Builder
     {
         return $query->where('user_id', $user->id);
@@ -61,7 +54,7 @@ class Sync extends Model
         $definiteError = $this->logs()->where('severity', 'error')->count() > 0;
         $isOld = $this->created_at->addMinutes(10)->lessThan(now());
 
-        return (!$this->completed && $isOld) || $definiteError;
+        return (! $this->completed && $isOld) || $definiteError;
     }
 
     public function complete(): void
@@ -78,14 +71,14 @@ class Sync extends Model
             'path' => $sync->filename,
             'created_at' => $sync->created_at->diffForHumans(),
             'completed' => $sync->completed,
-            'error' => $sync->hasError()
+            'error' => $sync->hasError(),
         ];
     }
 
     /**
      * Get the latest sync metadata for a collection of file paths, keyed by path.
      *
-     * @param Collection<string> $filePaths
+     * @param  Collection<string>  $filePaths
      * @return Collection<string, array>
      */
     public static function syncMetadataForFiles(Collection $filePaths): Collection
@@ -95,7 +88,7 @@ class Sync extends Model
         }
 
         return static::fromSub(
-            fn($query) => $query->select('*')
+            fn ($query) => $query->select('*')
                 ->selectRaw('ROW_NUMBER() OVER (PARTITION BY filename ORDER BY created_at DESC) as rowNumber')
                 ->from('sync')
                 ->whereIn('filename', $filePaths),

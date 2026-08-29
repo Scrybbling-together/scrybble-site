@@ -49,6 +49,7 @@ class FileControllerTest extends TestCase
         Queue::assertPushed(DownloadRemarkableFileJob::class, function ($job) {
             // Legacy path-based request should set input_filename and rm_file_id should be null
             $context = $job->sync_context;
+
             return $context->input_filename === '/Books/My Document'
                 && $context->rm_file_id === null;
         });
@@ -75,6 +76,7 @@ class FileControllerTest extends TestCase
         Queue::assertPushed(DownloadRemarkableFileJob::class, function ($job) {
             // ID-based request should set both rm_file_id and input_filename (for display)
             $context = $job->sync_context;
+
             return $context->rm_file_id === 'abc123-def456-789'
                 && $context->input_filename === 'My Document';
         });
@@ -117,6 +119,7 @@ class FileControllerTest extends TestCase
 
         Queue::assertPushed(DownloadRemarkableFileJob::class, function ($job) {
             $context = $job->sync_context;
+
             return $context->rm_file_id === 'abc123-def456-789'
                 && $context->input_filename === 'My Document';
         });

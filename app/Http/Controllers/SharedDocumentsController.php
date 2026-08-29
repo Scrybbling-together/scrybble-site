@@ -12,20 +12,20 @@ class SharedDocumentsController extends Controller
     public function index(DownloadService $downloadService)
     {
         $user = Auth::user();
-        $shared = RemarkableDocumentShare::with("sync:id,filename,created_at,sync_id,user_id")->where('developer_access_consent_granted', true)->select([
-            "id",
-            "sync_id",
-            "user_id",
-            "feedback",
-            "developer_access_consent_granted",
-            "open_access_consent_granted"
-        ])->with("user:id,email")->get();
+        $shared = RemarkableDocumentShare::with('sync:id,filename,created_at,sync_id,user_id')->where('developer_access_consent_granted', true)->select([
+            'id',
+            'sync_id',
+            'user_id',
+            'feedback',
+            'developer_access_consent_granted',
+            'open_access_consent_granted',
+        ])->with('user:id,email')->get();
 
         if ($user?->id !== 1) {
-           $shared = $shared->filter(fn ($item) => $item["open_access_consent_granted"]);
+            $shared = $shared->filter(fn ($item) => $item['open_access_consent_granted']);
         }
 
-        return view("admin.sharedDocuments", [
+        return view('admin.sharedDocuments', [
             'shared' => $shared->map(function ($shared) use ($downloadService) {
                 $public_sync_id = $shared->sync->sync_id;
 
@@ -33,14 +33,16 @@ class SharedDocumentsController extends Controller
                 if ($public_sync_id) {
                     try {
                         $output_href = $downloadService->prepareProcessedRemarksZipUrl($shared['user_id'], $public_sync_id);
-                    } catch (GoneHttpException) {}
+                    } catch (GoneHttpException) {
+                    }
                 }
 
                 $input_href = null;
                 if ($public_sync_id) {
                     try {
                         $input_href = $downloadService->prepareRMNZipUrl($shared['user_id'], $public_sync_id);
-                    } catch (GoneHttpException) {}
+                    } catch (GoneHttpException) {
+                    }
                 }
 
                 return [
@@ -52,7 +54,7 @@ class SharedDocumentsController extends Controller
                     'input_href' => $input_href,
                     'filename' => $shared->sync->filename,
                 ];
-            })
+            }),
         ]);
     }
 }

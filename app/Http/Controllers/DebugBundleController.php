@@ -34,7 +34,7 @@ class DebugBundleController extends Controller
         $syncId = $sync->sync_id;
 
         $tempFile = tempnam(sys_get_temp_dir(), 'debug_bundle_');
-        $zip = new ZipArchive();
+        $zip = new ZipArchive;
         $zip->open($tempFile, ZipArchive::CREATE | ZipArchive::OVERWRITE);
 
         // Add sync.json
@@ -84,7 +84,7 @@ class DebugBundleController extends Controller
 
         foreach ($iterator as $file) {
             $filePath = $file->getPathname();
-            $relativePath = $zipPath . '/' . substr($filePath, strlen($sourcePath) + 1);
+            $relativePath = $zipPath.'/'.substr($filePath, strlen($sourcePath) + 1);
 
             if ($file->isDir()) {
                 $zip->addEmptyDir($relativePath);

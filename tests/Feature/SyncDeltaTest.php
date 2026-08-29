@@ -20,13 +20,13 @@ class SyncDeltaTest extends TestCase
         $existingSync = Sync::factory()->completed()->create([
             'user_id' => $user->id,
             'filename' => '/test/existing_file.pdf',
-            'sync_id' => 'existing-sync-123'
+            'sync_id' => 'existing-sync-123',
         ]);
 
-         Sync::factory()->completed()->create([
+        Sync::factory()->completed()->create([
             'user_id' => $user->id,
             'filename' => '/test/missing_file.pdf',
-            'sync_id' => 'missing-sync-456'
+            'sync_id' => 'missing-sync-456',
         ]);
 
         $downloadService = $this->createMock(DownloadService::class);

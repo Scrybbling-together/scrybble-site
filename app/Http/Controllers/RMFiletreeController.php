@@ -22,7 +22,7 @@ class RMFiletreeController extends Controller
 
         $syncs = Sync::syncMetadataForFiles($files->pluck('path'));
 
-        $filesWithSync = $files->map(fn($file) => [
+        $filesWithSync = $files->map(fn ($file) => [
             ...$file,
             'sync' => $syncs[$file['path']] ?? null,
         ]);
@@ -37,25 +37,25 @@ class RMFiletreeController extends Controller
         $path = $request->get('path') ?? '/';
 
         $filesAndFolders = $rmapi->list($path);
-        if ($path !== "/") {
+        if ($path !== '/') {
             $parent = AbsolutePath::fromString($path)->parent()->normalize()->string();
-            if (!Str::endsWith($parent, "/")) {
-                $parent .= "/";
+            if (! Str::endsWith($parent, '/')) {
+                $parent .= '/';
             }
             $filesAndFolders->prepend(['type' => 'd', 'name' => '..', 'path' => $parent]);
         }
 
-        $filePaths = $filesAndFolders->filter(fn($item) => $item['type'] === "f")->pluck('path');
+        $filePaths = $filesAndFolders->filter(fn ($item) => $item['type'] === 'f')->pluck('path');
         $syncs = Sync::syncMetadataForFiles($filePaths);
 
-        $filesAndFolders = $filesAndFolders->map(fn($fileOrFolder) => [
+        $filesAndFolders = $filesAndFolders->map(fn ($fileOrFolder) => [
             ...$fileOrFolder,
-            "sync" => $fileOrFolder['type'] === "f" ? ($syncs[$fileOrFolder['path']] ?? null) : null
+            'sync' => $fileOrFolder['type'] === 'f' ? ($syncs[$fileOrFolder['path']] ?? null) : null,
         ]);
 
         return response()->json([
-            "items" => $filesAndFolders,
-            "cwd" => $path
+            'items' => $filesAndFolders,
+            'cwd' => $path,
         ]);
     }
 }

@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Services;
@@ -27,16 +28,16 @@ readonly class RMapiProcessRunner
         return new self(
             binaryPath: base_path('binaries/rmapi'),
             configPath: $storage->path('.rmapi-auth'),
-            cacheHome:  $storage->path(''),
+            cacheHome: $storage->path(''),
             workingDir: $storage->path(''),
-            apiHost:    config('scrybble.rmapi.host'),
+            apiHost: config('scrybble.rmapi.host'),
         );
     }
 
     public function buildProcessEnv(): array
     {
         $env = [
-            'RMAPI_CONFIG'   => $this->configPath,
+            'RMAPI_CONFIG' => $this->configPath,
             'XDG_CACHE_HOME' => $this->cacheHome,
         ];
 
@@ -50,9 +51,9 @@ readonly class RMapiProcessRunner
     /**
      * Run rmapi with the given argv.
      *
-     * @param list<string> $argv  Arguments after the binary. Pass as-is — array
-     *                            mode means there is no shell to escape against.
-     * @param string|null  $stdin Optional stdin payload (used by `authenticate`).
+     * @param  list<string>  $argv  Arguments after the binary. Pass as-is — array
+     *                              mode means there is no shell to escape against.
+     * @param  string|null  $stdin  Optional stdin payload (used by `authenticate`).
      */
     public function run(array $argv, ?string $stdin = null, int $timeoutSeconds = 60): RMapiProcessOutput
     {
@@ -88,8 +89,8 @@ readonly class RMapiProcessRunner
 
         return new RMapiProcessOutput(
             combined: $combined,
-            stdout:   $stdout,
-            stderr:   $stderr,
+            stdout: $stdout,
+            stderr: $stderr,
             exitCode: $exit,
         );
     }

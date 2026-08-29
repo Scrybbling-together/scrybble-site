@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace Tests\Unit\Services;
@@ -18,13 +19,13 @@ final class RMapiBindingTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_RMapi_constructor_requires_a_user(): void
+    public function test_r_mapi_constructor_requires_a_user(): void
     {
         $this->expectException(ArgumentCountError::class);
-        new RMapi();
+        new RMapi;
     }
 
-    public function test_RMapi_binding_is_scoped_per_request(): void
+    public function test_r_mapi_binding_is_scoped_per_request(): void
     {
         Storage::fake('efs');
 

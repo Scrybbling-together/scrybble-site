@@ -46,7 +46,7 @@ class Kernel extends HttpKernel
         PreventRequestsDuringMaintenance::class,
         ValidatePostSize::class,
         TrimStrings::class,
-        ConvertEmptyStringsToNull::class
+        ConvertEmptyStringsToNull::class,
     ];
 
     /**
@@ -65,7 +65,7 @@ class Kernel extends HttpKernel
         ],
 
         'api' => [
-             EnsureFrontendRequestsAreStateful::class,
+            EnsureFrontendRequestsAreStateful::class,
             'throttle:api',
             SubstituteBindings::class,
         ],
@@ -91,6 +91,6 @@ class Kernel extends HttpKernel
         'signed' => ValidateSignature::class,
         'throttle' => ThrottleRequests::class,
         'verified' => EnsureEmailIsVerified::class,
-        'verify-turnstile-token' => VerifyTurnstileToken::class
+        'verify-turnstile-token' => VerifyTurnstileToken::class,
     ];
 }

@@ -8,10 +8,9 @@ return new class extends Migration
 {
     /**
      * Run the migrations.
-     *
-     * @return void
      */
-    public function up(): void {
+    public function up(): void
+    {
         Schema::table('sync', static function (Blueprint $table) {
             $table->string('S3_download_path');
         });
@@ -19,10 +18,9 @@ return new class extends Migration
 
     /**
      * Reverse the migrations.
-     *
-     * @return void
      */
-    public function down(): void {
+    public function down(): void
+    {
         Schema::table('sync', static function (Blueprint $table) {
             $table->dropColumn(['S3_download_path']);
         });

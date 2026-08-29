@@ -186,7 +186,7 @@ return [
                 'balanceMaxShift' => 1,
                 'balanceCooldown' => 3,
                 'timeout' => 300,
-                'tries' => 3
+                'tries' => 3,
             ],
         ],
 

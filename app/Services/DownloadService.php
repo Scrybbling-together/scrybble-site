@@ -16,24 +16,20 @@ class DownloadService
     {
         $storage = Storage::disk('efs');
 
-        FileManipulations::ensureDirectoryTreeExists($storage, new RelativePath(["user-{$user_id}", "input_documents"]));
-        $rmNotebookPath = new RelativePath(["user-{$user_id}", "input_documents", "$sync_id.rmn"]);
+        FileManipulations::ensureDirectoryTreeExists($storage, new RelativePath(["user-{$user_id}", 'input_documents']));
+        $rmNotebookPath = new RelativePath(["user-{$user_id}", 'input_documents', "$sync_id.rmn"]);
 
-        if (!$storage->exists($rmNotebookPath->string())) {
+        if (! $storage->exists($rmNotebookPath->string())) {
             try {
                 FileManipulations::zipDirectory($storage, new RelativePath(["user-{$user_id}", 'jobs', $sync_id, 'extractedFiles']), $rmNotebookPath);
             } catch (UnexpectedValueException) {
-                throw new GoneHttpException("Input files do not exist anymore");
+                throw new GoneHttpException('Input files do not exist anymore');
             }
         }
+
         return $storage->temporaryUrl($rmNotebookPath->string(), now()->addMinutes(5));
     }
 
-    /**
-     * @param int $user_id
-     * @param string $sync_id
-     * @return string
-     */
     public function prepareProcessedRemarksZipUrl(int $user_id, string $sync_id): string
     {
         $storage = UserStorage::get(User::find($user_id));

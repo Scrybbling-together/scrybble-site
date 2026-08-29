@@ -17,13 +17,10 @@ class CreateNewUser implements CreatesNewUsers
 
     /**
      * Validate and create a newly registered user.
-     *
-     * @param  array  $input
-     * @return User|JsonResponse
      */
     public function create(array $input): User|JsonResponse
     {
-        $cloudflareService = new CloudflareTurnstileService();
+        $cloudflareService = new CloudflareTurnstileService;
 
         Validator::make($input, [
             'name' => ['required', 'string', 'max:255'],
@@ -36,8 +33,8 @@ class CreateNewUser implements CreatesNewUsers
             ],
             'password' => $this->passwordRules(),
             ...($cloudflareService::turnstileEnabled() ? [
-                'cf-turnstile-response' => ['required', new VerifyTurnstileToken($cloudflareService)]
-            ] : [])
+                'cf-turnstile-response' => ['required', new VerifyTurnstileToken($cloudflareService)],
+            ] : []),
 
         ])->validate();
 
@@ -47,5 +44,4 @@ class CreateNewUser implements CreatesNewUsers
             'password' => Hash::make($input['password']),
         ]);
     }
-
 }

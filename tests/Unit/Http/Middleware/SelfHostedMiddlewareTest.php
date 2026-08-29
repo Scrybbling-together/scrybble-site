@@ -16,15 +16,15 @@ class SelfHostedMiddlewareTest extends TestCase
 
         $this->expectException(NotFoundHttpException::class);
 
-        (new SelfHostedMiddleware())->handle(new Request(), fn ($r) => $r);
+        (new SelfHostedMiddleware)->handle(new Request, fn ($r) => $r);
     }
 
     public function test_passes_through_in_self_hosted_deployment()
     {
         config(['scrybble.deployment_environment' => DeploymentEnvironment::SelfHosted->value]);
 
-        $request = new Request();
-        $result = (new SelfHostedMiddleware())->handle($request, fn ($r) => 'next-called');
+        $request = new Request;
+        $result = (new SelfHostedMiddleware)->handle($request, fn ($r) => 'next-called');
 
         $this->assertSame('next-called', $result);
     }

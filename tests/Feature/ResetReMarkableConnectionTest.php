@@ -22,19 +22,19 @@ class ResetReMarkableConnectionTest extends TestCase
 
         // Set up the user's directory with auth files and data
         Storage::disk('efs')->put("$userDir/.rmapi-auth", "devicetoken: \"test-device-token\"\nusertoken: \"test-user-token\"");
-        Storage::disk('efs')->put("$userDir/rmapi/tree.cache", "cached tree data");
-        Storage::disk('efs')->put("$userDir/jobs/sync-123/out.zip", "job output");
-        Storage::disk('efs')->put("$userDir/processed/sync-123.zip", "processed output");
-        Storage::disk('efs')->put("$userDir/" . hash('sha1', '/test/file.pdf') . ".zip", "downloaded file");
+        Storage::disk('efs')->put("$userDir/rmapi/tree.cache", 'cached tree data');
+        Storage::disk('efs')->put("$userDir/jobs/sync-123/out.zip", 'job output');
+        Storage::disk('efs')->put("$userDir/processed/sync-123.zip", 'processed output');
+        Storage::disk('efs')->put("$userDir/".hash('sha1', '/test/file.pdf').'.zip', 'downloaded file');
 
         // Create sync history in the database
         $sync = Sync::factory()->completed()->create([
             'user_id' => $user->id,
             'filename' => '/test/file.pdf',
-            'sync_id' => 'sync-123'
+            'sync_id' => 'sync-123',
         ]);
 
-        $syncLog = new SyncLog();
+        $syncLog = new SyncLog;
         $syncLog->sync_id = $sync->id;
         $syncLog->message = 'Test log message';
         $syncLog->severity = 'info';
@@ -84,13 +84,13 @@ class ResetReMarkableConnectionTest extends TestCase
         Sync::factory()->completed()->create([
             'user_id' => $user1->id,
             'filename' => '/test/file1.pdf',
-            'sync_id' => 'sync-user1'
+            'sync_id' => 'sync-user1',
         ]);
 
         Sync::factory()->completed()->create([
             'user_id' => $user2->id,
             'filename' => '/test/file2.pdf',
-            'sync_id' => 'sync-user2'
+            'sync_id' => 'sync-user2',
         ]);
 
         // Reset user1's connection

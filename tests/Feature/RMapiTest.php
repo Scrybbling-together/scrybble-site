@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace Tests\Feature;
@@ -25,9 +26,9 @@ final class RMapiTest extends TestCase
     private function processOutput(string $stdout = '', string $stderr = '', int $exitCode = 0): RMapiProcessOutput
     {
         return new RMapiProcessOutput(
-            combined: $stdout . $stderr,
-            stdout:   $stdout,
-            stderr:   $stderr,
+            combined: $stdout.$stderr,
+            stdout: $stdout,
+            stderr: $stderr,
             exitCode: $exitCode,
         );
     }
@@ -100,7 +101,7 @@ final class RMapiTest extends TestCase
         $this->assertSame('downloaded', $result['output']);
     }
 
-    public function test_get_throws_FileNotFoundException_when_rmapi_says_file_doesnt_exist(): void
+    public function test_get_throws_file_not_found_exception_when_rmapi_says_file_doesnt_exist(): void
     {
         Storage::fake('efs');
         $runner = $this->createMock(RMapiProcessRunner::class);
@@ -112,7 +113,7 @@ final class RMapiTest extends TestCase
         (new RMapi(User::factory()->create(), $runner))->get('/Work/Missing');
     }
 
-    public function test_getById_moves_downloaded_file_to_hashed_location(): void
+    public function test_get_by_id_moves_downloaded_file_to_hashed_location(): void
     {
         Storage::fake('efs');
         $user = User::factory()->create();
@@ -133,7 +134,7 @@ final class RMapiTest extends TestCase
         $this->assertSame('downloaded', $result['output']);
     }
 
-    public function test_getById_throws_FileNotFoundException_when_rmapi_says_doesnt_exist(): void
+    public function test_get_by_id_throws_file_not_found_exception_when_rmapi_says_doesnt_exist(): void
     {
         Storage::fake('efs');
         $runner = $this->createMock(RMapiProcessRunner::class);

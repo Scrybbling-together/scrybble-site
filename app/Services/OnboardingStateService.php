@@ -9,34 +9,31 @@ use Illuminate\Support\Facades\Auth;
 
 class OnboardingStateService
 {
-    public function __construct(public RMapi $rmapi)
-    {
-    }
+    public function __construct(public RMapi $rmapi) {}
 
     public function getState(): string
     {
         /**
-        * @var User
-        */
+         * @var User
+         */
         $user = Auth::user();
 
-        if (!$user) {
-            return "unauthenticated";
+        if (! $user) {
+            return 'unauthenticated';
         }
 
-        if (DeploymentEnvironment::current()->isCommercial() && !$user->gumroadLicense()->exists()) {
-            return "setup-gumroad";
+        if (DeploymentEnvironment::current()->isCommercial() && ! $user->gumroadLicense()->exists()) {
+            return 'setup-gumroad';
         }
 
         try {
-            if (!$this->rmapi->isAuthenticated()) {
-                return "setup-one-time-code";
+            if (! $this->rmapi->isAuthenticated()) {
+                return 'setup-one-time-code';
             }
         } catch (MissingRMApiAuthenticationTokenException $e) {
-            return "setup-one-time-code-again";
+            return 'setup-one-time-code-again';
         }
 
-        return "ready";
+        return 'ready';
     }
-
 }

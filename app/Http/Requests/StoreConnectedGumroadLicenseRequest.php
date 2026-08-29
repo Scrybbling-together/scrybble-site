@@ -13,7 +13,7 @@ class StoreConnectedGumroadLicenseRequest extends FormRequest
             'license' => [
                 'filled',
                 'string',
-            ]
+            ],
         ];
     }
 

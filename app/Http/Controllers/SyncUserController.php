@@ -7,14 +7,15 @@ use App\Services\GumroadService;
 use App\Services\OnboardingStateService;
 use Illuminate\Http\Request;
 
-class SyncUserController extends Controller {
+class SyncUserController extends Controller
+{
     public function __construct(
         public GumroadService $gumroadService,
         public OnboardingStateService $onboardingStateService
-    ) {
-    }
+    ) {}
 
-    public function __invoke(Request $request) {
+    public function __invoke(Request $request)
+    {
         $user = $request->user();
 
         return [
@@ -22,7 +23,7 @@ class SyncUserController extends Controller {
             'subscription_status' => $this->gumroadService->licenseInfo(),
             'total_syncs' => Sync::forUser($user)->count(),
             'onboarding_state' => $this->onboardingStateService->getState(),
-            'rmapi_host' => config('scrybble.rmapi.host')
+            'rmapi_host' => config('scrybble.rmapi.host'),
         ];
     }
 }

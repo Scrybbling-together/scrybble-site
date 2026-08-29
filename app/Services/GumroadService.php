@@ -2,24 +2,21 @@
 
 namespace App\Services;
 
-
 use GuzzleHttp\Exception\ClientException;
 use Illuminate\Support\Facades\Auth;
 
 class GumroadService
 {
-    public function __construct(private GumroadApi $gumroadApi)
-    {
-    }
+    public function __construct(private GumroadApi $gumroadApi) {}
 
-    public function licenseInfo(): array | null
+    public function licenseInfo(): ?array
     {
         $licenseObj = Auth::user()->gumroadLicense;
         if ($licenseObj === null) {
             return null;
         }
         $license = $licenseObj->license;
-        $response = ['license' => $license,];
+        $response = ['license' => $license];
         $isLifetime = boolval($licenseObj->lifetime);
 
         try {
@@ -33,11 +30,11 @@ class GumroadService
 
             $response['exists'] = true;
             $response['licenseInformation'] = [
-                "uses" => $info['uses'],
-                "order_number" => $purchase['order_number'],
-                "sale_id" => $purchase['sale_id'],
-                "subscription_id" => $purchase['subscription_id'],
-                "active" => $cancelled === null && $ended === null && $failed === null
+                'uses' => $info['uses'],
+                'order_number' => $purchase['order_number'],
+                'sale_id' => $purchase['sale_id'],
+                'subscription_id' => $purchase['subscription_id'],
+                'active' => $cancelled === null && $ended === null && $failed === null,
             ];
             $response['lifetime'] = $isLifetime;
         } catch (ClientException $e) {

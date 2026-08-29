@@ -39,7 +39,7 @@ Route::get('/blog/{slug}', [BlogController::class, 'show'])->name('blog.show');
  */
 Route::get('/privacy-policy', fn () => view('pages.legal.privacy-policy'));
 
-Route::middleware(['middleware' => 'deployment.self-hosted'])->get('/self-host-setup', [CustomHostInformationController::class, "show"]);
+Route::middleware(['middleware' => 'deployment.self-hosted'])->get('/self-host-setup', [CustomHostInformationController::class, 'show']);
 Route::middleware(['middleware' => 'auth:sanctum'])->get('/sanctum/user', function (Request $request) {
     return $request->user();
 });
@@ -53,6 +53,6 @@ Route::group(['middleware' => 'auth'], static function () {
 });
 
 // TODO: Temporarily disabled because the underlying logic was removed for security review
-//Route::get('shared_documents', [SharedDocumentsController::class, 'index']);
+// Route::get('shared_documents', [SharedDocumentsController::class, 'index']);
 Route::get('/home', [HomeController::class, 'index'])->name('home');
 Route::redirect('/app/', '/home');

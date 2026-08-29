@@ -2,8 +2,8 @@
 
 namespace App\Filament\Widgets;
 
-use Filament\Widgets\ChartWidget;
 use App\Models\Sync;
+use Filament\Widgets\ChartWidget;
 
 class WeeklySyncsChart extends ChartWidget
 {
@@ -24,7 +24,7 @@ class WeeklySyncsChart extends ChartWidget
                     'data' => $data->pluck('syncs_count')->toArray(),
                     'borderColor' => '#3b82f6',
                     'backgroundColor' => 'rgba(59, 130, 246, 0.1)',
-                ]
+                ],
             ],
             'labels' => $data->pluck('week')->toArray(),
         ];

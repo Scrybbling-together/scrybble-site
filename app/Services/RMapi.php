@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Services;
@@ -31,7 +32,9 @@ use Illuminate\Support\Str;
 class RMapi
 {
     private Filesystem $storage;
+
     private int $userId;
+
     private RMapiProcessRunner $runner;
 
     public function __construct(User $user, ?RMapiProcessRunner $runner = null)
@@ -42,20 +45,19 @@ class RMapi
     }
 
     /**
-     * @return bool
      * @throws MissingRMApiAuthenticationTokenException
      */
     public function isAuthenticated(): bool
     {
         $authFile = new RmAuthenticationFile($this->storage);
-        if (!$authFile->exists()) {
+        if (! $authFile->exists()) {
             return false;
         }
 
         if ($authFile->hasValidAuthenticationValues()) {
             return true;
         }
-        throw new MissingRMApiAuthenticationTokenException();
+        throw new MissingRMApiAuthenticationTokenException;
     }
 
     /**
@@ -68,11 +70,12 @@ class RMapi
         $result = $this->runner->run(argv: [], stdin: $code);
 
         $commandOutput = Str::lower($result->combined);
-        if (Str::contains($commandOutput, 'refresh') || Str::contains($commandOutput, "syncversion: 1.5")) {
-            event(new ReMarkableAuthenticatedEvent());
+        if (Str::contains($commandOutput, 'refresh') || Str::contains($commandOutput, 'syncversion: 1.5')) {
+            event(new ReMarkableAuthenticatedEvent);
+
             return true;
         }
-        if (Str::contains($commandOutput, 'incorrect') || Str::contains($commandOutput, "enter one-time code")) {
+        if (Str::contains($commandOutput, 'incorrect') || Str::contains($commandOutput, 'enter one-time code')) {
             throw new RMApiInvalidCodeException('Invalid code');
         }
         if (Str::contains($commandOutput, 'failed to create a new device token')) {
@@ -120,7 +123,7 @@ class RMapi
             return [
                 'type' => $type,
                 'name' => $node['name'],
-                'path' => '/' . $node['name'],
+                'path' => '/'.$node['name'],
                 'id' => $node['id'],
                 'version' => $node['version'] ?? null,
                 'modifiedClient' => $node['modifiedClient'] ?? null,
@@ -128,7 +131,7 @@ class RMapi
                 'tags' => $node['tags'] ?? [],
                 'starred' => $node['starred'] ?? false,
             ];
-        })->filter(fn($item) => $item['type'] === 'f')
+        })->filter(fn ($item) => $item['type'] === 'f')
             ->values();
     }
 
@@ -170,17 +173,17 @@ class RMapi
             if ($a['type'] !== $b['type']) {
                 return $a['type'] === 'd' ? -1 : 1;
             }
+
             return strcasecmp($a['name'], $b['name']);
         })->values();
     }
 
     /**
-     * @param $strategy string Either "hard" or "soft". Hard removes the cache on disk, soft calls the "refresh" api in rmapi
-     * @return bool
+     * @param  $strategy  string Either "hard" or "soft". Hard removes the cache on disk, soft calls the "refresh" api in rmapi
      */
-    public function refresh(string $strategy = "soft"): bool
+    public function refresh(string $strategy = 'soft'): bool
     {
-        $hardRefresh = fn() => $this->storage->delete("rmapi/tree.cache");
+        $hardRefresh = fn () => $this->storage->delete('rmapi/tree.cache');
         $softRefresh = function () {
             $result = $this->runner->run(['--json', '-ni', 'refresh']);
             if ($result->exitCode !== 0) {
@@ -193,12 +196,13 @@ class RMapi
         $ttl = $redis->ttl($key);
 
         if ($ttl === -1 || $ttl === -2) {
-            if ($strategy === "soft") {
+            if ($strategy === 'soft') {
                 $softRefresh();
-            } elseif ($strategy === "hard") {
+            } elseif ($strategy === 'hard') {
                 $hardRefresh();
             }
-            $redis->set($key, "", ["EX" => 120]);
+            $redis->set($key, '', ['EX' => 120]);
+
             return true;
         }
 
@@ -207,7 +211,7 @@ class RMapi
 
     public static function hashedFilepath(string $filePath): string
     {
-        return hash('sha1', $filePath) . ".zip";
+        return hash('sha1', $filePath).'.zip';
     }
 
     /**
@@ -229,13 +233,12 @@ class RMapi
         }
         $location = $this->getDownloadedZipLocation($filePath)->toRelative();
 
-
         $newLocation = static::hashedFilepath($filePath);
-        if (!$this->storage->move($location, $newLocation)) {
-            throw new RMApiZipMoveFailedException("Unable to rename downloaded RMZip to hashed filePath " . $location . " to " . $newLocation);
+        if (! $this->storage->move($location, $newLocation)) {
+            throw new RMApiZipMoveFailedException('Unable to rename downloaded RMZip to hashed filePath '.$location.' to '.$newLocation);
         }
 
-        return ['output' => $result->combined, 'downloaded_zip_location' => $newLocation, 'folder' => $folders->replaceName("")->string()];
+        return ['output' => $result->combined, 'downloaded_zip_location' => $newLocation, 'folder' => $folders->replaceName('')->string()];
     }
 
     /**
@@ -260,21 +263,18 @@ class RMapi
 
         // Hash based on ID for uniqueness
         $newLocation = static::hashedFilepath($rmFileId);
-        if (!$this->storage->move($location, $newLocation)) {
-            throw new RMApiZipMoveFailedException("Unable to rename downloaded RMZip to hashed filePath " . $location . " to " . $newLocation);
+        if (! $this->storage->move($location, $newLocation)) {
+            throw new RMApiZipMoveFailedException('Unable to rename downloaded RMZip to hashed filePath '.$location.' to '.$newLocation);
         }
 
         // For ID-based downloads, we don't have the folder path
         return ['output' => $result->combined, 'downloaded_zip_location' => $newLocation, 'folder' => '/'];
     }
 
-    /**
-     * @param string $rmapiDownloadPath
-     * @return PathInterface
-     */
     private function getDownloadedZipLocation(string $rmapiDownloadPath): PathInterface
     {
         $filename = Path::fromString($rmapiDownloadPath)->name();
+
         return Path::fromString($filename)->joinExtensions('rmdoc');
     }
 
@@ -285,8 +285,9 @@ class RMapi
     {
         $nodes = json_decode($stdout, associative: true);
         if (json_last_error() !== JSON_ERROR_NONE) {
-            throw new RMApiJsonParseException("Failed to parse rmapi JSON output: " . json_last_error_msg());
+            throw new RMApiJsonParseException('Failed to parse rmapi JSON output: '.json_last_error_msg());
         }
+
         return $nodes;
     }
 }

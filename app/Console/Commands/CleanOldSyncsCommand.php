@@ -24,7 +24,7 @@ class CleanOldSyncsCommand extends Command
 
         // Calculate initial disk usage
         $initialUsage = $this->getDiskUsage($efsPath);
-        $this->info("Initial disk usage: " . Helper::formatMemory($initialUsage));
+        $this->info('Initial disk usage: '.Helper::formatMemory($initialUsage));
 
         // Find old job directories
         $oldJobDirs = $this->findOldJobDirectories($storage);
@@ -37,20 +37,21 @@ class CleanOldSyncsCommand extends Command
         $this->info("Found {$jobDirectoriesToClean} directories and {$filesToClean} files to clean up.");
 
         // Skip confirmation if force option is used
-        if (!$force && !$this->confirm('Do you want to proceed with cleanup?')) {
+        if (! $force && ! $this->confirm('Do you want to proceed with cleanup?')) {
             $this->info('Operation cancelled.');
+
             return;
         }
 
         // Clean up directories using Laravel's built-in methods
-        $this->info("Cleaning up old job directories...");
+        $this->info('Cleaning up old job directories...');
         foreach ($oldJobDirs as $oldJobDir) {
             $relativePath = str_replace($efsPath, '', $oldJobDir->getRealPath());
             $storage->deleteDirectory($relativePath);
         }
 
         // Clean up processed files
-        $this->info("Cleaning up old processed files...");
+        $this->info('Cleaning up old processed files...');
         foreach ($oldProcessedFiles as $file) {
             $relativePath = str_replace($efsPath, '', $file->getRealPath());
             $storage->delete($relativePath);
@@ -60,10 +61,10 @@ class CleanOldSyncsCommand extends Command
         $finalUsage = $this->getDiskUsage($efsPath);
         $savedSpace = $initialUsage - $finalUsage;
 
-        $this->info("Final disk usage: " . Helper::formatMemory($finalUsage));
-        $this->info("Space saved: " . Helper::formatMemory($savedSpace));
+        $this->info('Final disk usage: '.Helper::formatMemory($finalUsage));
+        $this->info('Space saved: '.Helper::formatMemory($savedSpace));
 
-        $this->info("Cleanup completed successfully.");
+        $this->info('Cleanup completed successfully.');
     }
 
     /**
@@ -72,37 +73,30 @@ class CleanOldSyncsCommand extends Command
     protected function getDiskUsage(string $path): int
     {
         $output = [];
-        exec("du -sb " . escapeshellarg($path) . " | cut -f1", $output);
+        exec('du -sb '.escapeshellarg($path).' | cut -f1', $output);
+
         return (int) ($output[0] ?? 0);
     }
 
-    /**
-     * @param Filesystem|FilesystemAdapter $storage
-     * @return Finder
-     */
     public function findOldJobDirectories(Filesystem|FilesystemAdapter $storage): Finder
     {
         $basePath = $storage->path('');
-        $finder = new Finder();
+        $finder = new Finder;
 
         return $finder->directories()
-            ->date('<' . Carbon::now()->subMonth()->format('Y-m-d'))
+            ->date('<'.Carbon::now()->subMonth()->format('Y-m-d'))
             ->depth(0)
-            ->in(glob($basePath . '*/jobs') ?: []);
+            ->in(glob($basePath.'*/jobs') ?: []);
     }
 
-    /**
-     * @param Filesystem|FilesystemAdapter $storage
-     * @return Finder
-     */
     public function findOldProcessedFiles(Filesystem|FilesystemAdapter $storage): Finder
     {
         $basePath = $storage->path('');
-        $finder = new Finder();
+        $finder = new Finder;
 
         return $finder->files()
-            ->date('<' . Carbon::now()->subMonth()->format('Y-m-d'))
+            ->date('<'.Carbon::now()->subMonth()->format('Y-m-d'))
             ->depth(0)
-            ->in(glob($basePath . '*/processed') ?: []);
+            ->in(glob($basePath.'*/processed') ?: []);
     }
 }

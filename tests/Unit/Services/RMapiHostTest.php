@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace Tests\Unit\Services;
@@ -12,15 +13,14 @@ use Tests\TestCase;
 #[CoversClass(RMapiProcessRunner::class)]
 final class RMapiHostTest extends TestCase
 {
-
     private function aRunnerWithApiHost(?string $apiHost): RMapiProcessRunner
     {
         return new RMapiProcessRunner(
             binaryPath: 'binaries/rmapi',
             configPath: '/user/.rmapi-auth',
-            cacheHome:  '/user',
+            cacheHome: '/user',
             workingDir: '/user',
-            apiHost:    $apiHost,
+            apiHost: $apiHost,
         );
     }
 
@@ -38,11 +38,11 @@ final class RMapiHostTest extends TestCase
     public static function provideHostValues(): array
     {
         return [
-            'trailing slash is stripped'        => ['https://fake.local/', 'https://fake.local'],
+            'trailing slash is stripped' => ['https://fake.local/', 'https://fake.local'],
             'multiple trailing slashes stripped' => ['https://fake.local//', 'https://fake.local'],
-            'no slash is unchanged'              => ['https://fake.local', 'https://fake.local'],
-            'empty string resolves to null'      => ['', null],
-            'unset resolves to null'             => [null, null],
+            'no slash is unchanged' => ['https://fake.local', 'https://fake.local'],
+            'empty string resolves to null' => ['', null],
+            'unset resolves to null' => [null, null],
         ];
     }
 

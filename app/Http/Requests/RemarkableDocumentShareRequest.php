@@ -20,7 +20,7 @@ class RemarkableDocumentShareRequest extends FormRequest
     public function authorize(): bool
     {
         $sync = Sync::find($this->input('sync_id'));
-        if (!$sync) {
+        if (! $sync) {
             return false;
         }
 

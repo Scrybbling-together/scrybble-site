@@ -26,7 +26,7 @@ class SyncFactory extends Factory
                 '/documents/notebook.pdf',
                 '/sketches/drawing.pdf',
                 '/notes/meeting_notes.pdf',
-                '/journal/daily_log.pdf'
+                '/journal/daily_log.pdf',
             ]),
             'completed' => false,
             'sync_id' => null,
@@ -58,8 +58,8 @@ class SyncFactory extends Factory
         return $this->state(function (array $attributes) {
             return [
                 'completed' => true,
-                'sync_id' => 'missing-file-' . $this->faker->uuid(),
-                'filename' => '/deleted/' . $this->faker->word() . '.pdf',
+                'sync_id' => 'missing-file-'.$this->faker->uuid(),
+                'filename' => '/deleted/'.$this->faker->word().'.pdf',
             ];
         });
     }

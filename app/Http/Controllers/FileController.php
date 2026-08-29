@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Http\Controllers;
@@ -9,11 +10,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Validation\UnauthorizedException;
 
-/**
- *
- */
 class FileController extends Controller
 {
     /**
@@ -40,7 +37,7 @@ class FileController extends Controller
         $file = $validated['file'] ?? null;
 
         // Require either file OR (rmFileId + name)
-        if (!$rmFileId && !$file) {
+        if (! $rmFileId && ! $file) {
             return response()->json([
                 'message' => 'Either file or rmFileId with name is required.',
                 'errors' => [
@@ -64,7 +61,7 @@ class FileController extends Controller
 
         return response()->json([
             'sync_id' => $sync_context->sync->id,
-            'filename' => $sync_context->input_filename
+            'filename' => $sync_context->input_filename,
         ]);
     }
 }

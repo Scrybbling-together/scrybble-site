@@ -21,7 +21,7 @@ class ConnectedGumroadLicenseController extends Controller
 
         if ($user->gumroadLicense !== null && $user->gumroadLicense->valid) {
             return response()
-                ->json(['error' => "A license is already connected"], 422);
+                ->json(['error' => 'A license is already connected'], 422);
         }
 
         try {
@@ -34,13 +34,13 @@ class ConnectedGumroadLicenseController extends Controller
             $data = json_decode($res->getBody(), true, 512, JSON_THROW_ON_ERROR);
         } catch (JsonException $e) {
             return response()
-                ->json(['error' => "Gumroad API error"], 503);
+                ->json(['error' => 'Gumroad API error'], 503);
         }
 
         if ($data['success']) {
             $user->gumroadLicense()->firstOrCreate([
                 'valid' => true,
-                'license' => $license
+                'license' => $license,
             ]);
 
             return response()->json(['newState' => $onboarding_state_service->getState()]);

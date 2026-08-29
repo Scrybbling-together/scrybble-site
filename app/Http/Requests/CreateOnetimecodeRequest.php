@@ -6,13 +6,15 @@ use Illuminate\Foundation\Http\FormRequest;
 
 class CreateOnetimecodeRequest extends FormRequest
 {
-    public function authorize(): bool {
+    public function authorize(): bool
+    {
         return true;
     }
 
-    public function rules(): array {
+    public function rules(): array
+    {
         return [
-            'code' => ['required', 'regex:/[a-z]{8}/']
+            'code' => ['required', 'regex:/[a-z]{8}/'],
         ];
     }
 }
