@@ -66,6 +66,8 @@ COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 WORKDIR /var/www/html
 
 RUN composer install --prefer-dist --optimize-autoloader --no-interaction --no-scripts \
+    && rm -f bootstrap/cache/*.php \
+    && php artisan package:discover --ansi \
     && php artisan passport:keys --force
 
 ENTRYPOINT []
