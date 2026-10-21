@@ -1,5 +1,5 @@
 ARG RELEASE_HASH
-FROM laauurraaa/composer-8.3.21 AS build-php
+FROM laauurraaa/php-composer:8.3.36-zts-alpine3.24 AS build-php
 RUN test -n "$RELEASE_HASH" || echo "RELEASE_HASH must be set for a build"
 LABEL authors="lb"
 
