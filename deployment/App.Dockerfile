@@ -14,7 +14,7 @@ RUN rm -f bootstrap/cache/*.php
 # This checks whether artisan is usable, it's a test.
 RUN php artisan about
 
-FROM node:lts-alpine3.15 AS build-js
+FROM node:lts-alpine3.24 AS build-js
 ARG RELEASE_HASH
 COPY --from=build-php /app/ /app/
 WORKDIR /app/
@@ -24,23 +24,22 @@ RUN npm install -g cross-env
 RUN npm run build
 RUN rm -rf node_modules
 
-FROM php:8.3.21-apache-bookworm AS production
+FROM php:8.3.36-apache-bookworm AS production
 
-RUN apt-get update
-RUN apt-get -yqq install libbz2-dev libzip-dev libicu-dev
+ARG PHPREDIS_VERSION=6.2.0
 
-RUN docker-php-ext-configure opcache --enable-opcache && \
-    docker-php-ext-install  \
-    bz2 \
-    zip \
-    intl \
-    pcntl \
-    pdo \
-    pdo_mysql \
-    exif \
-    && \
-    pecl install redis && \
-    docker-php-ext-enable redis exif
+RUN apt-get update \
+ && apt-get -yqq install libbz2-dev libzip-dev libicu-dev \
+ && rm -rf /var/lib/apt/lists/*
+
+RUN set -eux; \
+    docker-php-source extract; \
+    mkdir -p /usr/src/php/ext/redis; \
+    curl -fsSL "https://github.com/phpredis/phpredis/archive/refs/tags/${PHPREDIS_VERSION}.tar.gz" \
+      | tar -xz --strip-components=1 -C /usr/src/php/ext/redis; \
+    docker-php-ext-configure opcache --enable-opcache; \
+    docker-php-ext-install bz2 zip intl pcntl pdo pdo_mysql exif redis; \
+    docker-php-source delete
 
 COPY --chown=www-data:www-data --from=build-js /app/ /var/www/html/
 RUN rm -rf /var/www/html/public/hot
